@@ -136,15 +136,19 @@
   <link rel="stylesheet" href="shared/theme.css">
   <script src="shared/theme.js"></script>
 </head>
-<body>
-  <a class="dashboard-back" href="index.html">← Dashboard</a>
-  <div class="app">
-    <div class="top-row">
-      <div class="header-spacer"></div>
-      <div class="app-header">
-        <img src="bjh-logo.png" class="bjh-logo" alt="BJH Bobcat">
-        <h1 id="appTitle">Agenda</h1>
-        <img src="bjh-logo.png" class="bjh-logo right" alt="BJH Bobcat">
+<body class="td-has-app-shell">
+  <div data-td-mobile-bar></div>
+  <div class="td-shell">
+    <div data-td-sidebar="agenda"></div>
+    <main class="td-main td-main-legacy">
+      <div class="td-content td-content-wide">
+        <div class="td-legacy-page">
+
+<div class="app">
+    <div class="td-legacy-page-head">
+      <div>
+        <h1 id="appTitle" class="td-page-title">Agenda</h1>
+        <p class="td-page-subtitle">Plan the day, switch periods, and present the current lesson when class begins.</p>
       </div>
       <div class="bell-service-host" data-bell-mini></div>
     </div>
@@ -537,5 +541,11 @@ function initialize(){
 }
 initialize();
 </script>
+
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="shared/app-shell.js"></script>
 </body>
 </html>

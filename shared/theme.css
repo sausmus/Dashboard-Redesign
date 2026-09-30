@@ -1,6 +1,6 @@
 /* =========================================================
    TEACHER DASHBOARD — MASTER THEME SYSTEM
-   Prototype 2
+   Prototype 4
    ========================================================= */
 
 :root {
@@ -637,3 +637,123 @@ button.primary:hover,
 }
 input[type="checkbox"], input[type="radio"] { accent-color: var(--td-accent); }
 .settings-hub-card.active { border-color: var(--td-accent) !important; }
+
+
+/* =========================================================
+   PROTOTYPE 4 — APP SHELL / LEGACY PAGE BRIDGE
+   ========================================================= */
+
+.td-sidebar-collapse {
+  width: 100%;
+  border: 0;
+  cursor: pointer;
+  text-align: left;
+}
+.td-collapse-icon svg { transition: transform var(--td-normal); }
+
+body.td-sidebar-collapsed .td-shell {
+  grid-template-columns: 76px minmax(0, 1fr);
+}
+body.td-sidebar-collapsed .td-sidebar {
+  padding-inline: 10px;
+}
+body.td-sidebar-collapsed .td-brand {
+  justify-content: center;
+  padding-inline: 0;
+}
+body.td-sidebar-collapsed .td-brand-copy,
+body.td-sidebar-collapsed .td-nav-label {
+  display: none;
+}
+body.td-sidebar-collapsed .td-nav-link {
+  justify-content: center;
+  padding-inline: 6px;
+}
+body.td-sidebar-collapsed .td-nav-icon {
+  width: 34px;
+  height: 34px;
+}
+body.td-sidebar-collapsed .td-collapse-icon svg {
+  transform: rotate(180deg);
+}
+
+body.td-has-app-shell {
+  display: block !important;
+  min-width: 0;
+  overflow-x: hidden;
+}
+
+.td-main-legacy {
+  padding-top: 28px;
+}
+.td-content-wide {
+  width: min(1320px, 100%);
+}
+.td-main-full {
+  padding: 0;
+  min-height: 100vh;
+}
+.td-content-full {
+  width: 100%;
+  max-width: none;
+  min-height: 100vh;
+  margin: 0;
+}
+.td-legacy-page {
+  min-width: 0;
+}
+.td-legacy-page-full {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+.td-legacy-page-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  margin: 4px 0 24px;
+}
+.td-legacy-page-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+}
+.td-legacy-page .app {
+  max-width: none;
+  margin-left: 0;
+  margin-right: 0;
+}
+.td-legacy-page .dashboard-back,
+.td-legacy-page .back-link {
+  display: none !important;
+}
+
+/* When a legacy page enters its own classroom presentation/projector mode,
+   keep the app shell out of the projected view. */
+body.present-mode .td-sidebar,
+body.projector-mode .td-sidebar,
+body.present-mode .td-mobile-bar,
+body.projector-mode .td-mobile-bar {
+  display: none !important;
+}
+body.present-mode .td-shell,
+body.projector-mode .td-shell {
+  display: block;
+}
+body.present-mode .td-main,
+body.projector-mode .td-main {
+  padding: 0 !important;
+}
+
+@media (max-width: 860px) {
+  body.td-sidebar-collapsed .td-shell { display: block; }
+  body.td-sidebar-collapsed .td-brand-copy,
+  body.td-sidebar-collapsed .td-nav-label { display: initial; }
+  body.td-sidebar-collapsed .td-nav-link { justify-content: flex-start; padding: 9px 10px; }
+  body.td-sidebar-collapsed .td-nav-icon { width: 28px; height: 28px; }
+  .td-sidebar-collapse { display: none; }
+  .td-main-legacy { padding-top: 26px; }
+  .td-legacy-page-head { flex-direction: column; }
+}

@@ -1366,15 +1366,20 @@
   <script src="shared/theme.js"></script>
 </head>
 
-<body>
+<body class="td-has-app-shell">
+  <div data-td-mobile-bar></div>
+  <div class="td-shell">
+    <div data-td-sidebar="settings"></div>
+    <main class="td-main td-main-legacy">
+      <div class="td-content td-content-wide">
+        <div class="td-legacy-page">
+
   <main class="app">
 
     <div class="top-row">
-      <a class="back-link" href="index.html">← Dashboard</a>
-
-      <div class="page-title">
-        <h1>Dashboard Settings</h1>
-        <p>Shared classes, rosters, and Google Classroom connections.</p>
+<div class="page-title">
+        <h1 class="td-page-title">Settings</h1>
+        <p class="td-page-subtitle">Appearance, classes, school calendar, Google Classroom, backups, and school-year controls.</p>
       </div>
     </div>
 
@@ -1429,6 +1434,10 @@
       </div>
 
       <div class="td-appearance-grid">
+        <div class="td-appearance-group">
+          <div class="td-appearance-label">Navigation</div>
+          <div style="color:var(--td-text-secondary);font-size:12px;line-height:1.55;">The left sidebar can be collapsed from any major Dashboard section. That choice follows you throughout the application.</div>
+        </div>
         <div class="td-appearance-group">
           <div class="td-appearance-label">Mode</div>
           <div class="td-theme-mode-options" role="group" aria-label="Color mode">
@@ -4391,5 +4400,11 @@
       }
     })();
   </script>
+
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="shared/app-shell.js"></script>
 </body>
 </html>

@@ -75,7 +75,7 @@
             </article>
           </div>
 
-          <div class="writing-note"><strong>Prototype 2:</strong> The navigation is unified now; the two systems remain separate under the hood. Later, assignments created by Teacher Dashboard can become the shared object that links drafting, grading, returned work, and each Student Profile.</div>
+          <div class="writing-note"><strong>Current architecture:</strong> Writing Workspace and the Grading Assistant remain separate under the hood while this unified Writing section becomes their shared teacher-facing home.</div>
         </section>
 
         <section class="writing-panel" data-writing-panel="student-writing" hidden>
@@ -99,6 +99,8 @@
     </main>
   </div>
 
+  <script src="shared/dashboard-data.js"></script>
+  <script src="shared/bell-service.js"></script>
   <script src="shared/app-shell.js"></script>
   <script>
     (() => {

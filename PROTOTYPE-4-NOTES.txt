@@ -1,0 +1,60 @@
+TEACHER DASHBOARD REDESIGN — PROTOTYPE 4
+APP SHELL
+
+Goal
+----
+Make the major Teacher Dashboard destinations feel like one application without rewriting mature tool logic.
+
+Major sections now using the shared shell
+-----------------------------------------
+• Home
+• Students
+• Agenda
+• Writing
+• Games
+• Scoreboard
+• Inbox Assistant
+• Settings
+
+Shared shell behavior
+---------------------
+• Persistent left sidebar on desktop.
+• Sidebar can collapse to an icon rail.
+• Collapse state persists across major pages in:
+    teacherDashboard.shell.v1
+• Mobile/small screens use the existing slide-out navigation drawer.
+• Active section is highlighted consistently.
+• Settings remains pinned at the bottom.
+• The master light/dark + accent theme remains global.
+
+Current period context
+----------------------
+The redesign continues to use DashboardData.currentClassId as the single shared class context.
+BellService already updates that shared class automatically during the school day, and manual period
+changes in Students / Agenda / Scoreboard continue to write back to the same shared current-class value.
+No competing period-storage system was added.
+
+Page migration
+--------------
+• Agenda: new app shell and simplified page heading; old ← Dashboard control removed.
+• Scoreboard: new app shell and simplified heading; old ← Dashboard and redundant Dashboard Settings button removed.
+• Games: new app shell and simplified heading; individual game screens remain internally intact for now.
+• Inbox Assistant: new full-height app shell while preserving the embedded Apps Script workflow.
+• Settings: new app shell; old ← Dashboard control removed.
+• Writing: shell already existed; now keeps BellService/DashboardData active so class context remains current while Writing is open.
+• Home and Students retain their Prototype 3 layouts and automatically gain the new collapsible sidebar behavior.
+
+Intentionally deferred
+----------------------
+• Full visual redesign of every legacy utility control.
+• Wrapping Wordle / Word Hive / Jeopardy gameplay screens in the sidebar shell.
+• Rebuilding the advanced Participation Tracker / Student Picker pages.
+• Reorganizing the full Settings implementation.
+These are left intact to reduce the risk of breaking projection/fullscreen behavior or mature data workflows.
+
+Data safety
+-----------
+No Participation, Timeliness, roster, reminder, scoreboard, Google Classroom, Agenda, Writing,
+or existing Appearance storage schemas were renamed, cleared, or migrated.
+Prototype 4 adds only the isolated shell-preference key:
+    teacherDashboard.shell.v1

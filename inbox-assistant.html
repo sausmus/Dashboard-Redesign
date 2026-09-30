@@ -70,21 +70,23 @@
   <link rel="stylesheet" href="shared/theme.css">
   <script src="shared/theme.js"></script>
 </head>
-<body>
+<body class="td-has-app-shell">
+  <div data-td-mobile-bar></div>
+  <div class="td-shell">
+    <div data-td-sidebar="inbox"></div>
+    <main class="td-main td-main-full">
+      <div class="td-content td-content-full">
+        <div class="td-legacy-page td-legacy-page-full">
+
   <header class="topbar">
-    <div class="left"><a class="back" href="index.html">← <span class="hide-mobile">Dashboard</span></a></div>
-    <div class="brand">
-      <img src="bjh-logo.png" alt="BJH Bobcat">
-      <h1>Inbox Assistant</h1>
-      <img src="bjh-logo.png" class="right-logo" alt="BJH Bobcat">
-    </div>
+    <div class="left"><h1 style="margin:0;font-size:20px;">Inbox Assistant</h1></div>
+    <div></div>
     <div class="right">
       <button id="openStandaloneButton" class="button hide-mobile" type="button" hidden>Open Standalone ↗</button>
-      <button id="changeUrlButton" class="button" type="button" hidden>⚙</button>
+      <button id="changeUrlButton" class="button" type="button" hidden aria-label="Inbox Assistant settings">⚙</button>
     </div>
   </header>
-
-  <main id="setupView" class="setup" hidden>
+<main id="setupView" class="setup" hidden>
     <section class="card">
       <div class="setup-header">
         <div class="icon" aria-hidden="true">
@@ -243,5 +245,11 @@
   if (saved) showFrame(saved); else showSetup();
 })();
 </script>
+
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="shared/app-shell.js"></script>
 </body>
 </html>
