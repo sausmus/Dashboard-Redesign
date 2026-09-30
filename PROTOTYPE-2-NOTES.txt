@@ -1,0 +1,48 @@
+TEACHER DASHBOARD REDESIGN — PROTOTYPE 2
+========================================
+
+WHAT THIS PROTOTYPE ADDS
+- New live Home dashboard with persistent sidebar.
+- Current-class Now card driven by the existing Bell Service.
+- Schedule type appears only inside the Now card.
+- Contextual Now shortcuts: Agenda and Students.
+- Today feed reads real Dashboard reminders and reserves the same feed for Google Calendar events.
+- New Students area with:
+  - Roster / Picker / Participation / Timeliness segmented navigation
+  - Period selector
+  - Cross-period student search
+  - Student profile drawer
+  - Live Participation and Timeliness summaries
+  - Active reminders attached to students
+  - Balanced Picker as the new default
+  - Picker settings gear with Balanced / Random and legacy group-maker access
+- New Writing area with Assignments / Student Writing / Grading navigation.
+- Writing Workspace and AI Grader remain separate systems underneath for safety.
+- Master Appearance setting added to Dashboard Settings:
+  - Light / Dark / System
+  - Classic Blue / Sage / Lavender / Terracotta / Slate
+- Master theme files are loaded by every HTML page in the repo.
+- Legacy Student Picker defaults to Balanced for fresh state.
+- Legacy Participation Tracker supports ?view=timeliness deep linking.
+
+DATA SAFETY
+- Existing Dashboard storage keys and schemas are not renamed, cleared, or migrated.
+- Two NEW keys are introduced only for new preferences:
+  teacherDashboard.appearance.v1
+  teacherDashboard.studentsPicker.v1
+
+CURRENT PROTOTYPE LIMITS
+- Google Calendar is not authenticated in the GitHub app yet. The Today feed currently
+  shows real Dashboard reminders plus a Calendar connection placeholder. Calendar events
+  should later enter this same chronological feed.
+- External Apps Script interfaces (Writing Workspace and the content inside the AI Grader
+  iframe) cannot inherit CSS from the GitHub repo across origins. The master theme is now
+  established across the GitHub application; those external surfaces will need their own
+  theme bridge/migration later.
+- Student Profile Writing history is reserved visually but does not yet read Writing
+  Workspace assignment data. That comes when the unified Writing data service is built.
+- Legacy tools inherit the global mode/accent foundation now, but they have not yet all
+  been individually redesigned into the new component system.
+
+VALIDATION
+- shared JavaScript and every inline script passed `node --check`.

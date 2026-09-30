@@ -687,6 +687,8 @@
       .modal-footer button { flex: 1; }
     }
   </style>
+  <link rel="stylesheet" href="shared/theme.css">
+  <script src="shared/theme.js"></script>
 </head>
 <body>
 <a class="dashboard-back" href="index.html">← Dashboard</a>
@@ -2130,6 +2132,10 @@
     render();
     if (currentView === "timeliness" && lateModal.classList.contains("visible") && lateModalStudent) renderLateModal();
   });
+
+  const requestedView = new URLSearchParams(window.location.search).get("view");
+  if (requestedView === "timeliness") currentView = "timeliness";
+  else if (requestedView === "participation") currentView = "participation";
 
   buildTerms();
   buildPeriodButtons();

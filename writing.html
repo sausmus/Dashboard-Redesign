@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Writing · Teacher Dashboard</title>
+  <link rel="icon" type="image/png" href="bjh-logo.png">
+  <link rel="stylesheet" href="shared/theme.css">
+  <script src="shared/theme.js"></script>
+  <style>
+    .writing-head { margin-bottom: 24px; }
+    .writing-tabs { margin-bottom: 20px; }
+    .writing-panel[hidden] { display:none !important; }
+    .writing-hero { padding: clamp(24px, 4vw, 34px); margin-bottom: 16px; background: linear-gradient(135deg, var(--td-surface), color-mix(in srgb, var(--td-gold-soft) 48%, var(--td-surface))); }
+    .writing-hero-grid { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:22px; align-items:center; }
+    .writing-hero h2 { margin:0; font-size:24px; letter-spacing:-.03em; }
+    .writing-hero p { margin:8px 0 0; max-width:650px; color:var(--td-text-secondary); font-size:12px; line-height:1.6; }
+    .writing-actions { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:9px; }
+    .writing-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+    .writing-card { padding:20px; }
+    .writing-card-icon { width:42px; height:42px; display:grid; place-items:center; border-radius:12px; margin-bottom:18px; background:var(--td-gold-soft); color:var(--td-gold); font-size:19px; }
+    .writing-card:nth-child(2) .writing-card-icon { background:var(--td-accent-soft); color:var(--td-accent); }
+    .writing-card h3 { margin:0; font-size:16px; }
+    .writing-card p { margin:7px 0 18px; min-height:42px; color:var(--td-text-secondary); font-size:11px; line-height:1.55; }
+    .writing-note { margin-top:16px; padding:14px 16px; border:1px solid var(--td-border); border-radius:14px; background:var(--td-surface-soft); color:var(--td-text-secondary); font-size:11px; line-height:1.55; }
+    .empty-assignments { padding:38px 24px; text-align:center; }
+    .empty-assignments h3 { margin:0; font-size:17px; }
+    .empty-assignments p { margin:7px auto 18px; max-width:530px; color:var(--td-text-secondary); font-size:11px; line-height:1.55; }
+    @media (max-width:760px){ .writing-hero-grid,.writing-grid{grid-template-columns:1fr}.writing-actions{justify-content:flex-start} }
+  </style>
+</head>
+<body>
+  <div data-td-mobile-bar></div>
+  <div class="td-shell">
+    <div data-td-sidebar="writing"></div>
+    <main class="td-main">
+      <div class="td-content">
+        <header class="writing-head">
+          <h1 class="td-page-title">Writing</h1>
+          <p class="td-page-subtitle">Writing Workspace and AI-assisted grading, organized around the same assignment lifecycle.</p>
+        </header>
+
+        <div class="td-segmented writing-tabs" role="tablist" aria-label="Writing views">
+          <button type="button" data-writing-view="assignments" aria-selected="true">Assignments</button>
+          <button type="button" data-writing-view="student-writing" aria-selected="false">Student Writing</button>
+          <button type="button" data-writing-view="grading" aria-selected="false">Grading</button>
+        </div>
+
+        <section class="writing-panel" data-writing-panel="assignments">
+          <article class="td-card writing-hero">
+            <div class="writing-hero-grid">
+              <div>
+                <div class="td-eyebrow">Unified Writing</div>
+                <h2>One assignment, from drafting through returned feedback.</h2>
+                <p>This prototype keeps Writing Workspace and the Grading Assistant technically separate, but presents them as one teacher workflow. Assignment-level data can be unified later without disrupting either working system now.</p>
+              </div>
+              <div class="writing-actions">
+                <a class="td-button td-button-primary" href="https://script.google.com/a/macros/bousd.us/s/AKfycbzgrtsmL77tJjM8ShqM-NVHZZDeMntwrEgf6ikO2XxPJh9Pv5qTArxyHeDZl97jwuPKUg/exec" target="_blank" rel="noopener noreferrer">Open Writing Workspace ↗</a>
+              </div>
+            </div>
+          </article>
+
+          <div class="writing-grid">
+            <article class="td-card writing-card">
+              <div class="writing-card-icon">✎</div>
+              <h3>Student Writing</h3>
+              <p>Create and monitor focused student writing in the current Writing Workspace.</p>
+              <button class="td-button td-button-secondary" type="button" data-switch-writing="student-writing">Go to Student Writing →</button>
+            </article>
+            <article class="td-card writing-card">
+              <div class="writing-card-icon">◇</div>
+              <h3>Grading</h3>
+              <p>Open the Grading Assistant to review submissions, feedback, rubrics, and draft scores.</p>
+              <button class="td-button td-button-secondary" type="button" data-switch-writing="grading">Go to Grading →</button>
+            </article>
+          </div>
+
+          <div class="writing-note"><strong>Prototype 2:</strong> The navigation is unified now; the two systems remain separate under the hood. Later, assignments created by Teacher Dashboard can become the shared object that links drafting, grading, returned work, and each Student Profile.</div>
+        </section>
+
+        <section class="writing-panel" data-writing-panel="student-writing" hidden>
+          <article class="td-card empty-assignments">
+            <div class="td-eyebrow">Student Writing</div>
+            <h3>Writing Workspace remains the live student-writing system.</h3>
+            <p>For this prototype, we are preserving your working Apps Script implementation while giving it a permanent home inside the unified Writing section.</p>
+            <a class="td-button td-button-primary" href="https://script.google.com/a/macros/bousd.us/s/AKfycbzgrtsmL77tJjM8ShqM-NVHZZDeMntwrEgf6ikO2XxPJh9Pv5qTArxyHeDZl97jwuPKUg/exec" target="_blank" rel="noopener noreferrer">Open Writing Workspace ↗</a>
+          </article>
+        </section>
+
+        <section class="writing-panel" data-writing-panel="grading" hidden>
+          <article class="td-card empty-assignments">
+            <div class="td-eyebrow">Grading</div>
+            <h3>Your current Grading Assistant stays intact.</h3>
+            <p>Open it from here while we design the future assignment-centered Writing experience around the systems that already work.</p>
+            <a class="td-button td-button-primary" href="ai-grader.html">Open Grading Assistant →</a>
+          </article>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script src="shared/app-shell.js"></script>
+  <script>
+    (() => {
+      function switchView(view) {
+        const valid = ["assignments", "student-writing", "grading"];
+        const next = valid.includes(view) ? view : "assignments";
+        document.querySelectorAll("[data-writing-view]").forEach(button => button.setAttribute("aria-selected", String(button.dataset.writingView === next)));
+        document.querySelectorAll("[data-writing-panel]").forEach(panel => panel.hidden = panel.dataset.writingPanel !== next);
+        const url = new URL(location.href);
+        if (next === "assignments") url.searchParams.delete("view"); else url.searchParams.set("view", next);
+        history.replaceState(null, "", url);
+      }
+      document.querySelectorAll("[data-writing-view]").forEach(button => button.addEventListener("click", () => switchView(button.dataset.writingView)));
+      document.querySelectorAll("[data-switch-writing]").forEach(button => button.addEventListener("click", () => switchView(button.dataset.switchWriting)));
+      switchView(new URLSearchParams(location.search).get("view") || "assignments");
+    })();
+  </script>
+</body>
+</html>

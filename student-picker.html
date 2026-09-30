@@ -880,6 +880,8 @@
       }
     }
   </style>
+  <link rel="stylesheet" href="shared/theme.css">
+  <script src="shared/theme.js"></script>
 </head>
 
 <body>
@@ -1359,7 +1361,7 @@
       ],
 
       pickerConfig: {
-        strategy: "random",
+        strategy: "balanced",
         target: "below-goal"
       },
 
@@ -1492,13 +1494,13 @@
 
       if (!parsed.pickerConfig || typeof parsed.pickerConfig !== "object") {
         parsed.pickerConfig = {
-          strategy: "random",
+          strategy: "balanced",
           target: "below-goal"
         };
       }
 
       if (!["random", "balanced", "targeted"].includes(parsed.pickerConfig.strategy)) {
-        parsed.pickerConfig.strategy = "random";
+        parsed.pickerConfig.strategy = "balanced";
       }
 
       if (!["zero", "zero-one", "zero-two", "below-goal", "at-goal"].includes(parsed.pickerConfig.target)) {

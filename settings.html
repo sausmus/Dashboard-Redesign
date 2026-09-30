@@ -1362,6 +1362,8 @@
       }
     }
   </style>
+  <link rel="stylesheet" href="shared/theme.css">
+  <script src="shared/theme.js"></script>
 </head>
 
 <body>
@@ -1381,6 +1383,11 @@
     </div>
 
     <section class="settings-hub" aria-label="Settings sections">
+      <button class="settings-hub-card" type="button" data-settings-section="appearance">
+        <span class="settings-hub-title"><span class="settings-hub-icon">◐</span>Appearance</span>
+        <span class="settings-hub-summary">Choose one master light/dark mode and color theme for the entire Dashboard.</span>
+        <span class="settings-hub-action">Manage →</span>
+      </button>
       <button class="settings-hub-card" type="button" data-settings-section="classes">
         <span class="settings-hub-title"><span class="settings-hub-icon">👥</span>Classes & Rosters</span>
         <span id="hubClassesSummary" class="settings-hub-summary">Choose Google Classroom or a manual roster for each class.</span>
@@ -1412,6 +1419,38 @@
       <strong id="settingsDetailLabel">Settings section</strong>
       <button id="closeSettingsSectionButton" class="button secondary small" type="button">Close Section</button>
     </div>
+
+    <section class="panel settings-detail-panel" id="appearancePanel" data-settings-group="appearance">
+      <div class="section-header">
+        <div>
+          <h2>Appearance</h2>
+          <p>One master theme controls Teacher Dashboard. Individual tools no longer need their own color theme.</p>
+        </div>
+      </div>
+
+      <div class="td-appearance-grid">
+        <div class="td-appearance-group">
+          <div class="td-appearance-label">Mode</div>
+          <div class="td-theme-mode-options" role="group" aria-label="Color mode">
+            <button class="td-theme-mode-button" type="button" data-theme-mode="light">Light</button>
+            <button class="td-theme-mode-button" type="button" data-theme-mode="dark">Dark</button>
+            <button class="td-theme-mode-button" type="button" data-theme-mode="system">System</button>
+          </div>
+        </div>
+
+        <div class="td-appearance-group">
+          <div class="td-appearance-label">Color theme</div>
+          <div class="td-theme-swatches" role="group" aria-label="Color theme">
+            <button class="td-theme-swatch" type="button" data-theme-value="blue"><span class="td-theme-swatch-dot"></span><span>Classic Blue</span></button>
+            <button class="td-theme-swatch" type="button" data-theme-value="sage"><span class="td-theme-swatch-dot"></span><span>Sage</span></button>
+            <button class="td-theme-swatch" type="button" data-theme-value="lavender"><span class="td-theme-swatch-dot"></span><span>Lavender</span></button>
+            <button class="td-theme-swatch" type="button" data-theme-value="terracotta"><span class="td-theme-swatch-dot"></span><span>Terracotta</span></button>
+            <button class="td-theme-swatch" type="button" data-theme-value="slate"><span class="td-theme-swatch-dot"></span><span>Slate</span></button>
+          </div>
+          <p class="danger-note">Themes change the shared accent system across the Dashboard while keeping the interface mostly neutral.</p>
+        </div>
+      </div>
+    </section>
 
     <section class="panel settings-detail-panel" id="classesPanel" data-settings-group="classes">
       <div class="section-header">
@@ -2064,6 +2103,7 @@
       }
 
       const SETTINGS_SECTION_LABELS = {
+        appearance: "Appearance",
         classes: "Classes & Rosters",
         participation: "Participation & Timeliness",
         calendar: "School Calendar",

@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Students · Teacher Dashboard</title>
+  <link rel="icon" type="image/png" href="bjh-logo.png">
+  <link rel="stylesheet" href="shared/theme.css">
+  <script src="shared/theme.js"></script>
+  <style>
+    .students-head {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 22px;
+      margin-bottom: 24px;
+    }
+    .students-controls {
+      display: grid;
+      grid-template-columns: minmax(240px, 1fr) 170px;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+    .search-wrap { position: relative; }
+    .search-wrap .td-input { padding-left: 40px; }
+    .search-icon { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--td-text-muted); pointer-events: none; }
+    .students-tabs-wrap { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 18px; }
+    .view-note { color: var(--td-text-muted); font-size: 11px; }
+
+    .student-list { display: grid; gap: 8px; }
+    .student-row {
+      width: 100%;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 112px 112px 34px;
+      align-items: center;
+      gap: 12px;
+      min-height: 66px;
+      padding: 10px 14px;
+      border: 1px solid var(--td-border);
+      border-radius: 15px;
+      background: var(--td-surface);
+      color: var(--td-text);
+      text-align: left;
+      cursor: pointer;
+      transition: transform var(--td-fast), border-color var(--td-fast), background var(--td-fast);
+    }
+    .student-row:hover { transform: translateY(-1px); border-color: color-mix(in srgb, var(--td-accent) 28%, var(--td-border)); }
+    .student-name { min-width: 0; }
+    .student-name strong { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 13px; }
+    .student-name span { display: block; margin-top: 3px; color: var(--td-text-muted); font-size: 11px; }
+    .metric { text-align: right; }
+    .metric strong { display: block; font-size: 13px; }
+    .metric span { display: block; margin-top: 2px; color: var(--td-text-muted); font-size: 10px; }
+    .chevron { color: var(--td-text-muted); text-align: right; font-size: 18px; }
+
+    .view-panel[hidden] { display: none !important; }
+
+    /* Picker */
+    .picker-layout { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(260px, .65fr); gap: 16px; }
+    .picker-stage { min-height: 430px; padding: clamp(24px, 4vw, 40px); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; position: relative; overflow: hidden; }
+    .picker-stage::after { content:""; position:absolute; width:320px; height:320px; right:-110px; bottom:-150px; border-radius:50%; background:var(--td-accent-soft); opacity:.7; pointer-events:none; }
+    .picker-settings { position: absolute; top: 18px; right: 18px; z-index: 2; }
+    .picker-kicker { position: relative; z-index: 1; color: var(--td-text-muted); font-size: 11px; font-weight: 760; letter-spacing: .08em; text-transform: uppercase; }
+    .picker-name { position: relative; z-index: 1; min-height: 76px; display:flex; align-items:center; justify-content:center; margin: 14px 0 8px; font-size: clamp(34px, 5vw, 58px); line-height:1.05; letter-spacing:-.04em; font-weight: 760; }
+    .picker-meta { position: relative; z-index:1; min-height: 22px; color: var(--td-text-secondary); font-size: 12px; }
+    .picker-actions { position: relative; z-index:1; display:flex; flex-wrap:wrap; justify-content:center; gap:9px; margin-top:24px; }
+    .picker-primary { min-width: 150px; min-height: 48px; font-size:14px; }
+    .picker-side { padding: 20px; }
+    .picker-side h3 { margin:0; font-size:15px; }
+    .picker-side-copy { margin:5px 0 18px; color:var(--td-text-secondary); font-size:11px; line-height:1.5; }
+    .picker-stat { display:flex; justify-content:space-between; gap:12px; padding:12px 0; border-bottom:1px solid var(--td-border); font-size:12px; }
+    .picker-stat:last-child { border-bottom:0; }
+    .picker-stat span { color:var(--td-text-secondary); }
+    .picker-stat strong { text-align:right; }
+    .picker-reminder { margin-top: 16px; padding: 12px; border-radius: 12px; background: var(--td-warning-soft); color: color-mix(in srgb, var(--td-warning) 78%, var(--td-text)); font-size:11px; line-height:1.45; }
+
+    /* Participation */
+    .participation-head, .timeliness-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; }
+    .compact-copy { color:var(--td-text-secondary); font-size:12px; }
+    .score-list { display:grid; gap:8px; }
+    .score-row { display:grid; grid-template-columns:minmax(0,1fr) auto auto; gap:10px; align-items:center; min-height:64px; padding:10px 12px 10px 15px; }
+    .score-name button { border:0; background:transparent; color:var(--td-text); padding:0; cursor:pointer; font-weight:720; text-align:left; }
+    .score-name span { display:block; margin-top:3px; color:var(--td-text-muted); font-size:10px; }
+    .score-display { min-width:64px; text-align:center; font-size:13px; font-weight:760; }
+    .score-controls { display:flex; gap:5px; }
+    .score-controls button { width:34px; height:34px; border:1px solid var(--td-border); border-radius:10px; background:var(--td-surface); color:var(--td-text); cursor:pointer; font-weight:800; }
+    .score-controls button:hover { background:var(--td-accent-soft); color:var(--td-accent-strong); }
+
+    /* Drawer */
+    .profile-head { padding: 24px 22px 18px; border-bottom:1px solid var(--td-border); }
+    .profile-head-row { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+    .profile-name { margin:0; font-size:25px; letter-spacing:-.025em; }
+    .profile-period { margin-top:5px; color:var(--td-text-secondary); font-size:12px; }
+    .profile-body { padding:18px 22px 28px; display:grid; gap:14px; }
+    .profile-section { border:1px solid var(--td-border); border-radius:16px; padding:15px; }
+    .profile-section-head { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px; }
+    .profile-section h3 { margin:0; font-size:13px; }
+    .profile-big { font-size:24px; font-weight:760; letter-spacing:-.03em; }
+    .profile-muted { color:var(--td-text-secondary); font-size:11px; line-height:1.5; }
+    .profile-list { margin:0; padding:0; list-style:none; display:grid; gap:8px; }
+    .profile-list li { padding:9px 10px; border-radius:10px; background:var(--td-surface-soft); font-size:11px; line-height:1.45; }
+    .profile-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+
+    /* Picker settings modal */
+    .modal-head { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:20px 20px 14px; border-bottom:1px solid var(--td-border); }
+    .modal-head h2 { margin:0; font-size:18px; }
+    .modal-body { padding:18px 20px 22px; display:grid; gap:18px; }
+    .setting-row { display:grid; gap:9px; }
+    .setting-label { font-size:12px; font-weight:760; }
+    .setting-help { color:var(--td-text-secondary); font-size:11px; line-height:1.45; }
+    .radio-cards { display:grid; grid-template-columns:1fr 1fr; gap:9px; }
+    .radio-card { border:1px solid var(--td-border); border-radius:13px; padding:13px; cursor:pointer; }
+    .radio-card:has(input:checked) { border-color:var(--td-accent); background:var(--td-accent-soft); }
+    .radio-card input { margin-right:6px; accent-color:var(--td-accent); }
+    .modal-actions { display:flex; justify-content:space-between; align-items:center; gap:10px; padding-top:4px; }
+
+    .search-results-note { margin:0 0 10px; color:var(--td-text-muted); font-size:11px; }
+
+    @media (max-width: 900px) {
+      .picker-layout { grid-template-columns:1fr; }
+      .picker-stage { min-height:360px; }
+    }
+    @media (max-width: 680px) {
+      .students-head { align-items:flex-start; flex-direction:column; }
+      .students-controls { grid-template-columns:1fr; }
+      .students-tabs-wrap { align-items:flex-start; flex-direction:column; }
+      .student-row { grid-template-columns:minmax(0,1fr) 76px 34px; }
+      .student-row .metric.timeliness { display:none; }
+      .profile-grid { grid-template-columns:1fr; }
+      .radio-cards { grid-template-columns:1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div data-td-mobile-bar></div>
+  <div class="td-shell">
+    <div data-td-sidebar="students"></div>
+    <main class="td-main">
+      <div class="td-content">
+        <header class="students-head">
+          <div>
+            <h1 class="td-page-title">Students</h1>
+            <p class="td-page-subtitle">One place for rosters, balanced picking, participation, timeliness, and student context.</p>
+          </div>
+        </header>
+
+        <div class="students-controls">
+          <label class="search-wrap">
+            <span class="search-icon" aria-hidden="true">⌕</span>
+            <input id="studentSearch" class="td-input" type="search" placeholder="Search students across all periods…" autocomplete="off">
+          </label>
+          <select id="periodSelect" class="td-select" aria-label="Class period"></select>
+        </div>
+
+        <div class="students-tabs-wrap">
+          <div class="td-segmented" role="tablist" aria-label="Student tools">
+            <button type="button" role="tab" data-view="roster" aria-selected="true">Roster</button>
+            <button type="button" role="tab" data-view="picker" aria-selected="false">Picker</button>
+            <button type="button" role="tab" data-view="participation" aria-selected="false">Participation</button>
+            <button type="button" role="tab" data-view="timeliness" aria-selected="false">Timeliness</button>
+          </div>
+          <div id="viewNote" class="view-note"></div>
+        </div>
+
+        <section id="rosterView" class="view-panel" data-panel="roster">
+          <p id="searchResultsNote" class="search-results-note"></p>
+          <div id="rosterList" class="student-list"></div>
+        </section>
+
+        <section id="pickerView" class="view-panel" data-panel="picker" hidden>
+          <div class="picker-layout">
+            <article class="td-card picker-stage">
+              <button id="pickerSettingsButton" class="td-icon-button picker-settings" type="button" aria-label="Picker settings">⚙</button>
+              <div id="pickerKicker" class="picker-kicker">Balanced picker</div>
+              <div id="pickerName" class="picker-name">Ready when you are</div>
+              <div id="pickerMeta" class="picker-meta">Students below the participation goal receive more chances to be selected.</div>
+              <div class="picker-actions">
+                <button id="pickButton" class="td-button td-button-primary picker-primary" type="button">Pick a Student</button>
+                <button id="addPointButton" class="td-button td-button-secondary" type="button" hidden>+ Participation</button>
+              </div>
+            </article>
+            <aside class="td-card picker-side">
+              <h3>Current class</h3>
+              <p id="pickerSideCopy" class="picker-side-copy"></p>
+              <div class="picker-stat"><span>Selection mode</span><strong id="pickerModeStat">Balanced</strong></div>
+              <div class="picker-stat"><span>Participation goal</span><strong id="pickerGoalStat">5</strong></div>
+              <div class="picker-stat"><span>Students remaining</span><strong id="pickerRemainingStat">—</strong></div>
+              <div class="picker-stat"><span>Selected student</span><strong id="pickerParticipationStat">—</strong></div>
+              <div id="pickerReminder" class="picker-reminder" hidden></div>
+            </aside>
+          </div>
+        </section>
+
+        <section id="participationView" class="view-panel" data-panel="participation" hidden>
+          <div class="participation-head">
+            <div><div class="td-eyebrow">Participation</div><div id="participationCopy" class="compact-copy"></div></div>
+            <a class="td-button td-button-secondary td-button-small" href="participation-tracker.html">Full tracker →</a>
+          </div>
+          <div id="participationList" class="score-list"></div>
+        </section>
+
+        <section id="timelinessView" class="view-panel" data-panel="timeliness" hidden>
+          <div class="timeliness-head">
+            <div><div class="td-eyebrow">Timeliness</div><div id="timelinessCopy" class="compact-copy"></div></div>
+            <a class="td-button td-button-secondary td-button-small" href="participation-tracker.html?view=timeliness">Full tracker →</a>
+          </div>
+          <div id="timelinessList" class="score-list"></div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <div id="drawerBackdrop" class="td-drawer-backdrop"></div>
+  <aside id="profileDrawer" class="td-drawer" aria-label="Student profile" aria-hidden="true">
+    <div class="profile-head">
+      <div class="profile-head-row">
+        <div><h2 id="profileName" class="profile-name">Student</h2><div id="profilePeriod" class="profile-period"></div></div>
+        <button id="closeProfileButton" class="td-icon-button" type="button" aria-label="Close profile">×</button>
+      </div>
+    </div>
+    <div id="profileBody" class="profile-body"></div>
+  </aside>
+
+  <div id="pickerModalBackdrop" class="td-modal-backdrop"></div>
+  <section id="pickerModal" class="td-modal" aria-hidden="true" aria-labelledby="pickerModalTitle">
+    <div class="modal-head"><h2 id="pickerModalTitle">Picker settings</h2><button id="closePickerModal" class="td-icon-button" type="button" aria-label="Close picker settings">×</button></div>
+    <div class="modal-body">
+      <div class="setting-row">
+        <div class="setting-label">Selection mode</div>
+        <div class="radio-cards">
+          <label class="radio-card"><input type="radio" name="pickerMode" value="balanced"> <strong>Balanced</strong><div class="setting-help">Students with fewer participation points get more chances.</div></label>
+          <label class="radio-card"><input type="radio" name="pickerMode" value="random"> <strong>Random</strong><div class="setting-help">Every remaining student has the same chance.</div></label>
+        </div>
+      </div>
+      <div class="setting-row">
+        <div class="setting-label">More picker tools</div>
+        <div class="setting-help">Group generation and the legacy pool controls are still available while this combined Students area is being built.</div>
+        <a class="td-button td-button-secondary" href="student-picker.html">Open group maker & advanced picker →</a>
+      </div>
+      <div class="modal-actions">
+        <button id="resetPoolButton" class="td-button td-button-secondary" type="button">Reset selection pool</button>
+        <button id="donePickerSettings" class="td-button td-button-primary" type="button">Done</button>
+      </div>
+    </div>
+  </section>
+
+  <script src="shared/app-shell.js"></script>
+  <script src="shared/dashboard-data.js"></script>
+  <script src="shared/bell-service.js"></script>
+  <script src="shared/reminder-service.js"></script>
+  <script>
+    (() => {
+      const PICKER_KEY = "teacherDashboard.studentsPicker.v1";
+      const el = id => document.getElementById(id);
+      let currentView = "roster";
+      let currentPeriod = "1";
+      let currentWinner = null;
+
+      function activeClasses() {
+        return (DashboardData.getClasses?.() || []).filter(item => item.active !== false);
+      }
+
+      function classLabel(period) {
+        const info = DashboardData.getClass(period);
+        return info?.name || `Period ${period}`;
+      }
+
+      function allStudents() {
+        return activeClasses().flatMap(classInfo => (DashboardData.getStudents(classInfo.id) || []).map(student => ({ ...student, classId: String(classInfo.id), className: classInfo.name || `Period ${classInfo.id}` })));
+      }
+
+      function participationMap(period) {
+        const rows = DashboardData.getParticipationForClass(period) || [];
+        return new Map(rows.map(item => [String(item.id), item]));
+      }
+
+      function timelinessMap(period) {
+        const rows = DashboardData.getTimelinessForClass(period) || [];
+        return new Map(rows.map(item => [String(item.id), item]));
+      }
+
+      function remindersForStudent(student, period = student.classId || currentPeriod) {
+        if (!window.ReminderService) return [];
+        const nameKey = String(student.name || "").trim().toLocaleLowerCase();
+        return ReminderService.getReminders().filter(item => {
+          if (["done", "missed"].includes(item.status)) return false;
+          const idMatch = item.studentId && String(item.studentId) === String(student.id) && (!item.studentClassId || String(item.studentClassId) === String(period));
+          const nameMatch = item.studentName && item.studentName.trim().toLocaleLowerCase() === nameKey && (!item.studentClassId || String(item.studentClassId) === String(period));
+          return idMatch || nameMatch;
+        });
+      }
+
+      function escapeHtml(value) {
+        return String(value ?? "").replace(/[&<>'"]/g, ch => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", "'":"&#39;", '"':"&quot;" }[ch]));
+      }
+
+      function readPickerSettings() {
+        try {
+          const parsed = JSON.parse(localStorage.getItem(PICKER_KEY) || "{}");
+          return {
+            mode: parsed.mode === "random" ? "random" : "balanced",
+            pools: parsed.pools && typeof parsed.pools === "object" ? parsed.pools : {}
+          };
+        } catch {
+          return { mode: "balanced", pools: {} };
+        }
+      }
+
+      function savePickerSettings(next) {
+        localStorage.setItem(PICKER_KEY, JSON.stringify(next));
+      }
+
+      function ensurePool(period, students) {
+        const state = readPickerSettings();
+        const validIds = new Set(students.map(student => String(student.id)));
+        const existing = Array.isArray(state.pools[period]) ? state.pools[period].filter(id => validIds.has(String(id))) : [];
+        if (!existing.length && students.length) state.pools[period] = students.map(student => String(student.id));
+        else state.pools[period] = existing;
+        savePickerSettings(state);
+        return state.pools[period];
+      }
+
+      function resetPool(period = currentPeriod) {
+        const state = readPickerSettings();
+        state.pools[period] = (DashboardData.getStudents(period) || []).map(student => String(student.id));
+        savePickerSettings(state);
+        renderPickerSide();
+      }
+
+      function setupPeriodSelect() {
+        const classes = activeClasses();
+        const queryPeriod = new URLSearchParams(location.search).get("period");
+        const automatic = BellService?.getAutomaticClassId?.();
+        const saved = DashboardData.getCurrentClassId?.();
+        const candidate = [queryPeriod, automatic, saved, classes[0]?.id].find(id => id && classes.some(item => String(item.id) === String(id)));
+        currentPeriod = String(candidate || "1");
+        el("periodSelect").innerHTML = classes.map(item => `<option value="${escapeHtml(item.id)}">${escapeHtml(item.name || `Period ${item.id}`)}</option>`).join("");
+        el("periodSelect").value = currentPeriod;
+        DashboardData.setCurrentClass?.(currentPeriod);
+      }
+
+      function renderRoster() {
+        const query = el("studentSearch").value.trim().toLocaleLowerCase();
+        const source = query ? allStudents() : (DashboardData.getStudents(currentPeriod) || []).map(student => ({ ...student, classId: currentPeriod, className: classLabel(currentPeriod) }));
+        const filtered = source.filter(student => !query || student.name.toLocaleLowerCase().includes(query));
+        el("searchResultsNote").textContent = query ? `Searching all active periods · ${filtered.length} match${filtered.length === 1 ? "" : "es"}` : `${classLabel(currentPeriod)} · ${filtered.length} student${filtered.length === 1 ? "" : "s"}`;
+
+        if (!filtered.length) {
+          el("rosterList").innerHTML = '<div class="td-card td-empty">No students found.</div>';
+          return;
+        }
+
+        const cache = new Map();
+        const rows = filtered.map(student => {
+          if (!cache.has(student.classId)) cache.set(student.classId, { p: participationMap(student.classId), t: timelinessMap(student.classId) });
+          const data = cache.get(student.classId);
+          const p = data.p.get(String(student.id));
+          const t = data.t.get(String(student.id));
+          const reminderCount = remindersForStudent(student, student.classId).length;
+          return `<button class="student-row" type="button" data-student-id="${escapeHtml(student.id)}" data-student-period="${escapeHtml(student.classId)}">
+            <span class="student-name"><strong>${escapeHtml(student.name)}</strong><span>${escapeHtml(student.className)}${reminderCount ? ` · ${reminderCount} reminder${reminderCount === 1 ? "" : "s"}` : ""}</span></span>
+            <span class="metric"><strong>${p ? `${p.points}/${p.goal}` : "—"}</strong><span>Participation</span></span>
+            <span class="metric timeliness"><strong>${t ? `${t.score}/${t.startingPoints}` : "—"}</strong><span>Timeliness</span></span>
+            <span class="chevron">›</span>
+          </button>`;
+        }).join("");
+        el("rosterList").innerHTML = rows;
+        el("rosterList").querySelectorAll("[data-student-id]").forEach(button => button.addEventListener("click", () => openProfile(button.dataset.studentId, button.dataset.studentPeriod)));
+      }
+
+      function renderParticipation() {
+        const rows = DashboardData.getParticipationForClass(currentPeriod) || [];
+        const goal = DashboardData.getParticipationGoal();
+        el("participationCopy").textContent = `${classLabel(currentPeriod)} · Goal ${goal} point${goal === 1 ? "" : "s"}`;
+        el("participationList").innerHTML = rows.length ? rows.map(student => `<article class="td-card score-row">
+          <div class="score-name"><button type="button" data-profile-id="${escapeHtml(student.id)}">${escapeHtml(student.name)}</button><span>${student.points >= goal ? "At goal or above" : `${goal - student.points} to goal`}</span></div>
+          <div class="score-display">${student.points}/${goal}</div>
+          <div class="score-controls"><button type="button" data-adjust="-1" data-student-id="${escapeHtml(student.id)}" aria-label="Remove participation point from ${escapeHtml(student.name)}">−</button><button type="button" data-adjust="1" data-student-id="${escapeHtml(student.id)}" aria-label="Add participation point to ${escapeHtml(student.name)}">+</button></div>
+        </article>`).join("") : '<div class="td-card td-empty">No roster yet.</div>';
+
+        el("participationList").querySelectorAll("[data-adjust]").forEach(button => button.addEventListener("click", () => {
+          DashboardData.adjustParticipationPoints(currentPeriod, button.dataset.studentId, Number(button.dataset.adjust));
+          renderParticipation();
+          renderRoster();
+          renderPickerSide();
+        }));
+        el("participationList").querySelectorAll("[data-profile-id]").forEach(button => button.addEventListener("click", () => openProfile(button.dataset.profileId, currentPeriod)));
+      }
+
+      function renderTimeliness() {
+        const rows = DashboardData.getTimelinessForClass(currentPeriod) || [];
+        const policy = DashboardData.getTimelinessPolicy();
+        el("timelinessCopy").textContent = `${classLabel(currentPeriod)} · Starts at ${policy.startingPoints} points`;
+        el("timelinessList").innerHTML = rows.length ? rows.map(student => `<article class="td-card score-row">
+          <div class="score-name"><button type="button" data-profile-id="${escapeHtml(student.id)}">${escapeHtml(student.name)}</button><span>${student.lateCount ? `${student.lateCount} late submission${student.lateCount === 1 ? "" : "s"}` : "No late submissions recorded"}</span></div>
+          <div class="score-display">${student.score}/${student.startingPoints}</div>
+          <div><button class="td-button td-button-secondary td-button-small" type="button" data-profile-id="${escapeHtml(student.id)}">View</button></div>
+        </article>`).join("") : '<div class="td-card td-empty">No roster yet.</div>';
+        el("timelinessList").querySelectorAll("[data-profile-id]").forEach(button => button.addEventListener("click", () => openProfile(button.dataset.profileId, currentPeriod)));
+      }
+
+      function chooseWeighted(students) {
+        const settings = readPickerSettings();
+        if (settings.mode === "random") return students[Math.floor(Math.random() * students.length)];
+        const goal = DashboardData.getParticipationGoal();
+        const p = participationMap(currentPeriod);
+        const weighted = students.map(student => ({ student, weight: Math.max(1, goal + 1 - Math.min(p.get(String(student.id))?.points || 0, goal)) }));
+        let roll = Math.random() * weighted.reduce((sum, item) => sum + item.weight, 0);
+        for (const item of weighted) { roll -= item.weight; if (roll <= 0) return item.student; }
+        return weighted.at(-1)?.student;
+      }
+
+      function pickStudent() {
+        const students = DashboardData.getStudents(currentPeriod) || [];
+        if (!students.length) {
+          el("pickerName").textContent = "No roster yet";
+          el("pickerMeta").textContent = "Add or sync students in Settings first.";
+          return;
+        }
+        const poolIds = ensurePool(currentPeriod, students);
+        const poolSet = new Set(poolIds.map(String));
+        const candidates = students.filter(student => poolSet.has(String(student.id)));
+        currentWinner = chooseWeighted(candidates.length ? candidates : students);
+        if (!currentWinner) return;
+        const state = readPickerSettings();
+        state.pools[currentPeriod] = (state.pools[currentPeriod] || []).filter(id => String(id) !== String(currentWinner.id));
+        savePickerSettings(state);
+        renderPickerWinner();
+        renderPickerSide();
+      }
+
+      function renderPickerWinner() {
+        const settings = readPickerSettings();
+        el("pickerKicker").textContent = settings.mode === "balanced" ? "Balanced picker" : "Random picker";
+        el("pickerModeStat").textContent = settings.mode === "balanced" ? "Balanced" : "Random";
+        if (!currentWinner) {
+          el("pickerName").textContent = "Ready when you are";
+          el("pickerMeta").textContent = settings.mode === "balanced" ? "Students below the participation goal receive more chances to be selected." : "Each remaining student has an equal chance to be selected.";
+          el("addPointButton").hidden = true;
+          return;
+        }
+        const p = participationMap(currentPeriod).get(String(currentWinner.id));
+        const reminders = remindersForStudent(currentWinner, currentPeriod);
+        el("pickerName").textContent = currentWinner.name;
+        el("pickerMeta").textContent = `${classLabel(currentPeriod)} · Participation ${p ? `${p.points}/${p.goal}` : "—"}`;
+        el("addPointButton").hidden = false;
+        if (reminders.length) {
+          el("pickerReminder").hidden = false;
+          el("pickerReminder").innerHTML = `<strong>Reminder</strong><br>${escapeHtml(reminders[0].text)}${reminders.length > 1 ? `<br><span style="opacity:.8">+ ${reminders.length - 1} more</span>` : ""}`;
+        } else {
+          el("pickerReminder").hidden = true;
+          el("pickerReminder").textContent = "";
+        }
+      }
+
+      function renderPickerSide() {
+        const students = DashboardData.getStudents(currentPeriod) || [];
+        const state = readPickerSettings();
+        const pool = ensurePool(currentPeriod, students);
+        const goal = DashboardData.getParticipationGoal();
+        el("pickerGoalStat").textContent = String(goal);
+        el("pickerRemainingStat").textContent = `${pool.length} of ${students.length}`;
+        el("pickerSideCopy").textContent = `${classLabel(currentPeriod)} · ${students.length} students`;
+        if (currentWinner) {
+          const p = participationMap(currentPeriod).get(String(currentWinner.id));
+          el("pickerParticipationStat").textContent = p ? `${p.points}/${p.goal}` : "—";
+        } else {
+          el("pickerParticipationStat").textContent = "—";
+        }
+        el("pickerModeStat").textContent = state.mode === "balanced" ? "Balanced" : "Random";
+      }
+
+      function renderProfileBody(student, period) {
+        const p = participationMap(period).get(String(student.id));
+        const t = timelinessMap(period).get(String(student.id));
+        const reminders = remindersForStudent(student, period);
+        const lateEntries = t?.entries || [];
+        return `
+          <div class="profile-grid">
+            <section class="profile-section"><div class="profile-section-head"><h3>Participation</h3><a class="section-link" href="students.html?period=${encodeURIComponent(period)}&view=participation">Open →</a></div><div class="profile-big">${p ? `${p.points}/${p.goal}` : "—"}</div><div class="profile-muted">Current participation credit</div></section>
+            <section class="profile-section"><div class="profile-section-head"><h3>Timeliness</h3><a class="section-link" href="students.html?period=${encodeURIComponent(period)}&view=timeliness">Open →</a></div><div class="profile-big">${t ? `${t.score}/${t.startingPoints}` : "—"}</div><div class="profile-muted">${t?.lateCount ? `${t.lateCount} late submission${t.lateCount === 1 ? "" : "s"}` : "No late submissions recorded"}</div></section>
+          </div>
+          <section class="profile-section"><div class="profile-section-head"><h3>Reminders</h3><a class="section-link" href="reminders.html">All reminders →</a></div>${reminders.length ? `<ul class="profile-list">${reminders.map(item => `<li>${escapeHtml(item.text)}<div class="profile-muted">${escapeHtml(item.className || classLabel(period))} · ${escapeHtml(item.triggerLabel || "Upcoming")}</div></li>`).join("")}</ul>` : '<div class="profile-muted">No active reminders attached to this student.</div>'}</section>
+          <section class="profile-section"><div class="profile-section-head"><h3>Writing</h3><a class="section-link" href="writing.html">Open Writing →</a></div><div class="profile-muted">Writing Workspace assignments and Grading Assistant results will populate here as the unified Writing service is connected. The profile is already reserved as their single student-level home.</div></section>
+          <section class="profile-section"><div class="profile-section-head"><h3>Timeliness history</h3></div>${lateEntries.length ? `<ul class="profile-list">${lateEntries.slice().reverse().map(item => `<li>${escapeHtml(item.note || "Late submission")}<div class="profile-muted">${item.createdAt ? new Date(item.createdAt).toLocaleDateString() : ""}</div></li>`).join("")}</ul>` : '<div class="profile-muted">No late-work entries for the active term.</div>'}</section>`;
+      }
+
+      function openProfile(studentId, period) {
+        const student = DashboardData.getStudent(period, studentId);
+        if (!student) return;
+        el("profileName").textContent = student.name;
+        el("profilePeriod").textContent = classLabel(period);
+        el("profileBody").innerHTML = renderProfileBody(student, period);
+        el("drawerBackdrop").classList.add("open");
+        el("profileDrawer").classList.add("open");
+        el("profileDrawer").setAttribute("aria-hidden", "false");
+      }
+
+      function closeProfile() {
+        el("drawerBackdrop").classList.remove("open");
+        el("profileDrawer").classList.remove("open");
+        el("profileDrawer").setAttribute("aria-hidden", "true");
+      }
+
+      function openPickerModal() {
+        const settings = readPickerSettings();
+        document.querySelectorAll('input[name="pickerMode"]').forEach(input => input.checked = input.value === settings.mode);
+        el("pickerModalBackdrop").classList.add("open");
+        el("pickerModal").classList.add("open");
+        el("pickerModal").setAttribute("aria-hidden", "false");
+      }
+
+      function closePickerModal() {
+        el("pickerModalBackdrop").classList.remove("open");
+        el("pickerModal").classList.remove("open");
+        el("pickerModal").setAttribute("aria-hidden", "true");
+      }
+
+      function switchView(view, { updateUrl = true } = {}) {
+        const valid = ["roster", "picker", "participation", "timeliness"];
+        currentView = valid.includes(view) ? view : "roster";
+        document.querySelectorAll("[data-view]").forEach(button => button.setAttribute("aria-selected", String(button.dataset.view === currentView)));
+        document.querySelectorAll("[data-panel]").forEach(panel => panel.hidden = panel.dataset.panel !== currentView);
+        const labels = { roster: "Find a student or open a profile", picker: "Balanced by default", participation: "Active term participation", timeliness: "Active term timeliness" };
+        el("viewNote").textContent = labels[currentView];
+        if (currentView === "roster") renderRoster();
+        if (currentView === "picker") { renderPickerWinner(); renderPickerSide(); }
+        if (currentView === "participation") renderParticipation();
+        if (currentView === "timeliness") renderTimeliness();
+        if (updateUrl) {
+          const url = new URL(location.href);
+          url.searchParams.set("period", currentPeriod);
+          if (currentView === "roster") url.searchParams.delete("view"); else url.searchParams.set("view", currentView);
+          history.replaceState(null, "", url);
+        }
+      }
+
+      setupPeriodSelect();
+      document.querySelectorAll("[data-view]").forEach(button => button.addEventListener("click", () => switchView(button.dataset.view)));
+      el("periodSelect").addEventListener("change", () => {
+        currentPeriod = el("periodSelect").value;
+        DashboardData.setCurrentClass?.(currentPeriod);
+        currentWinner = null;
+        renderRoster(); renderParticipation(); renderTimeliness(); renderPickerWinner(); renderPickerSide();
+        switchView(currentView);
+      });
+      el("studentSearch").addEventListener("input", () => { if (currentView !== "roster") switchView("roster"); else renderRoster(); });
+      el("pickButton").addEventListener("click", pickStudent);
+      el("addPointButton").addEventListener("click", () => {
+        if (!currentWinner) return;
+        DashboardData.adjustParticipationPoints(currentPeriod, currentWinner.id, 1);
+        renderPickerWinner(); renderPickerSide(); renderRoster();
+      });
+      el("pickerSettingsButton").addEventListener("click", openPickerModal);
+      el("closePickerModal").addEventListener("click", closePickerModal);
+      el("donePickerSettings").addEventListener("click", closePickerModal);
+      el("pickerModalBackdrop").addEventListener("click", closePickerModal);
+      el("resetPoolButton").addEventListener("click", () => resetPool());
+      document.querySelectorAll('input[name="pickerMode"]').forEach(input => input.addEventListener("change", () => {
+        if (!input.checked) return;
+        const state = readPickerSettings(); state.mode = input.value; savePickerSettings(state); renderPickerWinner(); renderPickerSide();
+      }));
+      el("closeProfileButton").addEventListener("click", closeProfile);
+      el("drawerBackdrop").addEventListener("click", closeProfile);
+      window.addEventListener("keydown", event => { if (event.key === "Escape") { closeProfile(); closePickerModal(); } });
+      window.addEventListener(DashboardData.changeEvent, () => { renderRoster(); if (currentView === "participation") renderParticipation(); if (currentView === "timeliness") renderTimeliness(); if (currentView === "picker") { renderPickerWinner(); renderPickerSide(); } });
+      window.addEventListener(ReminderService?.changeEvent || "teacher-dashboard-reminders-changed", () => { renderRoster(); if (currentWinner) renderPickerWinner(); });
+
+      const initialView = new URLSearchParams(location.search).get("view") || "roster";
+      switchView(initialView, { updateUrl: false });
+    })();
+  </script>
+</body>
+</html>
