@@ -1,0 +1,30 @@
+TEACHER DASHBOARD REDESIGN — PROTOTYPE 4.3
+STUDENTS POLISH PASS
+
+Changes
+-------
+1. Sort controls
+   • Roster, Participation, and Timeliness sorters now share one rounded, roomier visual style.
+   • Sorters use a custom subtle chevron rather than the square browser-default appearance.
+   • Participation and Timeliness headers have more spacing between the sorter, settings gear, and Full Tracker action.
+   • Controls wrap cleanly on narrower screens.
+
+2. Utility settings buttons
+   • Participation and Timeliness settings gears now use the same rounded control geometry as the rest of Students.
+   • No settings behavior or stored preferences changed.
+
+3. Student Selector remaining pool
+   • "Students remaining" is now an interactive, persistent count.
+   • Clicking it opens an anchored informational popover.
+   • Remaining students are alphabetized by last name.
+   • Desktop: 4-column grid.
+   • Narrow screens: 2 columns.
+   • Small mobile screens: 1 column.
+   • Popover has a maximum height and scrolls internally when needed.
+   • Clicking names does not select or remove students.
+   • Click outside or press Escape to close.
+
+Data safety
+-----------
+No roster, Participation, Timeliness, reminder, Classroom, grading-term,
+Student Selector pool, theme, or shell storage schemas were changed.

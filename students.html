@@ -148,6 +148,225 @@
 
     .search-results-note { margin:0 0 10px; color:var(--td-text-muted); font-size:11px; }
 
+    .view-toolbar {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:18px;
+      margin-bottom:14px;
+    }
+
+    .view-toolbar .search-results-note {
+      margin:0;
+    }
+
+    .view-toolbar-actions {
+      display:flex;
+      align-items:center;
+      justify-content:flex-end;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+
+    .compact-select {
+      appearance:none;
+      -webkit-appearance:none;
+      min-width:170px;
+      min-height:42px;
+      padding:9px 42px 9px 14px;
+      border:1px solid var(--td-border);
+      border-radius:14px;
+      background-color:var(--td-surface);
+      background-image:
+        linear-gradient(45deg, transparent 50%, var(--td-text-secondary) 50%),
+        linear-gradient(135deg, var(--td-text-secondary) 50%, transparent 50%);
+      background-position:
+        calc(100% - 18px) 18px,
+        calc(100% - 13px) 18px;
+      background-size:5px 5px, 5px 5px;
+      background-repeat:no-repeat;
+      color:var(--td-text);
+      font:inherit;
+      font-size:11px;
+      font-weight:700;
+      box-shadow:0 1px 0 rgba(20, 24, 32, .02);
+      cursor:pointer;
+      transition:border-color var(--td-fast), box-shadow var(--td-fast), background-color var(--td-fast);
+    }
+
+    .compact-select:hover {
+      border-color:color-mix(in srgb, var(--td-accent) 26%, var(--td-border));
+      background-color:var(--td-surface-soft);
+    }
+
+    .compact-select:focus-visible {
+      border-color:var(--td-accent);
+      box-shadow:0 0 0 3px color-mix(in srgb, var(--td-accent) 18%, transparent);
+      outline:none;
+    }
+
+    #timelinessSort {
+      min-width:190px;
+    }
+
+    .utility-settings-button {
+      width:42px;
+      height:42px;
+      flex:0 0 42px;
+      border-radius:13px;
+      background:var(--td-surface);
+      border:1px solid var(--td-border);
+    }
+
+    .utility-settings-button:hover {
+      background:var(--td-accent-soft);
+      border-color:color-mix(in srgb, var(--td-accent) 28%, var(--td-border));
+      color:var(--td-accent-strong);
+    }
+
+    .participation-head,
+    .timeliness-head {
+      align-items:flex-start;
+      gap:22px;
+      margin-bottom:18px;
+    }
+
+    .participation-head > :first-child,
+    .timeliness-head > :first-child {
+      padding-top:4px;
+      min-width:190px;
+    }
+
+    .participation-head .view-toolbar-actions,
+    .timeliness-head .view-toolbar-actions {
+      margin-left:auto;
+    }
+
+    .participation-head .td-button-small,
+    .timeliness-head .td-button-small {
+      min-height:42px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding-inline:14px;
+      border-radius:13px;
+    }
+
+    /* Remaining-pool popover */
+    .picker-stat-remaining {
+      position:relative;
+      padding:0;
+    }
+
+    .picker-stat-trigger {
+      width:100%;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding:12px 0;
+      border:0;
+      background:transparent;
+      color:var(--td-text);
+      font:inherit;
+      cursor:pointer;
+      text-align:left;
+    }
+
+    .picker-stat-trigger:hover .picker-stat-trigger-label,
+    .picker-stat-trigger:focus-visible .picker-stat-trigger-label {
+      color:var(--td-accent-strong);
+    }
+
+    .picker-stat-trigger:focus-visible {
+      outline:none;
+    }
+
+    .picker-stat-trigger-label {
+      display:inline-flex;
+      align-items:center;
+      gap:5px;
+      color:var(--td-text-secondary);
+      transition:color var(--td-fast);
+    }
+
+    .picker-stat-trigger-chevron {
+      font-size:10px;
+      transition:transform var(--td-fast);
+    }
+
+    .picker-stat-trigger[aria-expanded="true"] .picker-stat-trigger-chevron {
+      transform:rotate(180deg);
+    }
+
+    .pool-popover {
+      position:absolute;
+      z-index:30;
+      top:calc(100% + 8px);
+      right:0;
+      width:min(620px, calc(100vw - 90px));
+      max-height:320px;
+      overflow:auto;
+      padding:14px;
+      border:1px solid var(--td-border);
+      border-radius:18px;
+      background:var(--td-surface);
+      box-shadow:var(--td-shadow-lg);
+    }
+
+    .pool-popover[hidden] {
+      display:none !important;
+    }
+
+    .pool-popover-head {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:11px;
+      padding:0 2px;
+    }
+
+    .pool-popover-title {
+      font-size:12px;
+      font-weight:780;
+      color:var(--td-text);
+    }
+
+    .pool-popover-count {
+      font-size:10px;
+      color:var(--td-text-muted);
+    }
+
+    .pool-grid {
+      display:grid;
+      grid-template-columns:repeat(4, minmax(0, 1fr));
+      gap:7px;
+    }
+
+    .pool-name {
+      min-width:0;
+      padding:8px 9px;
+      border-radius:10px;
+      background:var(--td-surface-soft);
+      color:var(--td-text);
+      font-size:10px;
+      font-weight:650;
+      line-height:1.25;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .pool-empty {
+      padding:12px;
+      border-radius:12px;
+      background:var(--td-surface-soft);
+      color:var(--td-text-secondary);
+      font-size:11px;
+      text-align:center;
+    }
+
     @media (max-width: 900px) {
       .picker-layout { grid-template-columns:1fr; }
       .picker-stage { min-height:360px; }
@@ -159,9 +378,19 @@
       .student-list, .score-list { grid-template-columns:1fr; }
       .view-toolbar { align-items:flex-start; flex-direction:column; }
       .view-toolbar-actions { width:100%; justify-content:flex-start; }
+      .participation-head, .timeliness-head { flex-direction:column; gap:12px; }
+      .participation-head .view-toolbar-actions, .timeliness-head .view-toolbar-actions { margin-left:0; }
+      .compact-select { min-width:min(100%, 220px); }
+      .pool-grid { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+      .pool-popover { right:auto; left:0; width:min(520px, calc(100vw - 56px)); }
       .student-row .metric.timeliness { display:block; }
       .profile-grid { grid-template-columns:1fr; }
       .radio-cards { grid-template-columns:1fr; }
+    }
+
+    @media (max-width: 430px) {
+      .pool-grid { grid-template-columns:1fr; }
+      .pool-popover { width:calc(100vw - 44px); }
     }
   </style>
 </head>
@@ -227,7 +456,19 @@
               <p id="pickerSideCopy" class="picker-side-copy"></p>
               <div class="picker-stat"><span>Selection mode</span><strong id="pickerModeStat">Balanced</strong></div>
               <div class="picker-stat"><span>Participation goal</span><strong id="pickerGoalStat">5</strong></div>
-              <div class="picker-stat"><span>Students remaining</span><strong id="pickerRemainingStat">—</strong></div>
+              <div class="picker-stat picker-stat-remaining">
+                <button id="pickerRemainingButton" class="picker-stat-trigger" type="button" aria-expanded="false" aria-controls="pickerPoolPopover">
+                  <span class="picker-stat-trigger-label">Students remaining <span class="picker-stat-trigger-chevron" aria-hidden="true">⌄</span></span>
+                  <strong id="pickerRemainingStat">—</strong>
+                </button>
+                <div id="pickerPoolPopover" class="pool-popover" hidden>
+                  <div class="pool-popover-head">
+                    <span class="pool-popover-title">Students remaining</span>
+                    <span id="pickerPoolCount" class="pool-popover-count"></span>
+                  </div>
+                  <div id="pickerPoolGrid" class="pool-grid"></div>
+                </div>
+              </div>
               <div class="picker-stat"><span>Selected student</span><strong id="pickerParticipationStat">—</strong></div>
               <div id="pickerReminder" class="picker-reminder" hidden></div>
             </aside>
@@ -688,9 +929,25 @@
         const state = readPickerSettings();
         const pool = ensurePool(currentPeriod, students);
         const goal = DashboardData.getParticipationGoal();
+        const poolSet = new Set(pool.map(String));
+        const remaining = students
+          .filter(student => poolSet.has(String(student.id)))
+          .slice()
+          .sort((a, b) => compareNames(a, b, "last"));
+
         el("pickerGoalStat").textContent = String(goal);
         el("pickerRemainingStat").textContent = `${pool.length} of ${students.length}`;
         el("pickerSideCopy").textContent = `${classLabel(currentPeriod)} · ${students.length} students`;
+
+        const poolGrid = el("pickerPoolGrid");
+        const poolCount = el("pickerPoolCount");
+        if (poolGrid && poolCount) {
+          poolCount.textContent = `${remaining.length} student${remaining.length === 1 ? "" : "s"}`;
+          poolGrid.innerHTML = remaining.length
+            ? remaining.map(student => `<div class="pool-name" title="${escapeHtml(student.name)}">${escapeHtml(student.name)}</div>`).join("")
+            : `<div class="pool-empty" style="grid-column:1/-1;">Everyone has been removed from the pool.</div>`;
+        }
+
         if (currentWinner) {
           const p = participationMap(currentPeriod).get(String(currentWinner.id));
           el("pickerParticipationStat").textContent = p ? `${p.points}/${p.goal}` : "—";
@@ -698,6 +955,20 @@
           el("pickerParticipationStat").textContent = "—";
         }
         el("pickerModeStat").textContent = state.mode === "balanced" ? "Balanced" : "Random";
+      }
+
+      function setPoolPopover(open) {
+        const button = el("pickerRemainingButton");
+        const popover = el("pickerPoolPopover");
+        if (!button || !popover) return;
+        const next = Boolean(open);
+        popover.hidden = !next;
+        button.setAttribute("aria-expanded", String(next));
+      }
+
+      function togglePoolPopover() {
+        const popover = el("pickerPoolPopover");
+        setPoolPopover(popover?.hidden !== false);
       }
 
       function renderProfileBody(student, period) {
@@ -853,6 +1124,13 @@
         });
       });
 
+      el("pickerRemainingButton").addEventListener("click", event => {
+        event.stopPropagation();
+        togglePoolPopover();
+      });
+      el("pickerPoolPopover").addEventListener("click", event => event.stopPropagation());
+      document.addEventListener("click", () => setPoolPopover(false));
+
       el("participationSettingsButton").addEventListener("click", () => openUtilityModal("participation"));
       el("timelinessSettingsButton").addEventListener("click", () => openUtilityModal("timeliness"));
       el("closeParticipationModal").addEventListener("click", () => closeUtilityModal("participation"));
@@ -896,6 +1174,7 @@
           closePickerModal();
           closeUtilityModal("participation");
           closeUtilityModal("timeliness");
+          setPoolPopover(false);
         }
       });
       window.addEventListener(DashboardData.changeEvent, () => { renderRoster(); if (currentView === "participation") renderParticipation(); if (currentView === "timeliness") renderTimeliness(); if (currentView === "picker") { renderPickerWinner(); renderPickerSide(); } });
