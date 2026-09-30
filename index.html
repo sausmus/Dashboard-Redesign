@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Teacher Dashboard</title>
-  <link rel="icon" type="image/png" href="bjh-logo.png">
+  <link rel="icon" type="image/svg+xml" href="redesign-favicon.svg">
   <link rel="stylesheet" href="shared/theme.css">
   <script src="shared/theme.js"></script>
   <style>
@@ -88,7 +88,7 @@
     .now-action-icon { width: 40px; height: 40px; flex: 0 0 auto; display: grid; place-items: center; border-radius: 12px; background: var(--td-accent-soft); color: var(--td-accent-strong); }
     .now-action:nth-child(1) .now-action-icon { background: var(--td-lavender-soft); color: var(--td-lavender); }
     .now-action-icon svg { width: 20px; height: 20px; stroke: currentColor; }
-    .now-action strong { display: block; font-size: 13px; }
+    .now-action strong { display: block; color: var(--td-text); font-size: 13px; }
     .now-action span { display: block; margin-top: 2px; color: var(--td-text-muted); font-size: 11px; }
 
     .today-card { overflow: hidden; }
@@ -110,7 +110,7 @@
     .today-title { font-size: 13px; font-weight: 720; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .today-meta { margin-top: 3px; color: var(--td-text-muted); font-size: 11px; }
     .today-empty { padding: 25px 20px; color: var(--td-text-secondary); font-size: 13px; }
-    .calendar-placeholder { color: var(--td-text-muted); }
+    .calendar-placeholder .today-title { color: var(--td-text); }
     .today-footer {
       display: flex;
       align-items: center;

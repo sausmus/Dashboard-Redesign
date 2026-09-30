@@ -1,0 +1,55 @@
+TEACHER DASHBOARD REDESIGN — PROTOTYPE 4.2
+STUDENT PROGRESS CONFIGURATION
+
+What changed
+------------
+1. Global grading-term model
+   • Added shared/grading-terms.js.
+   • New preference key: teacherDashboard.gradingTerms.v1.
+   • Settings now has a Grading Terms section.
+   • One global current term can be used throughout the Dashboard.
+   • Participation and Timeliness can inherit the global term or use a local override.
+   • Existing term records are never renamed, moved, or erased.
+   • A first-time P4.2 load does not change active terms automatically.
+   • Terms change only after the teacher explicitly saves a term preference.
+
+2. Existing term compatibility
+   • Participation already supports Q1, Q2, Q3, Q4, Fall Semester, and Spring Semester.
+   • Timeliness currently stores Fall Semester and Spring Semester records.
+   • If the global term is a quarter, Timeliness keeps a semester override instead of silently rewriting data.
+   • Quarter-based Timeliness can be added later as an explicit backward-compatible migration if desired.
+
+3. Student sorting
+   • New preference key: teacherDashboard.studentsSort.v1.
+   • Roster: Last name / First name.
+   • Participation: Last name / Lowest participation / Highest participation.
+   • Timeliness: Last name / Lowest score / Highest score / Most late assignments.
+   • Sort choices persist.
+
+4. Utility settings gears
+   • Participation now has a subtle settings gear.
+     - Participation goal.
+     - Global grading term or Participation-specific override.
+     - Link to the existing Classroom assignment setup.
+   • Timeliness now has a subtle settings gear.
+     - Global grading term or Timeliness-specific override.
+     - Link to the existing Classroom assignment setup.
+     - P5 placeholder for the read-only student Timeliness Doc workflow.
+
+5. Google Classroom
+   • P4.2 does not add new Classroom write behavior.
+   • The mature Participation/Timeliness Classroom assignment code already present in Settings is preserved.
+   • P5 will connect the cleaner Students UI and grading-term model to that existing sync infrastructure and add the student Timeliness Doc workflow.
+
+6. Primary text cleanup
+   • Home Agenda and Students action titles now use primary text color.
+   • The Google Calendar placeholder title also uses primary text color.
+   • Secondary descriptions and metadata remain muted.
+
+Data safety
+-----------
+No Participation scores, Timeliness entries, rosters, reminders, Classroom mappings,
+scoreboard data, or existing grade-assignment records were cleared or migrated.
+P4.2 adds only two isolated preference keys:
+  teacherDashboard.gradingTerms.v1
+  teacherDashboard.studentsSort.v1

@@ -157,6 +157,8 @@
       .students-controls { grid-template-columns:1fr; }
       .students-tabs-wrap { align-items:flex-start; flex-direction:column; }
       .student-list, .score-list { grid-template-columns:1fr; }
+      .view-toolbar { align-items:flex-start; flex-direction:column; }
+      .view-toolbar-actions { width:100%; justify-content:flex-start; }
       .student-row .metric.timeliness { display:block; }
       .profile-grid { grid-template-columns:1fr; }
       .radio-cards { grid-template-columns:1fr; }
@@ -195,7 +197,15 @@
         </div>
 
         <section id="rosterView" class="view-panel" data-panel="roster">
-          <p id="searchResultsNote" class="search-results-note"></p>
+          <div class="view-toolbar">
+            <p id="searchResultsNote" class="search-results-note"></p>
+            <div class="view-toolbar-actions">
+              <select id="rosterSort" class="compact-select" aria-label="Sort roster">
+                <option value="last">Last name</option>
+                <option value="first">First name</option>
+              </select>
+            </div>
+          </div>
           <div id="rosterList" class="student-list"></div>
         </section>
 
@@ -227,7 +237,15 @@
         <section id="participationView" class="view-panel" data-panel="participation" hidden>
           <div class="participation-head">
             <div><div class="td-eyebrow">Participation</div><div id="participationCopy" class="compact-copy"></div></div>
-            <a class="td-button td-button-secondary td-button-small" href="participation-tracker.html">Full tracker →</a>
+            <div class="view-toolbar-actions">
+              <select id="participationSort" class="compact-select" aria-label="Sort participation">
+                <option value="last">Last name</option>
+                <option value="low">Lowest participation</option>
+                <option value="high">Highest participation</option>
+              </select>
+              <button id="participationSettingsButton" class="td-icon-button utility-settings-button" type="button" aria-label="Participation settings" title="Participation settings">⚙</button>
+              <a class="td-button td-button-secondary td-button-small" href="participation-tracker.html">Full tracker →</a>
+            </div>
           </div>
           <div id="participationList" class="score-list"></div>
         </section>
@@ -235,7 +253,16 @@
         <section id="timelinessView" class="view-panel" data-panel="timeliness" hidden>
           <div class="timeliness-head">
             <div><div class="td-eyebrow">Timeliness</div><div id="timelinessCopy" class="compact-copy"></div></div>
-            <a class="td-button td-button-secondary td-button-small" href="participation-tracker.html?view=timeliness">Full tracker →</a>
+            <div class="view-toolbar-actions">
+              <select id="timelinessSort" class="compact-select" aria-label="Sort timeliness">
+                <option value="last">Last name</option>
+                <option value="low">Lowest score</option>
+                <option value="high">Highest score</option>
+                <option value="late">Most late assignments</option>
+              </select>
+              <button id="timelinessSettingsButton" class="td-icon-button utility-settings-button" type="button" aria-label="Timeliness settings" title="Timeliness settings">⚙</button>
+              <a class="td-button td-button-secondary td-button-small" href="participation-tracker.html?view=timeliness">Full tracker →</a>
+            </div>
           </div>
           <div id="timelinessList" class="score-list"></div>
         </section>
@@ -277,13 +304,63 @@
     </div>
   </section>
 
+
+  <div id="participationModalBackdrop" class="td-modal-backdrop"></div>
+  <section id="participationModal" class="td-modal" aria-hidden="true" aria-labelledby="participationModalTitle">
+    <div class="modal-head"><h2 id="participationModalTitle">Participation settings</h2><button id="closeParticipationModal" class="td-icon-button" type="button" aria-label="Close Participation settings">×</button></div>
+    <div class="modal-body">
+      <div class="setting-row">
+        <div class="setting-label">Participation goal</div>
+        <input id="participationGoalSetting" class="setting-number" type="number" min="1" max="100" step="1">
+        <div class="setting-help">This goal belongs to the active Participation grading term.</div>
+      </div>
+      <div class="setting-row">
+        <div class="setting-label">Grading term</div>
+        <select id="participationTermSetting" class="setting-select"></select>
+        <div id="participationTermHelp" class="setting-help"></div>
+      </div>
+      <div class="setting-row">
+        <div class="setting-label">Google Classroom</div>
+        <div class="setting-help">Classroom assignment setup remains in Settings for now. P5 will bring the sync workflow into this cleaner Students experience.</div>
+        <a class="td-button td-button-secondary" href="settings.html#participationGradeSyncPanel">Open Classroom sync settings →</a>
+      </div>
+      <div class="modal-actions">
+        <a class="td-button td-button-secondary" href="settings.html#gradingTermsPanel">Global grading terms</a>
+        <button id="saveParticipationSettings" class="td-button td-button-primary" type="button">Save</button>
+      </div>
+    </div>
+  </section>
+
+  <div id="timelinessModalBackdrop" class="td-modal-backdrop"></div>
+  <section id="timelinessModal" class="td-modal" aria-hidden="true" aria-labelledby="timelinessModalTitle">
+    <div class="modal-head"><h2 id="timelinessModalTitle">Timeliness settings</h2><button id="closeTimelinessModal" class="td-icon-button" type="button" aria-label="Close Timeliness settings">×</button></div>
+    <div class="modal-body">
+      <div class="setting-row">
+        <div class="setting-label">Grading term</div>
+        <select id="timelinessTermSetting" class="setting-select"></select>
+        <div id="timelinessTermHelp" class="setting-help"></div>
+      </div>
+      <div class="setting-row">
+        <div class="setting-label">Google Classroom & student record</div>
+        <div class="setting-help">P5 will connect the Timeliness grade plus the regenerated, read-only student Timeliness Doc. The existing Classroom assignment tools remain available in Settings until then.</div>
+        <a class="td-button td-button-secondary" href="settings.html#timelinessGradeSyncPanel">Open Classroom sync settings →</a>
+      </div>
+      <div class="modal-actions">
+        <a class="td-button td-button-secondary" href="settings.html#gradingTermsPanel">Global grading terms</a>
+        <button id="saveTimelinessSettings" class="td-button td-button-primary" type="button">Save</button>
+      </div>
+    </div>
+  </section>
+
   <script src="shared/app-shell.js"></script>
   <script src="shared/dashboard-data.js"></script>
+  <script src="shared/grading-terms.js"></script>
   <script src="shared/bell-service.js"></script>
   <script src="shared/reminder-service.js"></script>
   <script>
     (() => {
       const PICKER_KEY = "teacherDashboard.studentsPicker.v1";
+      const SORT_KEY = "teacherDashboard.studentsSort.v1";
       const el = id => document.getElementById(id);
       let currentView = "roster";
       let currentPeriod = "1";
@@ -328,6 +405,65 @@
 
       function escapeHtml(value) {
         return String(value ?? "").replace(/[&<>'"]/g, ch => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", "'":"&#39;", '"':"&quot;" }[ch]));
+      }
+
+      function nameParts(name) {
+        const parts = String(name || "").trim().split(/\s+/).filter(Boolean);
+        return {
+          first: parts[0] || "",
+          last: parts.length > 1 ? parts[parts.length - 1] : (parts[0] || ""),
+          full: String(name || "")
+        };
+      }
+
+      function compareNames(a, b, mode = "last") {
+        const aa = nameParts(a.name);
+        const bb = nameParts(b.name);
+        const primaryA = mode === "first" ? aa.first : aa.last;
+        const primaryB = mode === "first" ? bb.first : bb.last;
+        return primaryA.localeCompare(primaryB, undefined, { sensitivity: "base" }) ||
+          aa.full.localeCompare(bb.full, undefined, { sensitivity: "base" });
+      }
+
+      function readSortSettings() {
+        const defaults = { roster: "last", participation: "last", timeliness: "last" };
+        try {
+          return { ...defaults, ...(JSON.parse(localStorage.getItem(SORT_KEY) || "{}") || {}) };
+        } catch {
+          return defaults;
+        }
+      }
+
+      function saveSortSettings(next) {
+        localStorage.setItem(SORT_KEY, JSON.stringify(next));
+      }
+
+      function sortValue(view) {
+        return readSortSettings()[view] || "last";
+      }
+
+      function populateTermPreferenceSelect(select, utility) {
+        const service = window.TeacherDashboardGradingTerms;
+        if (!service || !select) return;
+        const config = service.getConfig();
+        const globalAllowed = service.allowedTerms[utility].includes(config.globalTermId);
+        const current = config.utilities[utility];
+        const globalLabel = globalAllowed
+          ? `Use global — ${service.termLabel(config.globalTermId)}`
+          : `Use global — unavailable for ${service.termLabel(config.globalTermId)}`;
+        const globalOption = `<option value="global" ${globalAllowed ? "" : "disabled"}>${escapeHtml(globalLabel)}</option>`;
+        const termOptions = service.terms
+          .filter(term => service.allowedTerms[utility].includes(term.id))
+          .map(term => `<option value="${escapeHtml(term.id)}">${escapeHtml(term.label)}</option>`)
+          .join("");
+        select.innerHTML = globalOption + termOptions;
+        select.value = current.mode === "global" && globalAllowed ? "global" : current.overrideTermId;
+      }
+
+      function gradingTermLabel(utility) {
+        const service = window.TeacherDashboardGradingTerms;
+        if (!service) return "";
+        return service.termLabel(service.resolveTermId(utility));
       }
 
       function readPickerSettings() {
@@ -379,6 +515,7 @@
         const query = el("studentSearch").value.trim().toLocaleLowerCase();
         const source = query ? allStudents() : (DashboardData.getStudents(currentPeriod) || []).map(student => ({ ...student, classId: currentPeriod, className: classLabel(currentPeriod) }));
         const filtered = source.filter(student => !query || student.name.toLocaleLowerCase().includes(query));
+        filtered.sort((a, b) => compareNames(a, b, sortValue("roster")));
         el("searchResultsNote").textContent = query ? `Searching all active periods · ${filtered.length} match${filtered.length === 1 ? "" : "es"}` : `${classLabel(currentPeriod)} · ${filtered.length} student${filtered.length === 1 ? "" : "s"}`;
 
         if (!filtered.length) {
@@ -409,7 +546,13 @@
       function renderParticipation() {
         const rows = DashboardData.getParticipationForClass(currentPeriod) || [];
         const goal = DashboardData.getParticipationGoal();
-        el("participationCopy").textContent = `${classLabel(currentPeriod)} · Goal ${goal} point${goal === 1 ? "" : "s"}`;
+        const sort = sortValue("participation");
+        rows.sort((a, b) => {
+          if (sort === "low") return a.points - b.points || compareNames(a, b, "last");
+          if (sort === "high") return b.points - a.points || compareNames(a, b, "last");
+          return compareNames(a, b, "last");
+        });
+        el("participationCopy").textContent = `${classLabel(currentPeriod)} · ${gradingTermLabel("participation")} · Goal ${goal}`;
         el("participationList").innerHTML = rows.length ? rows.map(student => `<article class="td-card score-row">
           <div class="score-name"><button type="button" data-profile-id="${escapeHtml(student.id)}">${escapeHtml(student.name)}</button><span>${student.points >= goal ? "At goal or above" : `${goal - student.points} to goal`}</span></div>
           <div class="score-display">${student.points}/${goal}</div>
@@ -428,7 +571,14 @@
       function renderTimeliness() {
         const rows = DashboardData.getTimelinessForClass(currentPeriod) || [];
         const policy = DashboardData.getTimelinessPolicy();
-        el("timelinessCopy").textContent = `${classLabel(currentPeriod)} · Starts at ${policy.startingPoints} points`;
+        const sort = sortValue("timeliness");
+        rows.sort((a, b) => {
+          if (sort === "low") return a.score - b.score || compareNames(a, b, "last");
+          if (sort === "high") return b.score - a.score || compareNames(a, b, "last");
+          if (sort === "late") return b.lateCount - a.lateCount || compareNames(a, b, "last");
+          return compareNames(a, b, "last");
+        });
+        el("timelinessCopy").textContent = `${classLabel(currentPeriod)} · ${gradingTermLabel("timeliness")} · Starts at ${policy.startingPoints}`;
         el("timelinessList").innerHTML = rows.length ? rows.map(student => `<article class="td-card score-row">
           <div class="score-name"><button type="button" data-profile-id="${escapeHtml(student.id)}">${escapeHtml(student.name)}</button><span>${student.lateCount ? `${student.lateCount} late submission${student.lateCount === 1 ? "" : "s"}` : "No late submissions recorded"}</span></div>
           <div class="score-display">${student.score}/${student.startingPoints}</div>
@@ -601,6 +751,62 @@
         el("pickerModal").setAttribute("aria-hidden", "true");
       }
 
+
+      function openUtilityModal(utility) {
+        const modal = el(`${utility}Modal`);
+        const backdrop = el(`${utility}ModalBackdrop`);
+        if (!modal || !backdrop) return;
+
+        if (utility === "participation") {
+          populateTermPreferenceSelect(el("participationTermSetting"), "participation");
+          el("participationGoalSetting").value = DashboardData.getParticipationGoal();
+          el("participationTermHelp").textContent = `Currently showing ${gradingTermLabel("participation")}.`;
+        } else {
+          populateTermPreferenceSelect(el("timelinessTermSetting"), "timeliness");
+          const config = TeacherDashboardGradingTerms.getConfig();
+          el("timelinessTermHelp").textContent = TeacherDashboardGradingTerms.allowedTerms.timeliness.includes(config.globalTermId)
+            ? `Currently showing ${gradingTermLabel("timeliness")}.`
+            : `Timeliness currently stores semester records, so ${TeacherDashboardGradingTerms.termLabel(config.globalTermId)} cannot be inherited yet.`;
+        }
+
+        backdrop.classList.add("open");
+        modal.classList.add("open");
+        modal.setAttribute("aria-hidden", "false");
+      }
+
+      function closeUtilityModal(utility) {
+        el(`${utility}ModalBackdrop`)?.classList.remove("open");
+        el(`${utility}Modal`)?.classList.remove("open");
+        el(`${utility}Modal`)?.setAttribute("aria-hidden", "true");
+      }
+
+      function saveParticipationUtilitySettings() {
+        const service = TeacherDashboardGradingTerms;
+        const config = service.getConfig();
+        const value = el("participationTermSetting").value;
+        config.utilities.participation = value === "global"
+          ? { ...config.utilities.participation, mode: "global" }
+          : { mode: "custom", overrideTermId: value };
+        service.saveConfig(config);
+        const termId = service.resolveTermId("participation");
+        const goal = Math.max(1, Math.min(100, Number(el("participationGoalSetting").value) || 5));
+        DashboardData.setParticipationGoal(termId, goal);
+        renderRoster(); renderParticipation(); renderPickerSide(); renderPickerWinner();
+        closeUtilityModal("participation");
+      }
+
+      function saveTimelinessUtilitySettings() {
+        const service = TeacherDashboardGradingTerms;
+        const config = service.getConfig();
+        const value = el("timelinessTermSetting").value;
+        config.utilities.timeliness = value === "global"
+          ? { ...config.utilities.timeliness, mode: "global" }
+          : { mode: "custom", overrideTermId: value };
+        service.saveConfig(config);
+        renderRoster(); renderTimeliness();
+        closeUtilityModal("timeliness");
+      }
+
       function switchView(view, { updateUrl = true } = {}) {
         const valid = ["roster", "picker", "participation", "timeliness"];
         currentView = valid.includes(view) ? view : "roster";
@@ -620,6 +826,11 @@
         }
       }
 
+      const initialSort = readSortSettings();
+      el("rosterSort").value = initialSort.roster || "last";
+      el("participationSort").value = initialSort.participation || "last";
+      el("timelinessSort").value = initialSort.timeliness || "last";
+
       setupPeriodSelect();
       document.querySelectorAll("[data-view]").forEach(button => button.addEventListener("click", () => switchView(button.dataset.view)));
       el("periodSelect").addEventListener("change", () => {
@@ -630,6 +841,27 @@
         switchView(currentView);
       });
       el("studentSearch").addEventListener("input", () => { if (currentView !== "roster") switchView("roster"); else renderRoster(); });
+
+      ["roster", "participation", "timeliness"].forEach(view => {
+        el(`${view}Sort`).addEventListener("change", () => {
+          const next = readSortSettings();
+          next[view] = el(`${view}Sort`).value;
+          saveSortSettings(next);
+          if (view === "roster") renderRoster();
+          if (view === "participation") renderParticipation();
+          if (view === "timeliness") renderTimeliness();
+        });
+      });
+
+      el("participationSettingsButton").addEventListener("click", () => openUtilityModal("participation"));
+      el("timelinessSettingsButton").addEventListener("click", () => openUtilityModal("timeliness"));
+      el("closeParticipationModal").addEventListener("click", () => closeUtilityModal("participation"));
+      el("closeTimelinessModal").addEventListener("click", () => closeUtilityModal("timeliness"));
+      el("participationModalBackdrop").addEventListener("click", () => closeUtilityModal("participation"));
+      el("timelinessModalBackdrop").addEventListener("click", () => closeUtilityModal("timeliness"));
+      el("saveParticipationSettings").addEventListener("click", saveParticipationUtilitySettings);
+      el("saveTimelinessSettings").addEventListener("click", saveTimelinessUtilitySettings);
+
       el("pickButton").addEventListener("click", pickStudent);
       el("addPointButton").addEventListener("click", () => {
         if (!currentWinner) return;
@@ -658,9 +890,23 @@
       }));
       el("closeProfileButton").addEventListener("click", closeProfile);
       el("drawerBackdrop").addEventListener("click", closeProfile);
-      window.addEventListener("keydown", event => { if (event.key === "Escape") { closeProfile(); closePickerModal(); } });
+      window.addEventListener("keydown", event => {
+        if (event.key === "Escape") {
+          closeProfile();
+          closePickerModal();
+          closeUtilityModal("participation");
+          closeUtilityModal("timeliness");
+        }
+      });
       window.addEventListener(DashboardData.changeEvent, () => { renderRoster(); if (currentView === "participation") renderParticipation(); if (currentView === "timeliness") renderTimeliness(); if (currentView === "picker") { renderPickerWinner(); renderPickerSide(); } });
       window.addEventListener(ReminderService?.changeEvent || "teacher-dashboard-reminders-changed", () => { renderRoster(); if (currentWinner) renderPickerWinner(); });
+      window.addEventListener(TeacherDashboardGradingTerms?.changeEvent || "teacher-dashboard-grading-terms-changed", () => {
+        renderRoster();
+        renderParticipation();
+        renderTimeliness();
+        renderPickerSide();
+        if (currentWinner) renderPickerWinner();
+      });
 
       const initialView = new URLSearchParams(location.search).get("view") || "roster";
       switchView(initialView, { updateUrl: false });
