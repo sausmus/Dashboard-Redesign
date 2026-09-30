@@ -6,564 +6,446 @@
   <title>Teacher Dashboard</title>
   <link rel="icon" type="image/png" href="bjh-logo.png">
   <link rel="stylesheet" href="shared/theme.css">
-
-  <style>
-    :root {
-      --bg: #f4f6f8;
-      --card: #ffffff;
-      --text: #202124;
-      --muted: #5f6368;
-      --border: #dadce0;
-      --blue: #1a73e8;
-      --blue-light: #e8f0fe;
-      --green: #188038;
-      --shadow: 0 2px 8px rgba(0,0,0,.08);
-      --shadow-hover: 0 8px 24px rgba(0,0,0,.12);
-      --radius: 16px;
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    html {
-      min-height: 100%;
-    }
-
-    body {
-      margin: 0;
-      min-height: 100vh;
-      background: var(--bg);
-      color: var(--text);
-      font-family: Arial, Helvetica, sans-serif;
-    }
-
-    a {
-      color: inherit;
-      text-decoration: none;
-    }
-
-    .app {
-      position: relative;
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 28px 20px 48px;
-    }
-
-    /* HEADER */
-    .app-header {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 14px;
-      margin-bottom: 30px;
-      white-space: nowrap;
-    }
-
-    .app-header h1 {
-      margin: 0;
-      font-size: 30px;
-      font-weight: 700;
-      letter-spacing: -.5px;
-    }
-
-    .bjh-logo {
-      width: 64px;
-      height: 64px;
-      object-fit: contain;
-    }
-
-    .bjh-logo.right {
-      transform: scaleX(-1);
-    }
-
-    /* INTRO */
-    .welcome-card {
-      background: var(--card);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 22px 24px;
-      margin-bottom: 18px;
-      text-align: center;
-    }
-
-    .welcome-title {
-      font-size: 20px;
-      font-weight: 700;
-      margin-bottom: 5px;
-    }
-
-    .welcome-text {
-      color: var(--muted);
-      font-size: 14px;
-      line-height: 1.45;
-    }
-
-    /* UTILITY GRID */
-    .utility-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 18px;
-    }
-
-    .utility-card {
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      min-height: 230px;
-      overflow: hidden;
-      background: var(--card);
-      border: 1px solid transparent;
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 24px;
-      transition:
-        transform .16s ease,
-        box-shadow .16s ease,
-        border-color .16s ease;
-    }
-
-    .utility-card:hover {
-      transform: translateY(-3px);
-      box-shadow: var(--shadow-hover);
-      border-color: #cbd8ee;
-    }
-
-    .utility-card:focus-visible {
-      outline: 3px solid rgba(26,115,232,.25);
-      outline-offset: 3px;
-    }
-
-    .utility-icon {
-      width: 54px;
-      height: 54px;
-      display: grid;
-      place-items: center;
-      margin-bottom: 20px;
-      border-radius: 14px;
-      background: var(--blue-light);
-      color: var(--blue);
-    }
-
-    .utility-icon svg {
-      width: 29px;
-      height: 29px;
-      stroke: currentColor;
-    }
-
-    .utility-title {
-      margin: 0 0 8px;
-      font-size: 22px;
-      font-weight: 700;
-      letter-spacing: -.25px;
-    }
-
-    .utility-description {
-      margin: 0;
-      color: var(--muted);
-      font-size: 14px;
-      line-height: 1.5;
-      max-width: 430px;
-    }
-
-    .open-row {
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      margin-top: auto;
-      padding-top: 22px;
-      color: var(--blue);
-      font-size: 14px;
-      font-weight: 700;
-    }
-
-    .open-arrow {
-      display: inline-block;
-      transition: transform .16s ease;
-    }
-
-    .utility-card:hover .open-arrow,
-    .settings-card:hover .open-arrow {
-      transform: translateX(4px);
-    }
-
-    /* SHARED DASHBOARD SETTINGS */
-    .settings-card {
-      grid-column: 1 / -1;
-      display: flex;
-      align-items: center;
-      gap: 18px;
-      min-height: 126px;
-      background: var(--card);
-      border: 1px solid transparent;
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 22px 24px;
-      transition:
-        transform .16s ease,
-        box-shadow .16s ease,
-        border-color .16s ease;
-    }
-
-    .settings-card:hover {
-      transform: translateY(-2px);
-      box-shadow: var(--shadow-hover);
-      border-color: #cbd8ee;
-    }
-
-    .settings-card:focus-visible {
-      outline: 3px solid rgba(26,115,232,.25);
-      outline-offset: 3px;
-    }
-
-    .settings-card .utility-icon {
-      margin: 0;
-      flex: 0 0 auto;
-    }
-
-    .settings-copy {
-      min-width: 0;
-      flex: 1;
-    }
-
-    .settings-copy .utility-title {
-      font-size: 19px;
-      margin-bottom: 5px;
-    }
-
-    .settings-open {
-      flex: 0 0 auto;
-      color: var(--blue);
-      font-size: 14px;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      white-space: nowrap;
-    }
-
-    .dashboard-bell-corner {
-      position: absolute;
-      top: 28px;
-      right: 20px;
-      z-index: 40;
-    }
-
-    /* FOOTER */
-    .dashboard-footer {
-      margin-top: 24px;
-      text-align: center;
-      color: var(--muted);
-      font-size: 12px;
-    }
-
-    /* RESPONSIVE */
-    @media (max-width: 900px) {
-      .dashboard-bell-corner {
-        position: static;
-        display: flex;
-        justify-content: center;
-        margin: -12px 0 18px;
-      }
-    }
-
-    @media (max-width: 700px) {
-      .app {
-        padding: 20px 14px 36px;
-      }
-
-      .app-header {
-        gap: 8px;
-        margin-bottom: 20px;
-      }
-
-      .app-header h1 {
-        font-size: 23px;
-      }
-
-      .bjh-logo {
-        width: 46px;
-        height: 46px;
-      }
-
-      .welcome-card {
-        padding: 18px;
-      }
-
-      .utility-grid {
-        grid-template-columns: 1fr;
-        gap: 14px;
-      }
-
-      .utility-card {
-        min-height: 205px;
-        padding: 20px;
-      }
-
-      .settings-card {
-        grid-column: auto;
-        align-items: flex-start;
-        min-height: 0;
-        padding: 20px;
-      }
-
-      .settings-open {
-        margin-left: auto;
-      }
-    }
-
-    @media (max-width: 520px) {
-      .settings-card {
-        flex-wrap: wrap;
-      }
-
-      .settings-copy {
-        flex-basis: calc(100% - 72px);
-      }
-
-      .settings-open {
-        width: 100%;
-        margin-left: 72px;
-      }
-    }
-
-    @media (max-width: 410px) {
-      .app-header h1 {
-        font-size: 21px;
-      }
-
-      .bjh-logo {
-        width: 42px;
-        height: 42px;
-      }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      .utility-card,
-      .settings-card,
-      .open-arrow {
-        transition: none;
-      }
-    }
-  </style>
 </head>
-
 <body>
-  <main class="app">
+  <div class="mobile-bar">
+    <a class="mobile-brand" href="index.html" aria-label="Teacher Dashboard home">
+      <img src="bjh-logo.png" alt="">
+      <span>Teacher Dashboard</span>
+    </a>
+    <nav class="mobile-nav-links" aria-label="Mobile navigation">
+      <a class="mobile-nav-link" href="agenda.html">Agenda</a>
+      <a class="mobile-nav-link" href="participation-tracker.html">Participation</a>
+      <a class="mobile-nav-link" href="settings.html">Settings</a>
+    </nav>
+  </div>
 
-    <header class="app-header">
-      <img src="bjh-logo.png" class="bjh-logo" alt="BJH Bobcat">
-      <h1>Teacher Dashboard</h1>
-      <img src="bjh-logo.png" class="bjh-logo right" alt="BJH Bobcat">
-    </header>
+  <div class="dashboard-shell">
+    <aside class="dashboard-sidebar" aria-label="Teacher Dashboard navigation">
+      <a class="dashboard-brand" href="index.html">
+        <img class="dashboard-brand__logo" src="bjh-logo.png" alt="BJH Bobcat">
+        <div>
+          <p class="dashboard-brand__name">Teacher Dashboard</p>
+          <p class="dashboard-brand__school">Brea Junior High</p>
+        </div>
+      </a>
 
-    <div class="dashboard-bell-corner">
-      <div data-bell-mini data-bell-compact></div>
-    </div>
+      <nav class="sidebar-nav">
+        <section class="sidebar-section" aria-label="Overview">
+          <a class="sidebar-link is-active" href="index.html" aria-current="page">
+            <span class="sidebar-link__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 10.5 12 3l8.5 7.5"/><path d="M5.5 9.5V21h13V9.5"/><path d="M9.5 21v-6h5v6"/></svg>
+            </span>
+            Home
+          </a>
+        </section>
 
-    <section class="welcome-card">
-      <div class="welcome-title">Classroom Utilities</div>
-      <div class="welcome-text">
-        Choose a tool below to get started.
+        <section class="sidebar-section" aria-label="Classroom tools">
+          <p class="sidebar-section__label">Classroom</p>
+
+          <a class="sidebar-link" href="agenda.html">
+            <span class="sidebar-link__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M8 2.5v4M16 2.5v4M3 9h18"/><path d="M7.5 13h3M7.5 16.5h6"/></svg>
+            </span>
+            Agenda
+          </a>
+
+          <a class="sidebar-link" href="student-picker.html">
+            <span class="sidebar-link__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M3.5 19c.5-3.2 2.4-5 5.5-5s5 1.8 5.5 5"/><circle cx="17.5" cy="9.5" r="2.2"/><path d="M15.5 15.5c2.8-.4 4.6.7 5 3.5"/></svg>
+            </span>
+            Student Picker
+          </a>
+
+          <a class="sidebar-link" href="participation-tracker.html">
+            <span class="sidebar-link__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="7" r="2.5"/><path d="M2.8 18c.4-3.2 1.9-5 4.2-5s3.8 1.8 4.2 5"/><path d="M14 6h7M14 11h7M14 16h4"/><path d="m18.5 19 1.5 1.5 2.5-3"/></svg>
+            </span>
+            Participation
+          </a>
+
+          <a class="sidebar-link" href="scoreboard.html">
+            <span class="sidebar-link__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4h8v4a4 4 0 0 1-8 0V4Z"/><path d="M8 6H5a2 2 0 0 0 2 4h1M16 6h3a2 2 0 0 1-2 4h-1"/><path d="M12 12v4M8.5 20h7M10 16h4"/></svg>
+            </span>
+            Scoreboard
+          </a>
+
+          <a class="sidebar-link" href="reminders.html">
+            <span class="sidebar-link__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg>
+            </span>
+            Reminders
+          </a>
+
+          <a class="sidebar-link" href="games.html">
+            <span class="sidebar-link__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="13" rx="5"/><path d="M8 10v5M5.5 12.5h5M16 11h.01M19 14h.01"/></svg>
+            </span>
+            Games
+          </a>
+        </section>
+
+        <section class="sidebar-section" aria-label="Work tools">
+          <p class="sidebar-section__label">Work</p>
+
+          <a class="sidebar-link" href="ai-grader.html">
+            <span class="sidebar-link__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.4 3.6L17 8l-3.6 1.4L12 13l-1.4-3.6L7 8l3.6-1.4L12 3Z"/><path d="M18.5 13.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8.8-2.2Z"/></svg>
+            </span>
+            Grading Assistant
+          </a>
+
+          <a class="sidebar-link" href="https://script.google.com/a/macros/bousd.us/s/AKfycbzgrtsmL77tJjM8ShqM-NVHZZDeMntwrEgf6ikO2XxPJh9Pv5qTArxyHeDZl97jwuPKUg/exec" target="_blank" rel="noopener noreferrer">
+            <span class="sidebar-link__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h11a2 2 0 0 1 2 2v12H6a2 2 0 0 0-2 2V4Z"/><path d="M6 20h14V8"/><path d="M8 9h5M8 13h5"/><path d="m15.5 15.5 4-4 1.5 1.5-4 4-2 .5.5-2Z"/></svg>
+            </span>
+            Writers Workspace
+          </a>
+
+          <a class="sidebar-link" href="inbox-assistant.html">
+            <span class="sidebar-link__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m4 7 8 6 8-6"/><path d="M17.5 3.5v4M15.5 5.5h4"/></svg>
+            </span>
+            Inbox Assistant
+          </a>
+        </section>
+      </nav>
+
+      <div class="sidebar-footer">
+        <a class="sidebar-link" href="settings.html">
+          <span class="sidebar-link__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1.1V21H9.6v-.1a1.7 1.7 0 0 0-.4-1.1 1.7 1.7 0 0 0-1-.6 1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 3.8 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1.1-.4H2V9.6h.1a1.7 1.7 0 0 0 1.1-.4 1.7 1.7 0 0 0 .6-1 1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.83-2.83.06.06A1.7 1.7 0 0 0 8.2 3.8a1.7 1.7 0 0 0 1-.6 1.7 1.7 0 0 0 .4-1.1V2h4v.1a1.7 1.7 0 0 0 .4 1.1 1.7 1.7 0 0 0 1 .6 1.7 1.7 0 0 0 1.88-.34l.06-.06 2.83 2.83-.06.06A1.7 1.7 0 0 0 20.2 8.2a1.7 1.7 0 0 0 .6 1 1.7 1.7 0 0 0 1.1.4h.1v4h-.1a1.7 1.7 0 0 0-1.1.4 1.7 1.7 0 0 0-.6 1Z"/></svg>
+          </span>
+          Settings
+        </a>
       </div>
-    </section>
+    </aside>
 
-    <section class="utility-grid" aria-label="Teacher Dashboard utilities">
+    <main class="dashboard-main">
+      <div class="dashboard-content">
+        <header class="dashboard-topbar">
+          <div class="dashboard-greeting">
+            <h1 class="dashboard-greeting__title"><span id="greetingText">Good morning</span>, Shaun</h1>
+            <p class="dashboard-greeting__date" id="todayDate">Wednesday, September 30</p>
+          </div>
+          <div class="day-pill" id="dayPill">Regular Day</div>
+        </header>
 
-      <!-- AGENDA -->
-      <a class="utility-card" href="agenda.html">
-        <div class="utility-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="4.5" width="18" height="16" rx="2"></rect>
-            <path d="M8 2.5v4M16 2.5v4M3 9h18"></path>
-            <path d="M7.5 13h3M7.5 16.5h6"></path>
-          </svg>
-        </div>
-        <h2 class="utility-title">Agenda</h2>
-        <p class="utility-description">
-          Plan and display daily class agendas, homework, and weekly lesson information.
-        </p>
-        <div class="open-row">
-          Open Agenda <span class="open-arrow">→</span>
-        </div>
-      </a>
+        <section aria-labelledby="nowTitle">
+          <div class="section-heading">
+            <h2 class="section-title" id="nowTitle">Now</h2>
+            <a class="section-link" href="bell-countdown.html">Bell controls</a>
+          </div>
 
-      <!-- CLASS REMINDERS -->
-      <a class="utility-card" href="reminders.html">
-        <div class="utility-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path>
-            <path d="M10 21h4"></path>
-            <path d="m15.5 4.5 1.5 1.5 3-3"></path>
-          </svg>
-        </div>
-        <h2 class="utility-title">Class Reminders</h2>
-        <p class="utility-description">
-          Set bell-aware reminders by period, with optional student roster matching and in-dashboard alerts.
-        </p>
-        <div class="open-row">
-          Open Class Reminders <span class="open-arrow">→</span>
-        </div>
-      </a>
+          <div class="now-card">
+            <div class="now-card__top">
+              <div>
+                <div class="now-card__eyebrow" id="nowEyebrow">Current class</div>
+                <h3 class="now-card__period" id="nowPeriod">Period 2</h3>
+              </div>
+              <div class="now-card__schedule" id="scheduleLabel">Regular Day</div>
+            </div>
 
-      <!-- BELL COUNTDOWN -->
-      <a class="utility-card" href="bell-countdown.html">
-        <div class="utility-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path>
-            <path d="M10 21h4"></path>
-          </svg>
-        </div>
-        <h2 class="utility-title">Bell Countdown</h2>
-        <p class="utility-description">
-          Track the current period, time remaining, bell schedule, and classroom warning bells.
-        </p>
-        <div class="open-row">
-          Open Bell Countdown <span class="open-arrow">→</span>
-        </div>
-      </a>
+            <div class="now-card__countdown-wrap">
+              <p class="now-card__countdown" id="nowCountdown">05:12</p>
+              <p class="now-card__countdown-label" id="countdownLabel">remaining in Period 2</p>
+            </div>
 
-      <!-- STUDENT PICKER -->
-      <a class="utility-card" href="student-picker.html">
-        <div class="utility-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="9" cy="8" r="3"></circle>
-            <path d="M3.5 19c.5-3.2 2.4-5 5.5-5s5 1.8 5.5 5"></path>
-            <circle cx="17.5" cy="9.5" r="2.2"></circle>
-            <path d="M15.5 15.5c2.8-.4 4.6.7 5 3.5"></path>
-          </svg>
-        </div>
-        <h2 class="utility-title">Student Picker</h2>
-        <p class="utility-description">
-          Select students at random or quickly organize students into groups by class period.
-        </p>
-        <div class="open-row">
-          Open Student Picker <span class="open-arrow">→</span>
-        </div>
-      </a>
+            <div class="now-actions">
+              <a class="now-action" href="agenda.html">
+                <span class="now-action__icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M8 2.5v4M16 2.5v4M3 9h18"/></svg>
+                </span>
+                Agenda
+              </a>
+              <a class="now-action" href="student-picker.html">
+                <span class="now-action__icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M3.5 19c.5-3.2 2.4-5 5.5-5s5 1.8 5.5 5"/><circle cx="17.5" cy="9.5" r="2.2"/></svg>
+                </span>
+                Pick Student
+              </a>
+              <a class="now-action" href="participation-tracker.html">
+                <span class="now-action__icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="7" r="2.5"/><path d="M2.8 18c.4-3.2 1.9-5 4.2-5s3.8 1.8 4.2 5"/><path d="m16 17 2 2 4-5"/></svg>
+                </span>
+                Participation
+              </a>
+              <a class="now-action" href="scoreboard.html">
+                <span class="now-action__icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4h8v4a4 4 0 0 1-8 0V4Z"/><path d="M8 6H5a2 2 0 0 0 2 4h1M16 6h3a2 2 0 0 1-2 4h-1"/><path d="M12 12v4M8.5 20h7"/></svg>
+                </span>
+                Scoreboard
+              </a>
+            </div>
+          </div>
+        </section>
 
-      <!-- PARTICIPATION TRACKER -->
-      <a class="utility-card" href="participation-tracker.html">
-        <div class="utility-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="7" cy="7" r="2.5"></circle>
-            <path d="M2.8 18c.4-3.2 1.9-5 4.2-5s3.8 1.8 4.2 5"></path>
-            <path d="M14 6h7M14 11h7M14 16h4"></path>
-            <path d="m18.5 19 1.5 1.5 2.5-3"></path>
-          </svg>
-        </div>
-        <h2 class="utility-title">Participation Tracker</h2>
-        <p class="utility-description">
-          Track student participation with one tap, monitor progress toward a goal, and share participation data with Student Picker.
-        </p>
-        <div class="open-row">
-          Open Participation Tracker <span class="open-arrow">→</span>
-        </div>
-      </a>
+        <section class="dashboard-section" aria-labelledby="todayTitle">
+          <div class="section-heading">
+            <h2 class="section-title" id="todayTitle">Today</h2>
+          </div>
 
-      <!-- SCOREBOARD -->
-      <a class="utility-card" href="scoreboard.html">
-        <div class="utility-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M8 4h8v4a4 4 0 0 1-8 0V4Z"></path>
-            <path d="M8 6H5a2 2 0 0 0 2 4h1M16 6h3a2 2 0 0 1-2 4h-1"></path>
-            <path d="M12 12v4M8.5 20h7M10 16h4"></path>
-          </svg>
-        </div>
-        <h2 class="utility-title">Scoreboard</h2>
-        <p class="utility-description">
-          Run class competitions, award points, and track championship standings throughout the year.
-        </p>
-        <div class="open-row">
-          Open Scoreboard <span class="open-arrow">→</span>
-        </div>
-      </a>
+          <div class="today-grid">
+            <a class="today-card today-card--agenda" href="agenda.html">
+              <div class="today-card__header">
+                <div class="today-card__identity">
+                  <span class="today-card__icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M8 2.5v4M16 2.5v4M3 9h18"/><path d="M7.5 13h3M7.5 16.5h6"/></svg>
+                  </span>
+                  <h3 class="today-card__title">Today's Agenda</h3>
+                </div>
+                <span class="today-card__arrow" aria-hidden="true">→</span>
+              </div>
+              <p class="today-card__primary" id="agendaPrimary">Open today's lesson plan</p>
+              <p class="today-card__secondary" id="agendaSecondary">Your agenda is one click away when you're ready to teach or present.</p>
+            </a>
 
-      <!-- AI GRADER -->
-      <a class="utility-card" href="ai-grader.html">
-        <div class="utility-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 3l1.4 3.6L17 8l-3.6 1.4L12 13l-1.4-3.6L7 8l3.6-1.4L12 3Z"></path>
-            <path d="M18.5 13.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8.8-2.2Z"></path>
-            <path d="M5.5 14.5l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8L3 17l1.8-.7.7-1.8Z"></path>
-          </svg>
-        </div>
-        <h2 class="utility-title">Grading Assistant</h2>
-        <p class="utility-description">
-          Create assignments, grade student writing, review feedback, and sync approved results to Google Classroom.
-        </p>
-        <div class="open-row">
-          Open Grading Assistant <span class="open-arrow">→</span>
-        </div>
-      </a>
+            <a class="today-card today-card--reminders" href="reminders.html">
+              <div class="today-card__header">
+                <div class="today-card__identity">
+                  <span class="today-card__icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg>
+                  </span>
+                  <h3 class="today-card__title">Reminders</h3>
+                </div>
+                <span class="today-card__arrow" aria-hidden="true">→</span>
+              </div>
+              <p class="today-card__count" id="reminderCount">0</p>
+              <p class="today-card__count-label" id="reminderLabel">No reminders scheduled today</p>
+            </a>
+          </div>
+        </section>
 
-      <!-- INBOX ASSISTANT -->
-      <a class="utility-card" href="inbox-assistant.html">
-        <div class="utility-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="5" width="18" height="14" rx="2"></rect>
-            <path d="m4 7 8 6 8-6"></path>
-            <path d="M17.5 3.5v4M15.5 5.5h4"></path>
-          </svg>
-        </div>
+        <section class="dashboard-section" aria-labelledby="workspaceTitle">
+          <div class="section-heading">
+            <h2 class="section-title" id="workspaceTitle">Workspace</h2>
+          </div>
 
-        <h2 class="utility-title">Inbox Assistant</h2>
+          <div class="workspace-grid">
+            <a class="workspace-card workspace-card--grader" href="ai-grader.html">
+              <div class="workspace-card__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.4 3.6L17 8l-3.6 1.4L12 13l-1.4-3.6L7 8l3.6-1.4L12 3Z"/><path d="M18.5 13.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8.8-2.2Z"/></svg>
+              </div>
+              <h3 class="workspace-card__title">Grading Assistant</h3>
+              <p class="workspace-card__text">Grade writing and review feedback.</p>
+            </a>
 
-        <p class="utility-description">
-          Triage email, surface messages that need attention, and prepare reply drafts for review.
-        </p>
+            <a class="workspace-card workspace-card--writing" href="https://script.google.com/a/macros/bousd.us/s/AKfycbzgrtsmL77tJjM8ShqM-NVHZZDeMntwrEgf6ikO2XxPJh9Pv5qTArxyHeDZl97jwuPKUg/exec" target="_blank" rel="noopener noreferrer">
+              <div class="workspace-card__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h11a2 2 0 0 1 2 2v12H6a2 2 0 0 0-2 2V4Z"/><path d="M6 20h14V8"/><path d="M8 9h5M8 13h5"/><path d="m15.5 15.5 4-4 1.5 1.5-4 4-2 .5.5-2Z"/></svg>
+              </div>
+              <h3 class="workspace-card__title">Writers Workspace</h3>
+              <p class="workspace-card__text">Open the focused writing environment.</p>
+            </a>
 
-        <div class="open-row">
-          Open Inbox Assistant <span class="open-arrow">→</span>
-        </div>
-      </a>
+            <a class="workspace-card workspace-card--games" href="games.html">
+              <div class="workspace-card__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="13" rx="5"/><path d="M8 10v5M5.5 12.5h5M16 11h.01M19 14h.01"/></svg>
+              </div>
+              <h3 class="workspace-card__title">Games</h3>
+              <p class="workspace-card__text">Launch review games and competitions.</p>
+            </a>
 
-<a class="utility-card" href="games.html"><div class="utility-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="13" rx="5"/><path d="M8 10v5M5.5 12.5h5M16 11h.01M19 14h.01"/></svg></div><h2 class="utility-title">Games</h2><p class="utility-description">Make review time game time. Play classroom games and award championship points.</p><div class="open-row">Open Games <span class="open-arrow">→</span></div></a>
+            <a class="workspace-card workspace-card--inbox" href="inbox-assistant.html">
+              <div class="workspace-card__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m4 7 8 6 8-6"/><path d="M17.5 3.5v4M15.5 5.5h4"/></svg>
+              </div>
+              <h3 class="workspace-card__title">Inbox Assistant</h3>
+              <p class="workspace-card__text">Review messages that need your attention.</p>
+            </a>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
 
-      <!-- WRITERS WORKSPACE PLACEHOLDER -->
-      <a class="utility-card" href="https://script.google.com/a/macros/bousd.us/s/AKfycbzgrtsmL77tJjM8ShqM-NVHZZDeMntwrEgf6ikO2XxPJh9Pv5qTArxyHeDZl97jwuPKUg/exec" target="_blank" rel="noopener noreferrer">
-        <div class="utility-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M4 4h11a2 2 0 0 1 2 2v12H6a2 2 0 0 0-2 2V4Z"></path>
-            <path d="M6 20h14V8"></path>
-            <path d="M8 9h5M8 13h5"></path>
-            <path d="m15.5 15.5 4-4 1.5 1.5-4 4-2 .5.5-2Z"></path>
-          </svg>
-        </div>
-        <h2 class="utility-title">Writers Workspace</h2>
-        <p class="utility-description">Open the current Writers Workspace prototype for focused student writing.</p>
-        <div class="open-row">Open Writers Workspace <span class="open-arrow">↗</span></div>
-      </a>
-      <!-- DASHBOARD SETTINGS -->
-      <a class="settings-card" href="settings.html">
-        <div class="utility-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="3"></circle>
-            <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1.1V21H9.6v-.1a1.7 1.7 0 0 0-.4-1.1 1.7 1.7 0 0 0-1-.6 1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 3.8 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1.1-.4H2V9.6h.1a1.7 1.7 0 0 0 1.1-.4 1.7 1.7 0 0 0 .6-1 1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.83-2.83.06.06A1.7 1.7 0 0 0 8.2 3.8a1.7 1.7 0 0 0 1-.6 1.7 1.7 0 0 0 .4-1.1V2h4v.1a1.7 1.7 0 0 0 .4 1.1 1.7 1.7 0 0 0 1 .6 1.7 1.7 0 0 0 1.88-.34l.06-.06 2.83 2.83-.06.06A1.7 1.7 0 0 0 20.2 8.2a1.7 1.7 0 0 0 .6 1 1.7 1.7 0 0 0 1.1.4h.1v4h-.1a1.7 1.7 0 0 0-1.1.4 1.7 1.7 0 0 0-.6 1Z"></path>
-          </svg>
-        </div>
-
-        <div class="settings-copy">
-          <h2 class="utility-title">Dashboard Settings</h2>
-          <p class="utility-description">
-            Manage shared classes, visible periods, and master student rosters for the entire dashboard.
-          </p>
-        </div>
-
-        <div class="settings-open">
-          Open Settings <span class="open-arrow">→</span>
-        </div>
-      </a>
-
-    </section>
-
-    <footer class="dashboard-footer">
-      Teacher Dashboard
-    </footer>
-
-  </main>
   <script src="shared/dashboard-data.js"></script>
   <script src="shared/bell-service.js"></script>
   <script src="shared/reminder-service.js"></script>
+  <script>
+    (() => {
+      "use strict";
+
+      const greetingText = document.getElementById("greetingText");
+      const todayDate = document.getElementById("todayDate");
+      const dayPill = document.getElementById("dayPill");
+      const nowEyebrow = document.getElementById("nowEyebrow");
+      const nowPeriod = document.getElementById("nowPeriod");
+      const nowCountdown = document.getElementById("nowCountdown");
+      const countdownLabel = document.getElementById("countdownLabel");
+      const scheduleLabel = document.getElementById("scheduleLabel");
+      const agendaPrimary = document.getElementById("agendaPrimary");
+      const agendaSecondary = document.getElementById("agendaSecondary");
+      const reminderCount = document.getElementById("reminderCount");
+      const reminderLabel = document.getElementById("reminderLabel");
+
+      function localDateKey(date = new Date()) {
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, "0");
+        const d = String(date.getDate()).padStart(2, "0");
+        return `${y}-${m}-${d}`;
+      }
+
+      function stripHtml(html) {
+        const temp = document.createElement("div");
+        temp.innerHTML = String(html || "");
+        return (temp.textContent || temp.innerText || "")
+          .replace(/\s+/g, " ")
+          .trim();
+      }
+
+      function renderGreeting() {
+        const now = new Date();
+        const hour = now.getHours();
+        greetingText.textContent = hour < 12
+          ? "Good morning"
+          : hour < 17
+            ? "Good afternoon"
+            : "Good evening";
+
+        todayDate.textContent = new Intl.DateTimeFormat("en-US", {
+          weekday: "long",
+          month: "long",
+          day: "numeric"
+        }).format(now);
+      }
+
+      function renderBell() {
+        if (!window.BellService) return;
+
+        try {
+          const snapshot = BellService.getSnapshot();
+          const schedule = snapshot.scheduleLabel || "School Day";
+          dayPill.textContent = schedule;
+          scheduleLabel.textContent = schedule;
+          nowCountdown.textContent = snapshot.displayCountdown || "--:--";
+
+          if (snapshot.phase === "duringSchool" && snapshot.entry) {
+            nowEyebrow.textContent = "Current class";
+            nowPeriod.textContent = snapshot.entry.name;
+            countdownLabel.textContent = `remaining in ${snapshot.entry.name}`;
+            return;
+          }
+
+          if (snapshot.phase === "passing") {
+            const nextName = snapshot.nextEntry?.name || "next class";
+            nowEyebrow.textContent = "Passing period";
+            nowPeriod.textContent = `Up next: ${nextName}`;
+            countdownLabel.textContent = `until ${nextName}`;
+            return;
+          }
+
+          if (snapshot.phase === "beforeSchool") {
+            nowEyebrow.textContent = "Before school";
+            nowPeriod.textContent = "Good morning";
+            countdownLabel.textContent = "until the first bell";
+            return;
+          }
+
+          if (snapshot.phase === "afterSchool") {
+            nowEyebrow.textContent = "School day complete";
+            nowPeriod.textContent = "That's a wrap";
+            countdownLabel.textContent = `until ${snapshot.targetDayLabel || "the next school day"}`;
+            return;
+          }
+
+          if (snapshot.phase === "weekend") {
+            nowEyebrow.textContent = "Weekend";
+            nowPeriod.textContent = "Next school day";
+            countdownLabel.textContent = `until ${snapshot.targetDayLabel || "school"}`;
+            return;
+          }
+
+          nowEyebrow.textContent = "School day";
+          nowPeriod.textContent = snapshot.targetDayLabel || "Upcoming";
+          countdownLabel.textContent = "until school begins";
+        } catch (error) {
+          console.warn("Dashboard Now card could not read bell data.", error);
+        }
+      }
+
+      function renderAgenda() {
+        try {
+          const raw = localStorage.getItem(`bjhAgenda_v1_${localDateKey()}`);
+          if (!raw) return;
+
+          const data = JSON.parse(raw);
+          let agendaHtml = "";
+          let homeworkHtml = "";
+
+          if (data.shared) {
+            agendaHtml = data.sharedAgenda || "";
+            homeworkHtml = data.sharedHomework || "";
+          } else {
+            const classId = window.DashboardData?.getCurrentClassId?.() || "1";
+            agendaHtml = data.periods?.[classId]?.agenda || "";
+            homeworkHtml = data.periods?.[classId]?.homework || "";
+          }
+
+          const agendaText = stripHtml(agendaHtml);
+          const homeworkText = stripHtml(homeworkHtml);
+
+          if (agendaText) {
+            agendaPrimary.textContent = agendaText.length > 88
+              ? `${agendaText.slice(0, 88).trim()}…`
+              : agendaText;
+          }
+
+          if (homeworkText) {
+            agendaSecondary.textContent = `Homework: ${homeworkText.length > 112
+              ? `${homeworkText.slice(0, 112).trim()}…`
+              : homeworkText}`;
+          } else if (agendaText) {
+            agendaSecondary.textContent = "Open Agenda to present or make changes.";
+          }
+        } catch (error) {
+          console.warn("Dashboard could not preview today's agenda.", error);
+        }
+      }
+
+      function renderReminders() {
+        if (!window.ReminderService) return;
+
+        try {
+          const today = localDateKey();
+          const active = ReminderService.getReminders().filter(reminder =>
+            reminder.date === today &&
+            !["done", "missed"].includes(reminder.status)
+          );
+
+          reminderCount.textContent = String(active.length);
+          reminderLabel.textContent = active.length === 0
+            ? "No reminders scheduled today"
+            : active.length === 1
+              ? "1 reminder scheduled today"
+              : `${active.length} reminders scheduled today`;
+        } catch (error) {
+          console.warn("Dashboard could not preview reminders.", error);
+        }
+      }
+
+      renderGreeting();
+      renderBell();
+      renderAgenda();
+      renderReminders();
+
+      window.setInterval(renderBell, 1000);
+      window.setInterval(renderGreeting, 60000);
+
+      window.addEventListener("storage", () => {
+        renderAgenda();
+        renderReminders();
+      });
+
+      if (window.ReminderService?.changeEvent) {
+        window.addEventListener(ReminderService.changeEvent, renderReminders);
+      }
+
+      if (window.DashboardData?.changeEvent) {
+        window.addEventListener(DashboardData.changeEvent, renderAgenda);
+      }
+    })();
+  </script>
 </body>
 </html>
