@@ -55,7 +55,7 @@
 
     .view-panel[hidden] { display: none !important; }
 
-    /* Picker */
+    /* Student Selector */
     .picker-layout { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(260px, .65fr); gap: 16px; }
     .picker-stage { min-height: 430px; padding: clamp(24px, 4vw, 40px); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; position: relative; overflow: hidden; }
     .picker-stage::after { content:""; position:absolute; width:320px; height:320px; right:-110px; bottom:-150px; border-radius:50%; background:var(--td-accent-soft); opacity:.7; pointer-events:none; }
@@ -101,7 +101,7 @@
     .profile-list li { padding:9px 10px; border-radius:10px; background:var(--td-surface-soft); font-size:11px; line-height:1.45; }
     .profile-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
 
-    /* Picker settings modal */
+    /* Student Selector settings modal */
     .modal-head { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:20px 20px 14px; border-bottom:1px solid var(--td-border); }
     .modal-head h2 { margin:0; font-size:18px; }
     .modal-body { padding:18px 20px 22px; display:grid; gap:18px; }
@@ -155,7 +155,7 @@
         <div class="students-tabs-wrap">
           <div class="td-segmented" role="tablist" aria-label="Student tools">
             <button type="button" role="tab" data-view="roster" aria-selected="true">Roster</button>
-            <button type="button" role="tab" data-view="picker" aria-selected="false">Picker</button>
+            <button type="button" role="tab" data-view="picker" aria-selected="false">Student Selector</button>
             <button type="button" role="tab" data-view="participation" aria-selected="false">Participation</button>
             <button type="button" role="tab" data-view="timeliness" aria-selected="false">Timeliness</button>
           </div>
@@ -170,13 +170,14 @@
         <section id="pickerView" class="view-panel" data-panel="picker" hidden>
           <div class="picker-layout">
             <article class="td-card picker-stage">
-              <button id="pickerSettingsButton" class="td-icon-button picker-settings" type="button" aria-label="Picker settings">⚙</button>
-              <div id="pickerKicker" class="picker-kicker">Balanced picker</div>
+              <button id="pickerSettingsButton" class="td-icon-button picker-settings" type="button" aria-label="Student Selector settings">⚙</button>
+              <div id="pickerKicker" class="picker-kicker">Balanced selection</div>
               <div id="pickerName" class="picker-name">Ready when you are</div>
               <div id="pickerMeta" class="picker-meta">Students below the participation goal receive more chances to be selected.</div>
               <div class="picker-actions">
-                <button id="pickButton" class="td-button td-button-primary picker-primary" type="button">Pick a Student</button>
+                <button id="pickButton" class="td-button td-button-primary picker-primary" type="button">Select Student</button>
                 <button id="addPointButton" class="td-button td-button-secondary" type="button" hidden>+ Participation</button>
+                <button id="removeFromPoolButton" class="td-button td-button-secondary" type="button" hidden>Remove from Pool</button>
               </div>
             </article>
             <aside class="td-card picker-side">
@@ -223,7 +224,7 @@
 
   <div id="pickerModalBackdrop" class="td-modal-backdrop"></div>
   <section id="pickerModal" class="td-modal" aria-hidden="true" aria-labelledby="pickerModalTitle">
-    <div class="modal-head"><h2 id="pickerModalTitle">Picker settings</h2><button id="closePickerModal" class="td-icon-button" type="button" aria-label="Close picker settings">×</button></div>
+    <div class="modal-head"><h2 id="pickerModalTitle">Student Selector settings</h2><button id="closePickerModal" class="td-icon-button" type="button" aria-label="Close Student Selector settings">×</button></div>
     <div class="modal-body">
       <div class="setting-row">
         <div class="setting-label">Selection mode</div>
@@ -233,9 +234,9 @@
         </div>
       </div>
       <div class="setting-row">
-        <div class="setting-label">More picker tools</div>
-        <div class="setting-help">Group generation and the legacy pool controls are still available while this combined Students area is being built.</div>
-        <a class="td-button td-button-secondary" href="student-picker.html">Open group maker & advanced picker →</a>
+        <div class="setting-label">More selector tools</div>
+        <div class="setting-help">Group generation and the legacy pool controls remain available while the combined Students area is being built.</div>
+        <a class="td-button td-button-secondary" href="student-picker.html">Open group maker & advanced selector →</a>
       </div>
       <div class="modal-actions">
         <button id="resetPoolButton" class="td-button td-button-secondary" type="button">Reset selection pool</button>
@@ -422,21 +423,20 @@
         const candidates = students.filter(student => poolSet.has(String(student.id)));
         currentWinner = chooseWeighted(candidates.length ? candidates : students);
         if (!currentWinner) return;
-        const state = readPickerSettings();
-        state.pools[currentPeriod] = (state.pools[currentPeriod] || []).filter(id => String(id) !== String(currentWinner.id));
-        savePickerSettings(state);
         renderPickerWinner();
         renderPickerSide();
       }
 
       function renderPickerWinner() {
         const settings = readPickerSettings();
-        el("pickerKicker").textContent = settings.mode === "balanced" ? "Balanced picker" : "Random picker";
+        el("pickerKicker").textContent = settings.mode === "balanced" ? "Balanced selection" : "Random selection";
         el("pickerModeStat").textContent = settings.mode === "balanced" ? "Balanced" : "Random";
         if (!currentWinner) {
           el("pickerName").textContent = "Ready when you are";
           el("pickerMeta").textContent = settings.mode === "balanced" ? "Students below the participation goal receive more chances to be selected." : "Each remaining student has an equal chance to be selected.";
           el("addPointButton").hidden = true;
+          el("removeFromPoolButton").hidden = true;
+          el("pickButton").textContent = "Select Student";
           return;
         }
         const p = participationMap(currentPeriod).get(String(currentWinner.id));
@@ -444,6 +444,14 @@
         el("pickerName").textContent = currentWinner.name;
         el("pickerMeta").textContent = `${classLabel(currentPeriod)} · Participation ${p ? `${p.points}/${p.goal}` : "—"}`;
         el("addPointButton").hidden = false;
+        el("removeFromPoolButton").hidden = false;
+        el("pickButton").textContent = "Select Again";
+
+        const state = readPickerSettings();
+        const stillInPool = (state.pools[currentPeriod] || []).some(id => String(id) === String(currentWinner.id));
+        el("removeFromPoolButton").disabled = !stillInPool;
+        el("removeFromPoolButton").textContent = stillInPool ? "Remove from Pool" : "Removed from Pool";
+
         if (reminders.length) {
           el("pickerReminder").hidden = false;
           el("pickerReminder").innerHTML = `<strong>Reminder</strong><br>${escapeHtml(reminders[0].text)}${reminders.length > 1 ? `<br><span style="opacity:.8">+ ${reminders.length - 1} more</span>` : ""}`;
@@ -521,7 +529,7 @@
         currentView = valid.includes(view) ? view : "roster";
         document.querySelectorAll("[data-view]").forEach(button => button.setAttribute("aria-selected", String(button.dataset.view === currentView)));
         document.querySelectorAll("[data-panel]").forEach(panel => panel.hidden = panel.dataset.panel !== currentView);
-        const labels = { roster: "Find a student or open a profile", picker: "Balanced by default", participation: "Active term participation", timeliness: "Active term timeliness" };
+        const labels = { roster: "Find a student or open a profile", picker: "Balanced selection by default", participation: "Active term participation", timeliness: "Active term timeliness" };
         el("viewNote").textContent = labels[currentView];
         if (currentView === "roster") renderRoster();
         if (currentView === "picker") { renderPickerWinner(); renderPickerSide(); }
@@ -551,6 +559,17 @@
         DashboardData.adjustParticipationPoints(currentPeriod, currentWinner.id, 1);
         renderPickerWinner(); renderPickerSide(); renderRoster();
       });
+
+      el("removeFromPoolButton").addEventListener("click", () => {
+        if (!currentWinner) return;
+        const state = readPickerSettings();
+        const pool = Array.isArray(state.pools[currentPeriod]) ? state.pools[currentPeriod] : [];
+        state.pools[currentPeriod] = pool.filter(id => String(id) !== String(currentWinner.id));
+        savePickerSettings(state);
+        renderPickerWinner();
+        renderPickerSide();
+      });
+
       el("pickerSettingsButton").addEventListener("click", openPickerModal);
       el("closePickerModal").addEventListener("click", closePickerModal);
       el("donePickerSettings").addEventListener("click", closePickerModal);

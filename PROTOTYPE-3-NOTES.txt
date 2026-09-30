@@ -1,0 +1,35 @@
+TEACHER DASHBOARD REDESIGN — PROTOTYPE 3
+
+Scope
+-----
+Prototype 3 is a refinement pass on Prototype 2. It intentionally avoids data migrations and major feature additions.
+
+Changes
+-------
+1. Sidebar brand subtitle
+   - "Brea Junior High" now sits directly beneath "Teacher Dashboard".
+
+2. Home
+   - Removed the redundant Workspace section.
+   - Writing, Games, and Inbox Assistant remain available from the persistent sidebar.
+   - Empty space is intentionally allowed rather than duplicating navigation.
+   - Updated Students shortcut copy to use "Student Selector".
+
+3. Students
+   - Renamed the user-facing "Picker" view to "Student Selector".
+   - Tab order remains:
+       Roster | Student Selector | Participation | Timeliness
+   - Balanced selection remains the default.
+   - Selecting a student no longer automatically removes them from the selection pool.
+   - After a student is selected, these persistent controls remain visible:
+       + Participation
+       Remove from Pool
+       Select Again
+   - "+ Participation" adds participation credit only.
+   - "Remove from Pool" is the only action that removes the selected student from the pool.
+   - If the student has already been removed, the control remains visible but disabled as "Removed from Pool".
+
+4. Safety / compatibility
+   - No existing storage keys were renamed or cleared.
+   - Existing Participation, Timeliness, roster, reminder, scoreboard, and Classroom data schemas are unchanged.
+   - The global master theme introduced in Prototype 2 remains intact.

@@ -122,20 +122,9 @@
     }
     .today-source-note { color: var(--td-text-muted); font-size: 11px; }
 
-    .home-workspace { margin-top: 30px; }
-    .workspace-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
-    .workspace-card { min-height: 132px; padding: 18px; text-decoration: none; transition: transform var(--td-fast), border-color var(--td-fast); }
-    .workspace-card:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--td-accent) 28%, var(--td-border)); }
-    .workspace-icon { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 11px; margin-bottom: 18px; }
-    .workspace-card:nth-child(1) .workspace-icon { background: var(--td-gold-soft); color: var(--td-gold); }
-    .workspace-card:nth-child(2) .workspace-icon { background: var(--td-peach-soft); color: var(--td-peach); }
-    .workspace-card:nth-child(3) .workspace-icon { background: var(--td-sage-soft); color: var(--td-sage); }
-    .workspace-title { font-size: 14px; font-weight: 760; }
-    .workspace-copy { margin-top: 5px; color: var(--td-text-secondary); font-size: 11px; line-height: 1.5; }
-
     @media (max-width: 760px) {
       .home-head { margin-bottom: 26px; }
-      .now-actions, .workspace-grid { grid-template-columns: 1fr; }
+      .now-actions { grid-template-columns: 1fr; }
       .today-item { grid-template-columns: 68px 34px minmax(0, 1fr); padding-inline: 14px; gap: 9px; }
       .now-card { min-height: 0; }
     }
@@ -183,7 +172,7 @@
               </a>
               <a class="now-action" id="studentsShortcut" href="students.html">
                 <span class="now-action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M3.5 19c.5-3.2 2.4-5 5.5-5s5 1.8 5.5 5"/><circle cx="17.5" cy="9.5" r="2.2"/><path d="M15.5 15.5c2.8-.4 4.6.7 5 3.5"/></svg></span>
-                <span><strong>Students</strong><span>Roster, picker, participation & timeliness</span></span>
+                <span><strong>Students</strong><span>Roster, Student Selector, participation & timeliness</span></span>
               </a>
             </div>
           </article>
@@ -200,21 +189,6 @@
               <a class="section-link" href="reminders.html">View day →</a>
             </div>
           </article>
-        </section>
-
-        <section class="home-workspace" aria-labelledby="workspaceHeading">
-          <div class="section-heading-row"><div id="workspaceHeading" class="td-eyebrow">Workspace</div></div>
-          <div class="workspace-grid">
-            <a class="td-card workspace-card" href="writing.html">
-              <div class="workspace-icon">✎</div><div class="workspace-title">Writing</div><div class="workspace-copy">Writing Workspace and grading in one place.</div>
-            </a>
-            <a class="td-card workspace-card" href="games.html">
-              <div class="workspace-icon">◇</div><div class="workspace-title">Games</div><div class="workspace-copy">Wordle, Word Hive, Jeopardy and class competitions.</div>
-            </a>
-            <a class="td-card workspace-card" href="inbox-assistant.html">
-              <div class="workspace-icon">✉</div><div class="workspace-title">Inbox Assistant</div><div class="workspace-copy">Keep high-priority communication within reach.</div>
-            </a>
-          </div>
         </section>
       </div>
     </main>
