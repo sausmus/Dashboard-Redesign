@@ -82,7 +82,7 @@
   function renderMobileBar() {
     return `<div class="td-mobile-bar">
       <button class="td-mobile-menu-button" type="button" data-td-menu-toggle aria-label="Open navigation">☰</button>
-      <span class="td-mobile-brand">Teacher Dashboard</span>
+      <a class="td-mobile-brand" href="index.html">Teacher Dashboard</a>
       <span style="width:38px" aria-hidden="true"></span>
     </div><div class="td-mobile-overlay"></div>`;
   }

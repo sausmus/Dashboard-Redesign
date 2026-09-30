@@ -1,0 +1,42 @@
+TEACHER DASHBOARD REDESIGN — PROTOTYPE 4.1
+POLISH PASS
+
+Fixes and refinements
+---------------------
+1. Student Selector
+   • Restored the name-cycling animation from the legacy picker.
+   • Balanced selection logic remains unchanged.
+   • The chosen student still stays in the pool until Remove from Pool is explicitly clicked.
+   • + Participation, Remove from Pool, and Select Again remain persistent after selection.
+
+2. Timeliness history
+   • Student profiles now read the canonical Timeliness record directly.
+   • History displays the saved assignment/note text rather than compact-record identifiers.
+   • Generated late-entry IDs are never shown as assignment text.
+
+3. Students density
+   • Roster is now a compact responsive card grid instead of long full-width rows.
+   • Participation and Timeliness also use compact multi-column tiles.
+   • Participation − / + controls sit close to each student's score.
+
+4. Agenda
+   • Removed the teacher-facing explanatory subtitle beneath Agenda.
+
+5. Legacy controls
+   • Old-style dropdown internals are intentionally deferred. P4.1 does not restyle all legacy controls.
+
+6. Favicon
+   • Added redesign-favicon.svg and applied it throughout the redesign repo so it is visually distinct from the production Dashboard.
+
+7. Settings
+   • Replaced mixed emoji/glyph section icons with one consistent rounded line-icon family.
+
+8. Navigation
+   • Sidebar navigation labels use full primary text color instead of the muted/shaded treatment.
+   • The desktop Teacher Dashboard brand already links Home.
+   • The mobile Teacher Dashboard header now links Home as well.
+
+Data safety
+-----------
+No existing Participation, Timeliness, roster, reminder, scoreboard, Google Classroom, Agenda,
+Writing, theme, or shell storage schemas were renamed, cleared, or migrated.

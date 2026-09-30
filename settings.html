@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dashboard Settings</title>
-  <link rel="icon" type="image/png" href="bjh-logo.png">
+  <link rel="icon" type="image/svg+xml" href="redesign-favicon.svg">
 
   <style>
     :root {
@@ -984,8 +984,24 @@
     }
 
     .settings-hub-icon {
-      font-size: 22px;
-      line-height: 1;
+      width: 34px;
+      height: 34px;
+      display: inline-grid;
+      place-items: center;
+      flex: 0 0 auto;
+      border-radius: 10px;
+      background: var(--td-accent-soft, #edf1ff);
+      color: var(--td-accent-strong, #466bd7);
+    }
+
+    .settings-hub-icon svg {
+      width: 18px;
+      height: 18px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
     }
 
     .settings-hub-summary {
@@ -1389,32 +1405,32 @@
 
     <section class="settings-hub" aria-label="Settings sections">
       <button class="settings-hub-card" type="button" data-settings-section="appearance">
-        <span class="settings-hub-title"><span class="settings-hub-icon">◐</span>Appearance</span>
+        <span class="settings-hub-title"><span class="settings-hub-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16Z"/></svg></span>Appearance</span>
         <span class="settings-hub-summary">Choose one master light/dark mode and color theme for the entire Dashboard.</span>
         <span class="settings-hub-action">Manage →</span>
       </button>
       <button class="settings-hub-card" type="button" data-settings-section="classes">
-        <span class="settings-hub-title"><span class="settings-hub-icon">👥</span>Classes & Rosters</span>
+        <span class="settings-hub-title"><span class="settings-hub-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3.5 19c.5-3.2 2.4-5 5.5-5s5 1.8 5.5 5"/><circle cx="17.5" cy="9.5" r="2.2"/><path d="M15.5 15.5c2.8-.4 4.6.7 5 3.5"/></svg></span>Classes & Rosters</span>
         <span id="hubClassesSummary" class="settings-hub-summary">Choose Google Classroom or a manual roster for each class.</span>
         <span class="settings-hub-action">Manage →</span>
       </button>
       <button class="settings-hub-card" type="button" data-settings-section="participation">
-        <span class="settings-hub-title"><span class="settings-hub-icon">✓</span>Participation & Timeliness</span>
+        <span class="settings-hub-title"><span class="settings-hub-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="m8.5 12 2.3 2.3 4.8-5"/></svg></span>Participation & Timeliness</span>
         <span id="hubParticipationSummary" class="settings-hub-summary">Set up Participation and Timeliness assignments for Google Classroom.</span>
         <span class="settings-hub-action">Manage →</span>
       </button>
       <button class="settings-hub-card" type="button" data-settings-section="calendar">
-        <span class="settings-hub-title"><span class="settings-hub-icon">📅</span>School Calendar</span>
+        <span class="settings-hub-title"><span class="settings-hub-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg></span>School Calendar</span>
         <span id="hubCalendarSummary" class="settings-hub-summary">Manage minimum-day dates.</span>
         <span class="settings-hub-action">Manage →</span>
       </button>
       <button class="settings-hub-card" type="button" data-settings-section="data">
-        <span class="settings-hub-title"><span class="settings-hub-icon">💾</span>Data Backup & Restore</span>
+        <span class="settings-hub-title"><span class="settings-hub-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h12l2 2v16H5Z"/><path d="M8 3v6h8V3M8 21v-7h8v7"/></svg></span>Data Backup & Restore</span>
         <span id="hubDataSummary" class="settings-hub-summary">Back up every saved Dashboard data entry on this browser.</span>
         <span class="settings-hub-action">Manage →</span>
       </button>
       <button class="settings-hub-card" type="button" data-settings-section="schoolyear">
-        <span class="settings-hub-title"><span class="settings-hub-icon">↻</span>School Year</span>
+        <span class="settings-hub-title"><span class="settings-hub-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5"/><path d="M19 12a7 7 0 1 0-2 5"/></svg></span>School Year</span>
         <span id="hubSchoolYearSummary" class="settings-hub-summary">Reset or restore school-year data.</span>
         <span class="settings-hub-action">Manage →</span>
       </button>
