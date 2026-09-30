@@ -1,0 +1,208 @@
+/* =========================================================
+   TEACHER DASHBOARD — SHARED DESIGN SYSTEM
+   Phase 1: Foundation
+   ========================================================= */
+
+:root {
+  /* -------------------------------------------------------
+     TYPOGRAPHY
+     ------------------------------------------------------- */
+
+  --font-sans: Inter, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-md: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.375rem;
+  --font-size-2xl: 1.75rem;
+  --font-size-3xl: 2.25rem;
+
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  --line-height-tight: 1.2;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.65;
+
+
+  /* -------------------------------------------------------
+     CORE COLORS
+     ------------------------------------------------------- */
+
+  --color-bg: #f8f7f4;
+  --color-surface: #ffffff;
+  --color-surface-soft: #f3f2ee;
+  --color-surface-hover: #efeee9;
+
+  --color-text: #202124;
+  --color-text-secondary: #60646c;
+  --color-text-muted: #8b9098;
+
+  --color-border: #e3e2de;
+  --color-border-strong: #d3d1cb;
+
+
+  /* -------------------------------------------------------
+     PRIMARY BRAND / ACTION COLOR
+     ------------------------------------------------------- */
+
+  --color-primary: #466bd7;
+  --color-primary-hover: #395cc4;
+  --color-primary-soft: #edf1ff;
+  --color-primary-text: #ffffff;
+
+
+  /* -------------------------------------------------------
+     SOFT ACCENT PALETTE
+     These will eventually help distinguish tool families.
+     ------------------------------------------------------- */
+
+  --color-blue-soft: #edf3ff;
+  --color-blue: #577bdc;
+
+  --color-lavender-soft: #f2efff;
+  --color-lavender: #7768cf;
+
+  --color-sage-soft: #edf6ef;
+  --color-sage: #5f9270;
+
+  --color-peach-soft: #fff1e9;
+  --color-peach: #cf7653;
+
+  --color-gold-soft: #fff7df;
+  --color-gold: #b88b31;
+
+  --color-rose-soft: #fff0f2;
+  --color-rose: #c96876;
+
+
+  /* -------------------------------------------------------
+     STATUS COLORS
+     ------------------------------------------------------- */
+
+  --color-success: #43865d;
+  --color-success-soft: #edf7f0;
+
+  --color-warning: #a97925;
+  --color-warning-soft: #fff7df;
+
+  --color-danger: #b84f5b;
+  --color-danger-hover: #a4424d;
+  --color-danger-soft: #fff0f2;
+
+
+  /* -------------------------------------------------------
+     SPACING
+     ------------------------------------------------------- */
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+
+
+  /* -------------------------------------------------------
+     BORDER RADIUS
+     ------------------------------------------------------- */
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
+  --radius-pill: 999px;
+
+
+  /* -------------------------------------------------------
+     SHADOWS
+     Intentionally subtle.
+     ------------------------------------------------------- */
+
+  --shadow-sm:
+    0 1px 2px rgba(25, 28, 33, 0.04),
+    0 1px 4px rgba(25, 28, 33, 0.04);
+
+  --shadow-md:
+    0 4px 12px rgba(25, 28, 33, 0.06);
+
+  --shadow-lg:
+    0 12px 30px rgba(25, 28, 33, 0.08);
+
+
+  /* -------------------------------------------------------
+     MOTION
+     ------------------------------------------------------- */
+
+  --transition-fast: 120ms ease;
+  --transition-normal: 200ms ease;
+  --transition-slow: 320ms ease;
+
+
+  /* -------------------------------------------------------
+     LAYOUT
+     ------------------------------------------------------- */
+
+  --content-width: 1240px;
+  --page-padding: 24px;
+}
+
+
+/* =========================================================
+   GLOBAL FOUNDATION
+   ========================================================= */
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  font-family: var(--font-sans);
+  color: var(--color-text);
+  background: var(--color-bg);
+}
+
+body {
+  margin: 0;
+  color: var(--color-text);
+  background: var(--color-bg);
+  font-family: var(--font-sans);
+  line-height: var(--line-height-normal);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+
+/* =========================================================
+   ACCESSIBILITY
+   ========================================================= */
+
+:focus-visible {
+  outline: 3px solid rgba(70, 107, 215, 0.35);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
