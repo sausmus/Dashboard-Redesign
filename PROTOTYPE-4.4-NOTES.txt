@@ -1,0 +1,39 @@
+TEACHER DASHBOARD REDESIGN — PROTOTYPE 4.4
+TIMELINESS + SELECTOR WORKFLOW POLISH
+
+Changes
+-------
+1. Timeliness — Record Late Work
+   • Replaced each Timeliness card's View button with Record Late Work.
+   • Clicking the student's name still opens the Student Profile.
+   • Record Late Work opens a compact modal showing:
+       - student name
+       - current Timeliness score
+       - active class/term
+       - assignment-title field
+       - four most recent late-work entries
+   • Enter or the Record Late Work button saves the entry.
+   • The workflow uses the existing DashboardData.addTimelinessEntry() API.
+   • Existing grace-period, deduction, minimum-score, history, and score-calculation rules remain authoritative.
+   • The Timeliness card and Roster update immediately after saving.
+   • If that student's profile is already open, it refreshes too.
+
+2. Student Selector — remaining pool
+   • Normal desktop popovers no longer use a fixed max-height or internal scrolling.
+   • The popover expands vertically to fit the remaining students.
+   • Four columns remain the normal desktop layout.
+   • Roomy desktop widths use five columns so a full class stays compact.
+   • Narrow screens retain two columns; small mobile retains one.
+   • An internal scrollbar is used only as a viewport-safety fallback on unusually short windows/mobile.
+
+3. Student Selector — Selection Mode
+   • Balanced / Random is now a directly clickable rounded pill in the Current Class panel.
+   • Clicking it immediately toggles Balanced ↔ Random.
+   • The existing teacherDashboard.studentsPicker.v1 setting continues to store the mode.
+   • The Student Selector settings modal remains available for the explanatory mode cards and advanced selector link.
+
+Data safety
+-----------
+No Timeliness schema, Participation schema, roster data, Student Selector pool format,
+grading-term data, Classroom mappings, reminders, theme settings, or shell data were changed.
+shared/dashboard-data.js is unchanged.
