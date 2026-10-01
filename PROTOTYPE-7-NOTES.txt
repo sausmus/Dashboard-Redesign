@@ -1,0 +1,69 @@
+TEACHER DASHBOARD — PROTOTYPE 7
+STUDENT NOTES + PAIRING INTELLIGENCE + LINKED TO-DOS
+
+Built from the uploaded Dashboard-Redesign-main (4).zip as the sole source of truth.
+
+1. Student Profile Notes
+------------------------
+• Preserves the existing right-side Student Profile drawer and vertical layout.
+• Adds one Notes section at the very bottom, beneath Timeliness History.
+• Notes are a simple chronological bullet list with no categories or tags.
+• Add a note with the compact input; Enter also saves.
+• Existing notes can be edited or deleted.
+• New storage key: teacherDashboard.studentProfiles.v1
+
+2. Avoid Pairing With
+---------------------
+• A small “Avoid pairing with” selector lives inside the Notes section.
+• No separate Seating/Grouping section or profile tab was added.
+• Pairing restrictions are reciprocal relationships: if A and B should not be paired,
+  both profiles reflect the same restriction.
+• Pairings are stored by stable class/student IDs in teacherDashboard.studentProfiles.v1.
+• This structure is intentionally reusable by a future seat arranger.
+
+3. Group Maker
+--------------
+• Adds “Respect pairing restrictions,” ON by default.
+• Existing studentNamePicker_v1 data remains intact.
+• groupConfig gains one backward-compatible optional field:
+  respectPairingRestrictions: true|false
+• When enabled, Group Maker tries to separate restricted pairs while preserving balanced
+  group sizes.
+• If constraints make a perfect arrangement impossible, groups are still created and the
+  teacher receives a small message indicating how many restrictions could not be avoided.
+• Turning the option off restores the existing random group behavior.
+
+4. Student-Linked To-Dos
+------------------------
+• New To-Do items can optionally be attached to a student from any active class.
+• Existing To-Do items remain fully compatible and require no migration.
+• Existing storage key remains teacherDashboard.todos.v1.
+• Optional backward-compatible fields added to new task records:
+  studentId, studentClassId, studentName
+• Active tagged To-Dos automatically surface in that student’s profile alongside active
+  tagged Reminders.
+• Completed To-Dos no longer appear as active student-profile items.
+
+5. Student Profile Intelligence
+-------------------------------
+• The existing Reminders profile section is now “Reminders & To-Do.”
+• It aggregates active student-linked Reminders and active student-linked To-Do items.
+• The rest of the profile structure remains unchanged.
+
+6. Word Hive
+------------
+• “Words found” is now collapsible with a chevron.
+• The found-word count remains visible while the word list is hidden.
+• Useful for class-day competitions using the same letters, so later periods can see
+  scores without seeing earlier classes’ discovered words.
+• Collapse state persists only for the current browser-tab session and per saved challenge.
+• Session key: bjhWordHiveFoundCollapsed_v1
+• No Word Hive saved-game or scoring schema changed.
+
+DATA SAFETY
+-----------
+No destructive migrations were performed.
+Existing P5/P6 Classroom, Timeliness Doc, Calendar, Class Groups, Agenda, Reminder,
+Participation, Timeliness, Scoreboard, and roster data remain untouched.
+The Dashboard backup system already captures all localStorage keys, including the new
+student profile key.

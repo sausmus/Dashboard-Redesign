@@ -131,6 +131,24 @@
     .profile-muted { color:var(--td-text-secondary); font-size:11px; line-height:1.5; }
     .profile-list { margin:0; padding:0; list-style:none; display:grid; gap:8px; }
     .profile-list li { padding:9px 10px; border-radius:10px; background:var(--td-surface-soft); font-size:11px; line-height:1.45; }
+    .profile-kind { display:inline-flex; margin-right:6px; padding:2px 6px; border-radius:999px; background:var(--td-accent-soft); color:var(--td-accent-strong); font-size:8px; font-weight:800; letter-spacing:.02em; text-transform:uppercase; }
+    .profile-notes-list { margin:0; padding-left:18px; display:grid; gap:7px; }
+    .profile-notes-list li { padding-left:2px; }
+    .profile-note-row { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:8px; align-items:start; }
+    .profile-note-actions { display:flex; gap:4px; }
+    .profile-note-actions button { width:26px; height:26px; border:0; border-radius:8px; background:transparent; color:var(--td-text-muted); cursor:pointer; }
+    .profile-note-actions button:hover { background:var(--td-surface-soft); color:var(--td-text); }
+    .profile-note-composer { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:8px; margin-top:11px; }
+    .profile-note-composer input { min-width:0; }
+    .avoid-pairing { margin-top:14px; padding-top:12px; border-top:1px solid var(--td-border); }
+    .avoid-pairing-label { margin-bottom:7px; color:var(--td-text-secondary); font-size:10px; font-weight:760; }
+    .avoid-select { position:relative; }
+    .avoid-select summary { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:9px 10px; border:1px solid var(--td-border); border-radius:11px; background:var(--td-surface); color:var(--td-text); cursor:pointer; list-style:none; font-size:10px; font-weight:700; }
+    .avoid-select summary::-webkit-details-marker { display:none; }
+    .avoid-options { display:grid; gap:5px; margin-top:7px; max-height:190px; overflow:auto; padding:8px; border:1px solid var(--td-border); border-radius:11px; background:var(--td-surface); }
+    .avoid-option { display:flex; align-items:center; gap:8px; padding:6px 7px; border-radius:8px; font-size:10px; }
+    .avoid-option:hover { background:var(--td-surface-soft); }
+    .avoid-option input { margin:0; accent-color:var(--td-accent); }
     .profile-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
 
     /* Student Selector settings modal */
@@ -671,6 +689,7 @@
 
   <script src="shared/app-shell.js"></script>
   <script src="shared/dashboard-data.js"></script>
+  <script src="shared/student-profile-service.js"></script>
   <script src="shared/grading-terms.js"></script>
   <script src="shared/classroom-service.js"></script>
   <script src="shared/student-progress-service.js"></script>
@@ -792,6 +811,30 @@
           const nameMatch = item.studentName && item.studentName.trim().toLocaleLowerCase() === nameKey && (!item.studentClassId || String(item.studentClassId) === String(period));
           return idMatch || nameMatch;
         });
+      }
+
+      function todosForStudent(student, period = student.classId || currentPeriod) {
+        if (!window.ReminderService?.getTodos) return [];
+        const nameKey = String(student.name || "").trim().toLocaleLowerCase();
+        return ReminderService.getTodos().filter(item => {
+          if (item.completedAt) return false;
+          const idMatch = item.studentId && String(item.studentId) === String(student.id) && (!item.studentClassId || String(item.studentClassId) === String(period));
+          const nameMatch = item.studentName && item.studentName.trim().toLocaleLowerCase() === nameKey && (!item.studentClassId || String(item.studentClassId) === String(period));
+          return idMatch || nameMatch;
+        });
+      }
+
+      function renderNotesSection(student, period) {
+        const profile = StudentProfileService.getProfile(period, student.id);
+        const classmates = (DashboardData.getStudents(period) || []).filter(item => String(item.id) !== String(student.id));
+        const avoided = new Set(profile.avoidPairingWith.map(String));
+        const notes = profile.notes || [];
+        const notesHtml = notes.length
+          ? `<ul class="profile-notes-list">${notes.map(note => `<li><div class="profile-note-row"><span>${escapeHtml(note.text)}</span><span class="profile-note-actions"><button type="button" data-note-edit="${escapeHtml(note.id)}" aria-label="Edit note">✎</button><button type="button" data-note-delete="${escapeHtml(note.id)}" aria-label="Delete note">×</button></span></div></li>`).join("")}</ul>`
+          : '<div class="profile-muted">No notes yet.</div>';
+        const selectedNames = classmates.filter(item => avoided.has(String(item.id))).map(item => item.name);
+        const pairingLabel = selectedNames.length ? selectedNames.join(", ") : "Select students…";
+        return `<section class="profile-section"><div class="profile-section-head"><h3>Notes</h3></div>${notesHtml}<div class="profile-note-composer"><input class="td-input" data-note-input type="text" maxlength="400" placeholder="Add a quick note…"><button type="button" class="td-button td-button-secondary td-button-small" data-note-add>Add</button></div><div class="avoid-pairing"><div class="avoid-pairing-label">Avoid pairing with</div><details class="avoid-select"><summary><span>${escapeHtml(pairingLabel)}</span><span aria-hidden="true">⌄</span></summary><div class="avoid-options">${classmates.length ? classmates.sort((a,b)=>a.name.localeCompare(b.name,undefined,{sensitivity:"base"})).map(item => `<label class="avoid-option"><input type="checkbox" data-avoid-student="${escapeHtml(item.id)}" ${avoided.has(String(item.id))?"checked":""}> <span>${escapeHtml(item.name)}</span></label>`).join("") : '<div class="profile-muted">No other students in this class.</div>'}</div></details></div></section>`;
       }
 
       function escapeHtml(value) {
@@ -1237,15 +1280,17 @@
         const p = participationMap(period).get(String(student.id));
         const t = DashboardData.getTimelinessRecord(period, student.id);
         const reminders = remindersForStudent(student, period);
+        const todos = todosForStudent(student, period);
         const lateEntries = t?.entries || [];
         return `
           <div class="profile-grid">
             <section class="profile-section"><div class="profile-section-head"><h3>Participation</h3><a class="section-link" href="students.html?period=${encodeURIComponent(period)}&view=participation">Open →</a></div><div class="profile-big">${p ? `${p.points}/${p.goal}` : "—"}</div><div class="profile-muted">Current participation credit</div></section>
             <section class="profile-section"><div class="profile-section-head"><h3>Timeliness</h3><a class="section-link" href="students.html?period=${encodeURIComponent(period)}&view=timeliness">Open →</a></div><div class="profile-big">${t ? `${t.score}/${t.startingPoints}` : "—"}</div><div class="profile-muted">${t?.lateCount ? `${t.lateCount} late submission${t.lateCount === 1 ? "" : "s"}` : "No late submissions recorded"}</div></section>
           </div>
-          <section class="profile-section"><div class="profile-section-head"><h3>Reminders</h3><a class="section-link" href="reminders.html">All reminders →</a></div>${reminders.length ? `<ul class="profile-list">${reminders.map(item => `<li>${escapeHtml(item.text)}<div class="profile-muted">${escapeHtml(item.className || classLabel(period))} · ${escapeHtml(item.triggerLabel || "Upcoming")}</div></li>`).join("")}</ul>` : '<div class="profile-muted">No active reminders attached to this student.</div>'}</section>
+          <section class="profile-section"><div class="profile-section-head"><h3>Reminders & To-Do</h3><a class="section-link" href="reminders.html">Open →</a></div>${(reminders.length || todos.length) ? `<ul class="profile-list">${reminders.map(item => `<li><span class="profile-kind">Reminder</span>${escapeHtml(item.text)}<div class="profile-muted">${escapeHtml(item.className || classLabel(period))} · ${escapeHtml(item.triggerLabel || "Upcoming")}</div></li>`).join("")}${todos.map(item => `<li><span class="profile-kind">To-Do</span>${escapeHtml(item.text)}<div class="profile-muted">Active task</div></li>`).join("")}</ul>` : '<div class="profile-muted">No active reminders or to-do items attached to this student.</div>'}</section>
           <section class="profile-section"><div class="profile-section-head"><h3>Writing</h3><a class="section-link" href="writing.html">Open Writing →</a></div><div class="profile-muted">Writing Workspace assignments and Grading Assistant results will populate here as the unified Writing service is connected. The profile is already reserved as their single student-level home.</div></section>
-          <section class="profile-section"><div class="profile-section-head"><h3>Timeliness history</h3></div>${lateEntries.length ? `<ul class="profile-list">${lateEntries.slice().reverse().map(item => `<li>${escapeHtml(timelinessEntryLabel(item))}<div class="profile-muted">${escapeHtml(formatEntryDate(item.createdAt))}</div><button type="button" class="td-button td-button-secondary td-button-small" data-profile-delete="${escapeHtml(item.id)}">Delete</button></li>`).join("")}</ul>` : '<div class="profile-muted">No late-work entries for the active term.</div>'}</section>`;
+          <section class="profile-section"><div class="profile-section-head"><h3>Timeliness history</h3></div>${lateEntries.length ? `<ul class="profile-list">${lateEntries.slice().reverse().map(item => `<li>${escapeHtml(timelinessEntryLabel(item))}<div class="profile-muted">${escapeHtml(formatEntryDate(item.createdAt))}</div><button type="button" class="td-button td-button-secondary td-button-small" data-profile-delete="${escapeHtml(item.id)}">Delete</button></li>`).join("")}</ul>` : '<div class="profile-muted">No late-work entries for the active term.</div>'}</section>
+          ${renderNotesSection(student, period)}`;
       }
 
       function openProfile(studentId, period) {
@@ -1386,16 +1431,52 @@
         renderRoster(); renderParticipation(); renderTimeliness(); renderPickerWinner(); renderPickerSide();
       });
       el("profileBody").addEventListener("click", event => {
-        const button = event.target.closest("[data-profile-delete]");
-        if (!button || !profileContext) return;
+        if (!profileContext) return;
         const {studentId,period,termId} = profileContext;
-        const record = DashboardData.getTimelinessRecord(period,studentId,termId);
-        const entry = record.entries.find(item => String(item.id) === button.dataset.profileDelete);
-        if (!entry || !window.confirm('Delete "' + timelinessEntryLabel(entry) + '"? The Timeliness score will be recalculated.')) return;
-        try {
-          DashboardData.removeTimelinessEntry(period,studentId,entry.id,termId);
-          openProfile(studentId,period); renderRoster(); renderParticipation(); renderTimeliness(); renderPickerSide();
-        } catch(e) { window.alert(e.message || "Could not delete the late assignment."); }
+        const timelinessButton = event.target.closest("[data-profile-delete]");
+        if (timelinessButton) {
+          const record = DashboardData.getTimelinessRecord(period,studentId,termId);
+          const entry = record.entries.find(item => String(item.id) === timelinessButton.dataset.profileDelete);
+          if (!entry || !window.confirm('Delete "' + timelinessEntryLabel(entry) + '"? The Timeliness score will be recalculated.')) return;
+          try { DashboardData.removeTimelinessEntry(period,studentId,entry.id,termId); openProfile(studentId,period); renderRoster(); renderParticipation(); renderTimeliness(); renderPickerSide(); }
+          catch(e) { window.alert(e.message || "Could not delete the late assignment."); }
+          return;
+        }
+        const addNoteButton = event.target.closest("[data-note-add]");
+        if (addNoteButton) {
+          const input=el("profileBody").querySelector("[data-note-input]");
+          try { StudentProfileService.addNote(period,studentId,input?.value||""); openProfile(studentId,period); }
+          catch(e) { if(e?.message) window.alert(e.message); }
+          return;
+        }
+        const editButton = event.target.closest("[data-note-edit]");
+        if (editButton) {
+          const note=StudentProfileService.getProfile(period,studentId).notes.find(item=>String(item.id)===String(editButton.dataset.noteEdit));
+          if(!note)return;
+          const next=window.prompt("Edit note",note.text);
+          if(next===null)return;
+          try { StudentProfileService.updateNote(period,studentId,note.id,next); openProfile(studentId,period); }
+          catch(e) { if(e?.message) window.alert(e.message); }
+          return;
+        }
+        const deleteButton = event.target.closest("[data-note-delete]");
+        if (deleteButton) {
+          if(!window.confirm("Delete this note?"))return;
+          StudentProfileService.deleteNote(period,studentId,deleteButton.dataset.noteDelete); openProfile(studentId,period);
+        }
+      });
+      el("profileBody").addEventListener("keydown", event => {
+        if(event.key!=="Enter" || event.isComposing || !event.target.matches("[data-note-input]") || !profileContext)return;
+        event.preventDefault();
+        try { StudentProfileService.addNote(profileContext.period,profileContext.studentId,event.target.value); openProfile(profileContext.studentId,profileContext.period); }
+        catch(e) { if(e?.message) window.alert(e.message); }
+      });
+      el("profileBody").addEventListener("change", event => {
+        if(!event.target.matches("[data-avoid-student]") || !profileContext)return;
+        const checked=[...el("profileBody").querySelectorAll("[data-avoid-student]:checked")];
+        StudentProfileService.setAvoidPairing(profileContext.period,profileContext.studentId,checked.map(input=>input.dataset.avoidStudent));
+        const summary=event.target.closest(".avoid-select")?.querySelector("summary span:first-child");
+        if(summary) summary.textContent=checked.length?checked.map(input=>input.closest("label")?.querySelector("span")?.textContent||"").filter(Boolean).join(", "):"Select students…";
       });
 
       ["roster", "participation", "timeliness"].forEach(view => {
@@ -1477,7 +1558,8 @@
         }
       });
       window.addEventListener(DashboardData.changeEvent, () => { renderRoster(); if (currentView === "participation") renderParticipation(); if (currentView === "timeliness") renderTimeliness(); if (currentView === "picker") { renderPickerWinner(); renderPickerSide(); } });
-      window.addEventListener(ReminderService?.changeEvent || "teacher-dashboard-reminders-changed", () => { renderRoster(); if (currentWinner) renderPickerWinner(); });
+      window.addEventListener(ReminderService?.changeEvent || "teacher-dashboard-reminders-changed", () => { renderRoster(); if (currentWinner) renderPickerWinner(); if(profileContext) openProfile(profileContext.studentId,profileContext.period); });
+      window.addEventListener(ReminderService?.todoChangeEvent || "teacher-dashboard-todos-changed", () => { if(profileContext) openProfile(profileContext.studentId,profileContext.period); });
       window.addEventListener(TeacherDashboardGradingTerms?.changeEvent || "teacher-dashboard-grading-terms-changed", () => {
         renderRoster();
         renderParticipation();

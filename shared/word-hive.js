@@ -1,6 +1,6 @@
 (() => {
 'use strict';
-const C=window.WordHiveCore, KEY='bjhWordHive_v1';
+const C=window.WordHiveCore, KEY='bjhWordHive_v1', FOUND_VISIBILITY_KEY='bjhWordHiveFoundCollapsed_v1';
 const $=id=>document.getElementById(id), copy=x=>JSON.parse(JSON.stringify(x));
 const uid=()=>globalThis.crypto?.randomUUID?.()||Date.now().toString(36)+Math.random().toString(36).slice(2);
 const node=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;};
@@ -10,6 +10,9 @@ let data={version:1,revision:0,selected:null,challenges:[]},blocked=false,active
 function validData(d){return d&&d.version===1&&Number.isInteger(d.revision)&&Array.isArray(d.challenges)&&d.challenges.every(C.validate)&&new Set(d.challenges.map(c=>c.id)).size===d.challenges.length&&(!d.selected||d.challenges.some(c=>c.id===d.selected))&&d.challenges.flatMap(c=>Object.values(c.rounds)).filter(r=>['running','paused'].includes(r.status)).length<=1;}
 try{const raw=localStorage.getItem(KEY);if(raw){const parsed=JSON.parse(raw);if(!validData(parsed))throw Error('Invalid saved data');data=parsed;}}catch(e){blocked=true;say('Saved Word Hive data could not be read. It has been preserved. Import a valid backup in Teacher controls to recover it.');}
 function current(){return data.challenges.find(c=>c.id===data.selected);}
+function foundCollapsed(id=current()?.id){if(!id)return false;try{const state=JSON.parse(sessionStorage.getItem(FOUND_VISIBILITY_KEY)||'{}');return state[id]===true;}catch{return false;}}
+function setFoundCollapsed(value,id=current()?.id){if(!id)return;let state={};try{state=JSON.parse(sessionStorage.getItem(FOUND_VISIBILITY_KEY)||'{}')||{};state[id]=!!value;sessionStorage.setItem(FOUND_VISIBILITY_KEY,JSON.stringify(state));}catch{}}
+function paintFoundVisibility(){const c=current(),collapsed=foundCollapsed(c?.id);if(!$('found')||!$('toggleFoundWords'))return;$('found').hidden=collapsed;$('toggleFoundWords').setAttribute('aria-expanded',String(!collapsed));}
 function currentRound(){return current()?.rounds[activePeriod];}
 function isTimed(c=current()){return c?.timed!==false;}
 function fresh(){if(blocked)throw Error('Reload this page or import a valid backup before continuing.');const raw=localStorage.getItem(KEY);if(raw&&JSON.parse(raw).revision!==data.revision){blocked=true;throw Error('Word Hive changed in another tab. Reload to use the latest results.');}}
@@ -45,7 +48,7 @@ function render(){
   $('challengeTitle').textContent=c.title;
   $('challengeDate').textContent=new Date(c.createdAt).toLocaleDateString(undefined,{month:'short',day:'numeric'})+' · '+String(c.difficulty||'medium').toUpperCase()+' · '+(isTimed(c)?c.durationMs/60000+' MINUTES PER CLASS':'NO TIME LIMIT');
   const r=currentRound();$('roundStatus').textContent=c.posted?'RESULTS POSTED':r.status.toUpperCase();$('score').textContent=C.roundScore(c,r);
-  const accepted=r.attempts.filter(w=>c.words.includes(w)).sort();$('foundCount').textContent=accepted.length;$('found').replaceChildren(...accepted.map(w=>node('span',w,C.letters(w).length===7?'word pangram':'word')));if(!accepted.length)$('found').append(node('p',r.status==='ready'?'A fresh word list for this class.':'Your accepted words will appear here.','subtle'));
+  const accepted=r.attempts.filter(w=>c.words.includes(w)).sort();$('foundCount').textContent=accepted.length;$('found').replaceChildren(...accepted.map(w=>node('span',w,C.letters(w).length===7?'word pangram':'word')));if(!accepted.length)$('found').append(node('p',r.status==='ready'?'A fresh word list for this class.':'Your accepted words will appear here.','subtle'));paintFoundVisibility();
   const enabled=r.status==='running'&&!c.posted&&!blocked;for(const id of ['guess','enter','delete'])$(id).disabled=!enabled;
   $('startRound').hidden=r.status!=='ready'||!!c.posted;$('startRound').disabled=!!running()||blocked;$('startRound').textContent=isTimed(c)?'Start '+c.durationMs/60000+'-minute round':'Start untimed round';
   $('roundNote').textContent=r.status==='ready'?(running()?'Finish the active round before starting this class.':isTimed(c)?'The timer starts when you click Start.':'No timer will run. End the round from Teacher controls when the class is finished.'):r.status==='running'?(isTimed(c)?'The timer continues if you refresh or leave this page.':'No time limit. End the round from Teacher controls when the class is finished.'):r.status==='paused'?'Round paused. Resume in Teacher controls.':r.status==='excluded'?'This class is excluded from this challenge.':'Round complete. Results are saved for the teacher.';
@@ -120,6 +123,7 @@ function randomPuzzle(difficulty){
   }
   return best;
 }
+on('toggleFoundWords',()=>{const c=current();if(!c)return;setFoundCollapsed(!foundCollapsed(c.id),c.id);paintFoundVisibility();});
 on('generate',async()=>{if(!dictionaryReady)throw Error('The dictionary is still loading. If it failed, refresh the page.');$('generate').disabled=true;resetPreview();try{await new Promise(resolve=>setTimeout(resolve,0));const method=$('method').value,difficulty=$('difficulty').value;let hive;if(method==='random'){draft=randomPuzzle(difficulty);if(!draft)throw Error('No random puzzle is available. Try entering your own pangram.');}else{const raw=C.normalize(method==='letters'?$('letters').value.replace(/\s/g,''):$('pangram').value);if(!/^[a-z]+$/.test(raw))throw Error('Enter letters A–Z only.');if(method==='letters'&&raw.length!==7)throw Error('Enter seven different letters, without repeats.');hive=C.letters(raw);if(hive.length!==7)throw Error('The puzzle needs exactly seven unique letters.');if(method==='pangram'&&!dictionary.has(raw))throw Error('That pangram is not in the built-in dictionary. Use Choose seven letters, then add your word to the answer bank.');draft=build(hive,$('center').value,difficulty);} $('previewLetters').textContent=draft.letters.toUpperCase().split('').join(' · ')+' — CENTER: '+draft.center.toUpperCase()+' · '+difficulty.toUpperCase();$('bankCount').textContent=draft.words.length+' words · '+draft.words.reduce((s,w)=>s+C.points(w),0)+' possible points · Pangrams: '+draft.words.filter(w=>C.letters(w).length===7).join(', ');$('bank').value=draft.words.join('\n');$('preview').hidden=false;}finally{$('generate').disabled=false;}});
 on('saveChallenge',()=>{
   if(!draft)throw Error('Generate a puzzle first.');if(running())throw Error('Finish the active round first.');

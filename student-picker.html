@@ -548,6 +548,8 @@
       color: #5f6368;
       font-size: 14px;
     }
+    .pairing-option { display:flex; align-items:center; justify-content:center; gap:8px; margin-top:18px; color:#5f6368; font-size:13px; font-weight:600; }
+    .pairing-option input { width:16px; height:16px; margin:0; accent-color:#1a73e8; }
 
     .generate-area {
       margin-top: 20px;
@@ -1100,6 +1102,8 @@
           0 students available
         </div>
 
+        <label class="pairing-option"><input id="respectPairingRestrictions" type="checkbox" checked> Respect pairing restrictions</label>
+
         <div class="generate-area">
           <button id="generateGroupsButton" class="primary large-button">
             GENERATE GROUPS
@@ -1287,6 +1291,7 @@
 
 
 <script src="shared/dashboard-data.js"></script>
+<script src="shared/student-profile-service.js"></script>
 <script src="shared/bell-service.js"></script>
   <script src="shared/reminder-service.js"></script>
 
@@ -1329,7 +1334,8 @@
 
       groupConfig: {
         method: "size",
-        value: 4
+        value: 4,
+        respectPairingRestrictions: true
       },
 
       groups: []
@@ -1433,9 +1439,13 @@
 
           data.groupConfig = {
             method: "size",
-            value: 4
+            value: 4,
+            respectPairingRestrictions: true
           };
 
+        }
+        if (typeof data.groupConfig.respectPairingRestrictions !== "boolean") {
+          data.groupConfig.respectPairingRestrictions = true;
         }
 
         if (
@@ -1923,6 +1933,8 @@
     document.getElementById(
       "generateGroupsButton"
     );
+
+  const respectPairingRestrictions = document.getElementById("respectPairingRestrictions");
 
   const regenerateButton =
     document.getElementById(
@@ -2697,6 +2709,7 @@
       remaining === 0;
 
     updateGroupChoiceButtons();
+    respectPairingRestrictions.checked = data.groupConfig.respectPairingRestrictions !== false;
 
     renderGroups();
 
@@ -3278,6 +3291,8 @@
 
           data.groupConfig = {
 
+            ...data.groupConfig,
+
             method:
               button.dataset.method,
 
@@ -3302,108 +3317,57 @@
   );
 
 
+  respectPairingRestrictions.addEventListener("change", () => {
+    const data = currentData();
+    data.groupConfig.respectPairingRestrictions = respectPairingRestrictions.checked;
+    data.groups = [];
+    saveState();
+    updateUI();
+  });
+
   /* =========================================================
      GENERATE GROUPS
   ========================================================= */
 
   function generateGroups() {
+    const data = currentData();
+    if (data.masterRoster.length === 0) { window.location.href = "settings.html"; return; }
+    if (data.pool.length === 0) { showToast("No students are currently in the pool"); return; }
 
-    const data =
-      currentData();
-
-    if (
-      data.masterRoster.length === 0
-    ) {
-
-      window.location.href =
-        "settings.html";
-
-      return;
-
-    }
-
-    if (
-      data.pool.length === 0
-    ) {
-
-      showToast(
-        "No students are currently in the pool"
-      );
-
-      return;
-
-    }
-
-    const students =
-      shuffleArray(
-        data.pool
-      );
-
-    const config =
-      data.groupConfig;
-
+    const students = shuffleArray(data.pool);
+    const config = data.groupConfig;
     let numberOfGroups;
+    if (config.method === "size") numberOfGroups = Math.ceil(students.length / config.value);
+    else numberOfGroups = Math.min(config.value, students.length);
 
-    if (
-      config.method ===
-      "size"
-    ) {
+    const groups = Array.from({ length: numberOfGroups }, () => []);
+    let unavoidableConflicts = 0;
 
-      numberOfGroups =
-        Math.ceil(
-          students.length /
-          config.value
-        );
+    if (config.respectPairingRestrictions !== false && window.StudentProfileService) {
+      const pairings = StudentProfileService.getPairings(state.currentPeriod);
+      const conflictSet = new Set(pairings.map(pair => [String(pair.a), String(pair.b)].sort().join("\u0000")));
+      const conflict = (a,b) => conflictSet.has([String(a),String(b)].sort().join("\u0000"));
+      const degree = id => students.reduce((count,other)=>count+(id!==other&&conflict(id,other)?1:0),0);
+      const ordered = students.slice().sort((a,b)=>degree(b)-degree(a));
+      const base = Math.floor(students.length / numberOfGroups), extra = students.length % numberOfGroups;
+      const capacities = Array.from({length:numberOfGroups},(_,i)=>base+(i<extra?1:0));
 
+      ordered.forEach(student => {
+        const candidates = groups.map((group,index)=>({group,index,conflicts:group.filter(other=>conflict(student,other)).length,size:group.length,capacity:capacities[index]})).filter(item=>item.size<item.capacity);
+        candidates.sort((a,b)=>a.conflicts-b.conflicts || a.size-b.size || Math.random()-.5);
+        const pick = candidates[0];
+        if (pick.conflicts) unavoidableConflicts += pick.conflicts;
+        pick.group.push(student);
+      });
+    } else {
+      students.forEach((student,index)=>groups[index % numberOfGroups].push(student));
     }
 
-    else {
-
-      numberOfGroups =
-        Math.min(
-          config.value,
-          students.length
-        );
-
-    }
-
-    const groups =
-      Array.from(
-        {
-          length:
-            numberOfGroups
-        },
-        () => []
-      );
-
-    students.forEach(
-      (student, index) => {
-
-        const groupIndex =
-          index %
-          numberOfGroups;
-
-        groups[
-          groupIndex
-        ].push(
-          student
-        );
-
-      }
-    );
-
-    data.groups =
-      groups;
-
+    data.groups = groups;
     saveState();
-
     renderGroups();
-
-    groupsResultSection.scrollIntoView({
-      behavior: "smooth",
-      block: "start"
-    });
-
+    if (unavoidableConflicts) showToast(`Groups created. ${unavoidableConflicts} pairing restriction${unavoidableConflicts===1?"":"s"} could not be avoided.`);
+    groupsResultSection.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
 

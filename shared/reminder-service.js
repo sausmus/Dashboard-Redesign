@@ -738,6 +738,9 @@
       id: String(item.id || makeId()),
       text,
       source: String(item.source || "manual"),
+      studentId: String(item.studentId || "").trim(),
+      studentClassId: String(item.studentClassId || item.classId || "").trim(),
+      studentName: String(item.studentName || "").trim(),
       createdAt: String(item.createdAt || new Date().toISOString()),
       completedAt: String(item.completedAt || "")
     };
@@ -789,6 +792,9 @@
       id: makeId(),
       text,
       source: input.source || "manual",
+      studentId: input.studentId,
+      studentClassId: input.studentClassId || input.classId,
+      studentName: input.studentName,
       createdAt: new Date().toISOString(),
       completedAt: ""
     });
