@@ -1,6 +1,9 @@
 TEACHER DASHBOARD PROTOTYPE 5 — STUDENT PROGRESS SYNC
 
 STUDENTS FOLLOW-UP FIX
+Student grids reserve their normal responsive columns even when search returns
+only one or two matches. Cards retain their regular width instead of expanding
+to fill the empty results area; existing padding and height rules are preserved.
 Search stays in the current tab and filters Roster, Participation, and
 Timeliness across all active periods. It persists when switching tabs.
 Matching utility cards carry their actual class IDs, so profile, point changes,
