@@ -20,7 +20,7 @@
   };
   const ready = c => Boolean(c.assignment?.courseWorkId && c.mapping?.courseId === c.assignment.courseId && Number(c.assignment.maxPoints) === Number(c.settings.assignmentPoints) && c.assignment.state === "PUBLISHED");
   const key = c => JSON.stringify([c.utility, c.mapping?.courseId, c.assignment?.courseWorkId, c.termId]);
-  const fingerprint = (c, student) => JSON.stringify({student, settings:c.settings.title, policy:c.utility === "timeliness" ? DashboardData.getTimelinessRecord(c.classId, student.id, c.termId) : null, delivery:"native-drive-attachment-v1", options:c.utility === "timeliness" ? read().options : null});
+  const fingerprint = (c, student) => JSON.stringify({student, settings:c.settings.title, policy:c.utility === "timeliness" ? DashboardData.getTimelinessRecord(c.classId, student.id, c.termId) : null, delivery:"teacher-owned-link-v2", options:c.utility === "timeliness" ? read().options : null});
   function status(utility, classId) {
     const c = context(utility, classId);
     if (!ready(c)) return "Needs setup";
@@ -52,7 +52,8 @@
       saveDoc(k,saved); // persist before rewriting/sharing, including failed later steps
     }
     const file = await ClassroomService.progressRequest("drive", `/files/${saved.id}`, {params:{fields:"id,ownedByMe,trashed,appProperties"}});
-    if (!file.ownedByMe || file.trashed || file.appProperties?.tdTimelinessRecord !== digest) throw new Error("Record ownership or identity changed. Restore the original teacher-owned Doc; no replacement created.");
+    if (!file.ownedByMe) throw new Error("The record is no longer teacher-owned, possibly from the native-attachment test. Have its current owner transfer it back to you and remove its native Drive attachment from the submission before retrying. No replacement Doc was created.");
+    if (file.trashed || file.appProperties?.tdTimelinessRecord !== digest) throw new Error("Record identity changed or the Doc is trashed. Restore the original teacher-owned Doc; no replacement created.");
     const permissions = await ClassroomService.progressRequest("drive", `/files/${saved.id}/permissions`, {params:{fields:"permissions(id,type,role,emailAddress),nextPageToken",pageSize:100}});
     if (permissions.nextPageToken || (permissions.permissions || []).some(p => p.role !== "owner" && (p.type !== "user" || p.emailAddress?.toLowerCase() !== person.email.toLowerCase()))) throw new Error("Record has unexpected sharing. Restrict access in Drive before syncing.");
     const studentPermission = permissions.permissions?.find(p => p.emailAddress?.toLowerCase() === person.email.toLowerCase() && p.role !== "owner");
@@ -70,16 +71,17 @@
     saved = {...saved, updatedAt:new Date().toISOString()}; saveDoc(k,saved);
     return saved;
   }
-  const testKey = c => JSON.stringify(["native-drive-v1",options().recordYear,c.mapping?.courseId,c.assignment?.courseWorkId,c.termId]);
+  const testKey = c => JSON.stringify(["teacher-owned-link-v2",options().recordYear,c.mapping?.courseId,c.assignment?.courseWorkId,c.termId]);
   function tested(c) { return Boolean(read().attachmentTests?.[testKey(c)]); }
   async function attachDoc(c,student,submission,doc) {
     const path = "/courses/" + encodeURIComponent(c.mapping.courseId) + "/courseWork/" + encodeURIComponent(c.assignment.courseWorkId) + "/studentSubmissions/" + encodeURIComponent(submission.id);
     const current = await ClassroomService.progressRequest("classroom",path);
     const attachments = current.assignmentSubmission?.attachments || [];
-    const containsDoc = attachments.some(a => a.driveFile?.id === doc.id);
+    if (attachments.some(a => a.driveFile?.id === doc.id)) throw new Error("Remove this record's native Drive attachment before syncing its read-only link; returning a native attachment can transfer ownership to the student.");
+    const containsDoc = attachments.some(a => a.link?.url?.match(/docs\.google\.com\/document\/d\/([^/?#]+)/)?.[1] === doc.id);
     if (!containsDoc) {
       if (attachments.length >= 20) throw new Error("Submission has 20 attachments; nothing was replaced.");
-      await ClassroomService.progressRequest("classroom",path+":modifyAttachments",{method:"POST",body:{addAttachments:[{driveFile:{id:doc.id}}]}});
+      await ClassroomService.progressRequest("classroom",path+":modifyAttachments",{method:"POST",body:{addAttachments:[{link:{url:doc.url}}]}});
     }
     const saved = {...doc,attachedAssignments:{...doc.attachedAssignments,[c.assignment.courseWorkId]:new Date().toISOString()}};
     saveDoc(documentKey(c,student),saved);
@@ -110,6 +112,15 @@
         if (student.eligible && withDocs) {
           try {
             if (withAttachments && !submission) throw new Error("No Classroom submission found; no record created.");
+            const existingDoc = docInfo(c,student);
+            if (existingDoc?.id && submission) {
+              const existingSubmission = await ClassroomService.progressRequest("classroom", "/courses/" + encodeURIComponent(c.mapping.courseId) + "/courseWork/" + encodeURIComponent(c.assignment.courseWorkId) + "/studentSubmissions/" + encodeURIComponent(submission.id));
+              if ((existingSubmission.assignmentSubmission?.attachments || []).some(a => a.driveFile?.id === existingDoc.id)) {
+                result.failedCount++;
+                result.errors.push(`${student.name}: Native test attachment is still present. Remove that native attachment and restore the Doc's ownership to the teacher before syncing. This student's Doc and grade were not updated.`);
+                continue;
+              }
+            }
             const doc = await syncDoc(c,student,roster);
             if (withAttachments) await attachDoc(c,student,submission,doc);
           } catch (e) { docError=e; }

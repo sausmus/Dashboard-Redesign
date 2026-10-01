@@ -1,17 +1,26 @@
 TEACHER DASHBOARD PROTOTYPE 5 — ONE-STUDENT ASSIGNMENT ATTACHMENT TEST
 
-NATIVE DRIVE ATTACHMENT UPDATE
-New attachments use driveFile:{id:existingDocId}, rather than a web link. This
-requests Classroom's native file presentation; the exact preview and student
-read-only access must still be verified live. The one-student tester is retained.
-Native-file tests use a new versioned test identity, so the previous web-link
-test does not unlock full-class native attachment delivery. Rerun one student.
-Matching native files are not added again on subsequent syncs. An existing web
-link alone does not count as a native file. For the previously tested student,
-one native file is added alongside the old link to the SAME Doc. No new Doc is
-created. The API supports adding attachments, not removing/replacing the old
-link; this patch leaves all existing attachments intact. The old Google Sign In
-tile may remain alongside the native file. No separate Classwork posts are made.
+TEACHER-OWNED READ-ONLY LINK UPDATE (SUPERSEDES NATIVE-FILE PATCH)
+Record attachments now use link:{url:existingDocUrl}, never a native Drive file.
+Returning a Classroom submission transfers ownership of native Drive attachments
+to the student; URL attachments avoid that native-file ownership mechanism.
+The link may appear as a Google Sign In tile, but opens the privately shared Doc.
+The Doc is verified teacher-owned and the student's permission is reader only.
+Classroom controls link title/thumbnail fetching; no preview improvement is promised.
+Existing matching URL attachments are reused, and no extra Classwork posts are made.
+The one-student tester remains. A versioned link test is required before class
+record attachment sync; run it with a student who has not received a native file.
+
+RECOVERING THE NATIVE TEST STUDENT
+The already transferred Doc is not silently replaced, copied or reclaimed.
+Its current owner must transfer ownership back to the teacher, and its native
+Drive attachment must be removed from the Classroom submission before reusing
+that record. This API can add attachments but cannot remove the native one.
+When a mapped record's native attachment is detected, that student's Doc and
+grade writes are skipped with an explicit explanation, to avoid another ownership
+transfer. The old URL attachment, if present, can remain. For now, test another
+student to verify the read-only link workflow without modifying the native test Doc.
+Other student's unrelated attachments and all Dashboard data remain untouched.
 This incremental patch changes only shared/student-progress-service.js and notes.
 
 This package replaces the earlier separate-Classroom-material workflow.
@@ -48,7 +57,7 @@ session, with detailed errors. Grade success can coexist with attachment failure
 that student stays pending and the test does not unlock class attachment sync.
 
 ATTACHMENT IMPLEMENTATION
-Uses Classroom studentSubmissions.modifyAttachments to add a native Drive file inside
+Uses Classroom studentSubmissions.modifyAttachments to add a read-only Doc URL inside
 the student's existing assignment submission. Teacher-owned Docs stay reader-
 shared with the student. No template or Make a copy for each student is needed.
 Reads existing submission attachments before adding; matching Doc links/files
