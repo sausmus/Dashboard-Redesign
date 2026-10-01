@@ -3,2031 +3,451 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Class Reminders</title>
-  <link rel="icon" type="image/png" href="bjh-logo.png">
-
-  <style>
-    * { box-sizing: border-box; }
-
-    :root {
-      --blue: #1a73e8;
-      --blue-dark: #1765cc;
-      --green: #188038;
-      --red: #c5221f;
-      --text: #202124;
-      --muted: #5f6368;
-      --border: #dadce0;
-      --panel: #ffffff;
-      --page: #f4f6f8;
-    }
-
-    body {
-      margin: 0;
-      padding: 26px;
-      font-family: Arial, Helvetica, sans-serif;
-      background: var(--page);
-      color: var(--text);
-    }
-
-    .dashboard-back {
-      position: fixed;
-      top: 18px;
-      left: 18px;
-      z-index: 900;
-      display: inline-flex;
-      align-items: center;
-      padding: 9px 14px;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      background: #fff;
-      color: var(--blue);
-      font-size: 14px;
-      font-weight: 700;
-      text-decoration: none;
-      box-shadow: 0 2px 8px rgba(0,0,0,.08);
-    }
-
-    .dashboard-back:hover { background: #e8f0fe; }
-
-    .app {
-      max-width: 980px;
-      margin: 0 auto;
-    }
-
-    .app-header {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 14px;
-      margin-bottom: 18px;
-    }
-
-    .app-header h1 {
-      margin: 0;
-      text-align: center;
-      font-size: 30px;
-    }
-
-    .bjh-logo {
-      width: 64px;
-      height: auto;
-      flex-shrink: 0;
-    }
-
-    .bjh-logo.right { transform: scaleX(-1); }
-
-    .global-bell-row {
-      display: flex;
-      justify-content: flex-end;
-      margin: -4px 0 16px;
-    }
-
-    .view-switch {
-      display: flex;
-      justify-content: center;
-      gap: 8px;
-      margin: 0 0 16px;
-    }
-
-    .view-switch button {
-      min-width: 160px;
-      min-height: 44px;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      background: #fff;
-      color: var(--text);
-      padding: 10px 16px;
-      font: inherit;
-      font-weight: 800;
-      cursor: pointer;
-    }
-
-    .view-switch button.selected {
-      border-color: var(--blue);
-      background: var(--blue);
-      color: #fff;
-    }
-
-    .todo-input {
-      font-size: 16px;
-      flex: 1 1 auto;
-    }
-
-    .todo-entry-row {
-      display: flex;
-      gap: 10px;
-      align-items: stretch;
-    }
-
-    .todo-entry-row .button {
-      flex: 0 0 auto;
-      min-width: 88px;
-    }
-
-    .todo-list {
-      display: grid;
-      gap: 8px;
-    }
-
-    .todo-item {
-      display: grid;
-      grid-template-columns: auto minmax(0, 1fr);
-      gap: 12px;
-      align-items: start;
-      padding: 14px 15px;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      background: #fff;
-    }
-
-    .todo-item input[type="checkbox"] {
-      width: 20px;
-      height: 20px;
-      min-height: 0;
-      margin: 1px 0 0;
-      padding: 0;
-      accent-color: var(--blue);
-      cursor: pointer;
-    }
-
-    .todo-text {
-      font-size: 16px;
-      font-weight: 700;
-      line-height: 1.4;
-      overflow-wrap: anywhere;
-    }
-
-    .todo-date {
-      margin-top: 4px;
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 700;
-    }
-
-    .todo-item.completed {
-      background: #f8f9fa;
-      opacity: .78;
-    }
-
-    .todo-item.completed .todo-text {
-      text-decoration: line-through;
-    }
-
-    .completed-todos {
-      margin-top: 18px;
-      border-top: 1px solid var(--border);
-      padding-top: 4px;
-    }
-
-    .completed-todos summary {
-      padding: 13px 2px 9px;
-      color: var(--muted);
-      font-size: 13px;
-      font-weight: 800;
-      cursor: pointer;
-      user-select: none;
-    }
-
-    .completed-todos[open] summary {
-      margin-bottom: 4px;
-    }
-
-    .completed-todo-actions {
-      display: flex;
-      justify-content: flex-end;
-      margin: 0 0 10px;
-    }
-
-    .completed-todo-actions[hidden] {
-      display: none;
-    }
-
-    .notification-setting {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 18px;
-    }
-
-    .notification-setting-copy {
-      min-width: 0;
-    }
-
-    .notification-setting-copy strong {
-      display: block;
-      margin-bottom: 5px;
-      font-size: 17px;
-    }
-
-    .notification-setting-copy p {
-      margin: 0;
-      color: var(--muted);
-      font-size: 14px;
-      line-height: 1.45;
-    }
-
-    .notification-controls {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex: 0 0 auto;
-    }
-
-    .notification-status {
-      display: inline-flex;
-      align-items: center;
-      min-height: 34px;
-      padding: 6px 10px;
-      border-radius: 999px;
-      background: #f1f3f4;
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 800;
-      white-space: nowrap;
-    }
-
-    .notification-status.enabled {
-      background: #e6f4ea;
-      color: #137333;
-    }
-
-    .notification-status.blocked {
-      background: #fce8e6;
-      color: #b3261e;
-    }
-
-    .notification-help {
-      margin-top: 10px;
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.45;
-    }
-
-    .notification-permission-backdrop {
-      position: fixed;
-      inset: 0;
-      z-index: 31000;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 18px;
-      background: rgba(32,33,36,.64);
-      backdrop-filter: blur(3px);
-    }
-
-    .notification-permission-backdrop.visible { display: flex; }
-
-    .notification-permission-dialog {
-      width: min(500px, 100%);
-      padding: 25px;
-      border-radius: 18px;
-      background: #fff;
-      box-shadow: 0 18px 60px rgba(0,0,0,.30);
-      text-align: center;
-    }
-
-    .notification-permission-icon {
-      width: 58px;
-      height: 58px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 auto 12px;
-      border-radius: 50%;
-      background: #e8f0fe;
-      font-size: 28px;
-    }
-
-    .notification-permission-dialog h2 {
-      margin: 0 0 9px;
-      font-size: 23px;
-    }
-
-    .notification-permission-dialog p {
-      margin: 0 auto;
-      max-width: 410px;
-      color: var(--muted);
-      font-size: 15px;
-      line-height: 1.5;
-    }
-
-    .notification-permission-actions {
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-      margin-top: 20px;
-    }
-
-    .section {
-      background: var(--panel);
-      padding: 22px;
-      border-radius: 16px;
-      margin-bottom: 16px;
-      box-shadow: 0 2px 8px rgba(0,0,0,.08);
-    }
-
-    .section-title {
-      margin-bottom: 14px;
-      color: var(--muted);
-      font-size: 13px;
-      font-weight: 800;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-    }
-
-    .schedule-row {
-      display: grid;
-      grid-template-columns: minmax(220px, 1fr) minmax(220px, 320px);
-      gap: 16px;
-      align-items: end;
-    }
-
-    .daily-setup-section {
-      padding: 16px 18px;
-    }
-
-    .daily-setup-section .section-title {
-      margin-bottom: 10px;
-    }
-
-    .daily-setup-grid {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-      gap: 0;
-      align-items: stretch;
-    }
-
-    .daily-setup-item {
-      min-width: 0;
-      padding: 2px 18px 2px 0;
-    }
-
-    .daily-setup-item + .daily-setup-item {
-      padding: 2px 0 2px 18px;
-      border-left: 1px solid var(--border);
-    }
-
-    .daily-setup-label {
-      margin-bottom: 8px;
-      color: var(--text);
-      font-size: 14px;
-      font-weight: 800;
-    }
-
-    .daily-setup-control-row {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(132px, 168px);
-      gap: 12px;
-      align-items: end;
-    }
-
-    .compact-schedule-status {
-      min-height: 38px;
-      font-size: 14px;
-    }
-
-    .compact-field-label {
-      margin-bottom: 4px !important;
-      font-size: 10px !important;
-    }
-
-    select.compact-select {
-      min-height: 38px;
-      padding: 7px 9px;
-      border-radius: 9px;
-      font-size: 14px;
-    }
-
-    .daily-setup-note {
-      margin-top: 5px;
-      color: var(--muted);
-      font-size: 11px;
-      line-height: 1.35;
-    }
-
-    .compact-notification-setting {
-      gap: 12px;
-      align-items: flex-start;
-    }
-
-    .compact-notification-setting .notification-setting-copy p {
-      font-size: 12px;
-      line-height: 1.35;
-    }
-
-    .compact-notification-setting .notification-help {
-      margin-top: 5px;
-      font-size: 11px;
-      line-height: 1.35;
-    }
-
-    .compact-notification-setting .notification-status {
-      min-height: 30px;
-      padding: 4px 8px;
-      font-size: 11px;
-    }
-
-    .compact-notification-setting .button.compact {
-      min-height: 32px;
-      padding: 6px 10px;
-      font-size: 12px;
-    }
-
-    .schedule-status {
-      min-height: 44px;
-      display: flex;
-      align-items: center;
-      gap: 9px;
-      font-weight: 800;
-    }
-
-    .status-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: var(--green);
-      flex: 0 0 auto;
-    }
-
-    .form-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-    }
-
-    .field.full { grid-column: 1 / -1; }
-
-    label.field-label {
-      display: block;
-      margin-bottom: 7px;
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 800;
-      letter-spacing: .45px;
-      text-transform: uppercase;
-    }
-
-    select,
-    input,
-    textarea {
-      width: 100%;
-      min-height: 44px;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      background: #fff;
-      color: var(--text);
-      padding: 10px 12px;
-      font: inherit;
-      outline: none;
-    }
-
-    textarea {
-      min-height: 105px;
-      resize: vertical;
-      line-height: 1.45;
-    }
-
-    select:focus,
-    input:focus,
-    textarea:focus {
-      border-color: var(--blue);
-      box-shadow: 0 0 0 2px rgba(26,115,232,.15);
-    }
-
-    .student-field {
-      position: relative;
-    }
-
-    .suggestions {
-      position: absolute;
-      left: 0;
-      right: 0;
-      top: calc(100% + 5px);
-      z-index: 500;
-      display: none;
-      max-height: 260px;
-      overflow-y: auto;
-      border: 1px solid var(--border);
-      border-radius: 11px;
-      background: #fff;
-      box-shadow: 0 8px 24px rgba(0,0,0,.14);
-    }
-
-    .suggestions.visible { display: block; }
-
-    .suggestion {
-      width: 100%;
-      min-height: 42px;
-      padding: 10px 12px;
-      border: 0;
-      border-bottom: 1px solid #f1f3f4;
-      background: #fff;
-      color: var(--text);
-      text-align: left;
-      font: inherit;
-      cursor: pointer;
-    }
-
-    .suggestion:last-child { border-bottom: 0; }
-    .suggestion:hover,
-    .suggestion.active { background: #e8f0fe; }
-
-    .suggestion-name {
-      display: block;
-      font-weight: 700;
-    }
-
-    .suggestion-class {
-      display: block;
-      margin-top: 2px;
-      color: var(--muted);
-      font-size: 11px;
-      font-weight: 600;
-    }
-
-    .student-match-note,
-    .small-note {
-      margin-top: 7px;
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.45;
-    }
-
-    .timing-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 9px;
-    }
-
-    .timing-option {
-      position: relative;
-    }
-
-    .timing-option input {
-      position: absolute;
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    .timing-option span {
-      min-height: 48px;
-      display: flex;
-      align-items: center;
-      padding: 10px 12px;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      background: #fff;
-      font-size: 14px;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
-    .timing-option input:checked + span {
-      border-color: var(--blue);
-      background: #e8f0fe;
-      color: var(--blue);
-    }
-
-    .custom-timing-row {
-      display: none;
-      grid-template-columns: minmax(100px, 160px) 1fr;
-      gap: 10px;
-      align-items: center;
-      margin-top: 10px;
-      padding: 12px;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      background: #f8f9fa;
-    }
-
-    .custom-timing-row.visible { display: grid; }
-
-    .custom-timing-row input { min-height: 40px; }
-
-    .custom-timing-copy {
-      color: var(--muted);
-      font-size: 13px;
-      font-weight: 700;
-    }
-
-    .privacy-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 9px;
-    }
-
-    .privacy-option { position: relative; }
-
-    .privacy-option input {
-      position: absolute;
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    .privacy-option span {
-      min-height: 66px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      gap: 3px;
-      padding: 10px 12px;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      background: #fff;
-      cursor: pointer;
-    }
-
-    .privacy-option strong { font-size: 14px; }
-    .privacy-option small { color: var(--muted); font-size: 11px; line-height: 1.35; }
-
-    .privacy-option input:checked + span {
-      border-color: var(--blue);
-      background: #e8f0fe;
-      color: var(--blue);
-    }
-
-    .timing-preview {
-      margin-top: 12px;
-      padding: 11px 13px;
-      border-radius: 10px;
-      background: #f8f9fa;
-      color: var(--muted);
-      font-size: 13px;
-      font-weight: 700;
-    }
-
-    .button-row {
-      display: flex;
-      justify-content: flex-end;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-top: 18px;
-    }
-
-    button.button {
-      min-height: 44px;
-      border: 0;
-      border-radius: 10px;
-      padding: 11px 17px;
-      font: inherit;
-      font-weight: 800;
-      cursor: pointer;
-    }
-
-    .button.primary {
-      background: var(--blue);
-      color: #fff;
-    }
-
-    .button.primary:hover { background: var(--blue-dark); }
-
-    .button.secondary {
-      border: 1px solid var(--border);
-      background: #fff;
-      color: var(--text);
-    }
-
-    .button.danger {
-      background: #fce8e6;
-      color: var(--red);
-    }
-
-    .reminder-list {
-      display: grid;
-      gap: 10px;
-    }
-
-    .reminder-card {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 14px;
-      align-items: center;
-      padding: 15px 16px;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      background: #fff;
-    }
-
-    .reminder-card.done,
-    .reminder-card.missed {
-      background: #f8f9fa;
-      opacity: .75;
-    }
-
-    .reminder-meta {
-      margin-bottom: 5px;
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 800;
-    }
-
-    .reminder-text {
-      font-size: 16px;
-      font-weight: 800;
-      line-height: 1.35;
-    }
-
-    .reminder-student {
-      margin-top: 5px;
-      color: var(--blue);
-      font-size: 13px;
-      font-weight: 800;
-    }
-
-    .reminder-actions {
-      display: flex;
-      gap: 7px;
-      flex-wrap: wrap;
-      justify-content: flex-end;
-    }
-
-    .reminder-actions button {
-      min-height: 36px;
-      border: 0;
-      border-radius: 9px;
-      padding: 8px 11px;
-      font: inherit;
-      font-size: 12px;
-      font-weight: 800;
-      cursor: pointer;
-    }
-
-    .reminder-actions .show-button {
-      background: #e8f0fe;
-      color: var(--blue);
-    }
-
-    .reminder-actions .done-button {
-      background: #e6f4ea;
-      color: var(--green);
-    }
-
-    .reminder-actions .delete-button {
-      background: #fce8e6;
-      color: var(--red);
-    }
-
-    .empty-state {
-      padding: 35px 18px;
-      border: 1px dashed #bdc1c6;
-      border-radius: 12px;
-      background: #fafafa;
-      color: var(--muted);
-      text-align: center;
-      line-height: 1.55;
-    }
-
-    .list-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 14px;
-    }
-
-    .list-header .section-title { margin: 0; }
-
-    .list-header-actions {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-      justify-content: flex-end;
-    }
-
-    .button.compact {
-      min-height: 34px;
-      padding: 7px 10px;
-      font-size: 12px;
-    }
-
-    .count-pill {
-      padding: 5px 9px;
-      border-radius: 999px;
-      background: #e8f0fe;
-      color: var(--blue);
-      font-size: 12px;
-      font-weight: 800;
-    }
-
-    .toast {
-      position: fixed;
-      left: 50%;
-      bottom: 25px;
-      z-index: 3000;
-      transform: translate(-50%, 15px);
-      padding: 11px 18px;
-      border-radius: 30px;
-      background: #202124;
-      color: #fff;
-      opacity: 0;
-      pointer-events: none;
-      transition: .2s;
-      text-align: center;
-      max-width: calc(100% - 30px);
-    }
-
-    .toast.show {
-      opacity: 1;
-      transform: translate(-50%, 0);
-    }
-
-    @media (max-width: 820px) {
-      .daily-setup-grid { grid-template-columns: 1fr; }
-      .daily-setup-item { padding: 0 0 12px; }
-      .daily-setup-item + .daily-setup-item {
-        padding: 12px 0 0;
-        border-left: 0;
-        border-top: 1px solid var(--border);
-      }
-    }
-
-    @media (max-width: 720px) {
-      .form-grid,
-      .schedule-row { grid-template-columns: 1fr; }
-      .daily-setup-control-row { grid-template-columns: 1fr minmax(120px, 150px); }
-      .timing-grid,
-      .privacy-grid { grid-template-columns: 1fr; }
-      .custom-timing-row { grid-template-columns: 1fr; }
-    }
-
-    @media (max-width: 600px) {
-      body { padding: 12px; }
-      .dashboard-back { position: static; margin-bottom: 14px; }
-      .app-header { gap: 8px; }
-      .app-header h1 { font-size: 23px; }
-      .bjh-logo { width: 46px; }
-      .view-switch button { min-width: 0; flex: 1; }
-      .section { padding: 17px; }
-      .reminder-card { grid-template-columns: 1fr; }
-      .reminder-actions { justify-content: flex-start; }
-      .button-row .button { flex: 1; }
-      .notification-setting { align-items: flex-start; flex-direction: column; }
-      .notification-controls { width: 100%; justify-content: space-between; }
-      .daily-setup-section { padding: 14px 15px; }
-      .daily-setup-control-row { grid-template-columns: 1fr; }
-      .compact-notification-setting .notification-controls { width: 100%; }
-      .notification-permission-actions { flex-direction: column-reverse; }
-      .notification-permission-actions .button { width: 100%; }
-    }
-  </style>
+  <title>Reminders · Teacher Dashboard</title>
+  <link rel="icon" type="image/svg+xml" href="redesign-favicon.svg">
   <link rel="stylesheet" href="shared/theme.css">
   <script src="shared/theme.js"></script>
+  <style>
+    .reminders-head { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:20px; }
+    .reminders-head-actions { display:flex; align-items:center; gap:9px; }
+    .view-switch { width:fit-content; margin-bottom:18px; }
+    .reminder-layout { display:grid; gap:16px; }
+    .composer-card { padding:20px; }
+    .section-head { display:flex; align-items:flex-start; justify-content:space-between; gap:14px; margin-bottom:16px; }
+    .section-head h2 { margin:0; font-size:15px; letter-spacing:-.01em; }
+    .section-copy { margin:4px 0 0; color:var(--td-text-secondary); font-size:11px; line-height:1.45; }
+    .edit-indicator { display:none; align-items:center; gap:6px; padding:5px 9px; border-radius:999px; background:var(--td-accent-soft); color:var(--td-accent-strong); font-size:10px; font-weight:800; }
+    .edit-indicator.visible { display:inline-flex; }
+    .form-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+    .field { display:grid; gap:7px; min-width:0; }
+    .field.full { grid-column:1/-1; }
+    .field-label { color:var(--td-text); font-size:11px; font-weight:760; }
+    .field-help { color:var(--td-text-muted); font-size:10px; line-height:1.4; }
+    .student-field { position:relative; }
+    .suggestions { position:absolute; z-index:40; top:69px; left:0; right:0; display:none; overflow:hidden; border:1px solid var(--td-border); border-radius:14px; background:var(--td-surface); box-shadow:var(--td-shadow-md); }
+    .suggestions.visible { display:block; }
+    .suggestion { width:100%; display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 12px; border:0; border-bottom:1px solid var(--td-border); background:transparent; color:var(--td-text); cursor:pointer; text-align:left; }
+    .suggestion:last-child { border-bottom:0; }
+    .suggestion:hover,.suggestion.active { background:var(--td-accent-softer); }
+    .suggestion-name { font-size:11px; font-weight:740; }
+    .suggestion-class { color:var(--td-text-muted); font-size:9px; }
+    .timing-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+    .timing-option { position:relative; min-width:0; }
+    .timing-option input { position:absolute; opacity:0; pointer-events:none; }
+    .timing-option span { min-height:42px; display:flex; align-items:center; justify-content:center; padding:8px 10px; border:1px solid var(--td-border); border-radius:12px; background:var(--td-surface); color:var(--td-text-secondary); text-align:center; font-size:10px; font-weight:720; cursor:pointer; transition:all var(--td-fast); }
+    .timing-option input:checked + span { border-color:color-mix(in srgb,var(--td-accent) 55%,var(--td-border)); background:var(--td-accent-soft); color:var(--td-accent-strong); }
+    .custom-time-row { display:none; grid-template-columns:180px minmax(0,1fr); align-items:center; gap:12px; margin-top:10px; padding:12px; border-radius:13px; background:var(--td-surface-soft); }
+    .custom-time-row.visible { display:grid; }
+    .time-input { min-height:42px; padding:8px 11px; border:1px solid var(--td-border); border-radius:11px; background:var(--td-surface); color:var(--td-text); font:inherit; }
+    .timing-preview { margin-top:9px; min-height:16px; color:var(--td-text-secondary); font-size:10px; }
+    .privacy-row { display:flex; gap:8px; flex-wrap:wrap; }
+    .privacy-option { position:relative; }
+    .privacy-option input { position:absolute; opacity:0; }
+    .privacy-option span { display:inline-flex; align-items:center; gap:5px; min-height:36px; padding:7px 11px; border:1px solid var(--td-border); border-radius:11px; color:var(--td-text-secondary); font-size:10px; font-weight:700; cursor:pointer; }
+    .privacy-option input:checked + span { border-color:color-mix(in srgb,var(--td-accent) 45%,var(--td-border)); background:var(--td-accent-soft); color:var(--td-accent-strong); }
+    .composer-actions { display:flex; align-items:center; justify-content:flex-end; gap:9px; margin-top:16px; }
+    .list-section { display:grid; gap:10px; }
+    .list-head { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+    .list-title { display:flex; align-items:baseline; gap:8px; }
+    .list-title h2 { margin:0; font-size:15px; }
+    .count-pill { padding:4px 8px; border-radius:999px; background:var(--td-surface-soft); color:var(--td-text-secondary); font-size:9px; font-weight:760; }
+    .reminder-list { display:grid; gap:8px; }
+    .reminder-card { position:relative; display:grid; grid-template-columns:minmax(0,1fr) auto; gap:12px; align-items:center; min-height:76px; padding:13px 14px; border:1px solid var(--td-border); border-radius:15px; background:var(--td-surface); box-shadow:var(--td-shadow-sm); cursor:pointer; transition:transform var(--td-fast),border-color var(--td-fast),box-shadow var(--td-fast); }
+    .reminder-card:hover { transform:translateY(-1px); border-color:color-mix(in srgb,var(--td-accent) 25%,var(--td-border)); box-shadow:var(--td-shadow-md); }
+    .reminder-card.done { opacity:.72; cursor:default; }
+    .reminder-card.missed { border-color:color-mix(in srgb,var(--td-warning) 35%,var(--td-border)); }
+    .reminder-copy { min-width:0; }
+    .reminder-text { color:var(--td-text); font-size:12px; font-weight:760; line-height:1.35; white-space:pre-wrap; overflow-wrap:anywhere; }
+    .reminder-meta { margin-top:5px; color:var(--td-text-secondary); font-size:9px; line-height:1.4; }
+    .reminder-student { margin-top:5px; color:var(--td-accent-strong); font-size:9px; font-weight:760; }
+    .reminder-side { display:flex; align-items:center; gap:7px; }
+    .status-pill { padding:5px 8px; border-radius:999px; background:var(--td-surface-soft); color:var(--td-text-secondary); font-size:9px; font-weight:760; }
+    .status-pill.alerting { background:var(--td-warning-soft); color:var(--td-warning); }
+    .status-pill.snoozed { background:var(--td-accent-soft); color:var(--td-accent-strong); }
+    .status-pill.missed { background:var(--td-warning-soft); color:var(--td-warning); }
+    .done-button { min-height:34px; padding:6px 10px; border:1px solid color-mix(in srgb,var(--td-success) 26%,var(--td-border)); border-radius:10px; background:var(--td-success-soft); color:var(--td-success); font:inherit; font-size:10px; font-weight:800; cursor:pointer; }
+    .show-button { min-height:34px; padding:6px 10px; border:1px solid var(--td-border); border-radius:10px; background:var(--td-accent-soft); color:var(--td-accent-strong); font:inherit; font-size:10px; font-weight:800; cursor:pointer; }
+    .reminder-menu { position:relative; }
+    .reminder-menu summary { list-style:none; width:34px; height:34px; display:grid; place-items:center; border:1px solid var(--td-border); border-radius:10px; background:var(--td-surface); color:var(--td-text-secondary); cursor:pointer; font-weight:800; }
+    .reminder-menu summary::-webkit-details-marker { display:none; }
+    .reminder-menu-popover { position:absolute; z-index:50; top:40px; right:0; min-width:130px; padding:5px; border:1px solid var(--td-border); border-radius:11px; background:var(--td-surface); box-shadow:var(--td-shadow-md); }
+    .reminder-menu-popover button { width:100%; padding:8px 9px; border:0; border-radius:8px; background:transparent; color:var(--td-text); text-align:left; font:inherit; font-size:10px; cursor:pointer; }
+    .reminder-menu-popover button:hover { background:var(--td-surface-soft); }
+    .reminder-menu-popover .danger { color:var(--td-danger); }
+    .completed-reminders { margin-top:4px; border:1px solid var(--td-border); border-radius:14px; background:var(--td-surface); overflow:visible; }
+    .completed-reminders summary { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:12px 14px; cursor:pointer; color:var(--td-text-secondary); font-size:11px; font-weight:760; list-style:none; }
+    .completed-reminders summary::-webkit-details-marker { display:none; }
+    .completed-body { padding:0 10px 10px; }
+    .completed-actions { display:flex; justify-content:flex-end; padding:0 4px 9px; }
+    .empty-state { padding:26px 18px; border:1px dashed var(--td-border-strong); border-radius:15px; color:var(--td-text-secondary); text-align:center; font-size:11px; line-height:1.5; }
+    .empty-state strong { color:var(--td-text); }
+    .todo-entry-row { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:9px; }
+    .todo-list { display:grid; gap:8px; }
+    .todo-item { display:grid; grid-template-columns:auto minmax(0,1fr); gap:10px; align-items:flex-start; padding:11px 12px; border:1px solid var(--td-border); border-radius:13px; background:var(--td-surface); }
+    .todo-item input { margin-top:2px; accent-color:var(--td-accent); }
+    .todo-text { color:var(--td-text); font-size:11px; font-weight:700; line-height:1.4; }
+    .todo-date { margin-top:3px; color:var(--td-text-muted); font-size:9px; }
+    .todo-item.completed .todo-text { text-decoration:line-through; color:var(--td-text-muted); }
+    .settings-group { display:grid; gap:12px; }
+    .settings-row { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:14px; align-items:center; padding:12px; border:1px solid var(--td-border); border-radius:13px; background:var(--td-surface-soft); }
+    .settings-row-title { color:var(--td-text); font-size:11px; font-weight:760; }
+    .settings-row-copy { margin-top:3px; color:var(--td-text-secondary); font-size:10px; line-height:1.4; }
+    .settings-status { display:inline-flex; align-items:center; gap:6px; color:var(--td-text-secondary); font-size:10px; font-weight:760; }
+    .settings-status::before { content:""; width:7px; height:7px; border-radius:50%; background:var(--td-text-muted); }
+    .settings-status.enabled::before { background:var(--td-success); }
+    .settings-status.blocked::before { background:var(--td-danger); }
+    .notification-permission-copy { margin:0; color:var(--td-text-secondary); font-size:11px; line-height:1.55; }
+    .toast { position:fixed; z-index:40000; left:50%; bottom:24px; transform:translate(-50%,12px); opacity:0; pointer-events:none; padding:9px 13px; border:1px solid var(--td-border); border-radius:999px; background:var(--td-text); color:var(--td-bg); box-shadow:var(--td-shadow-md); font-size:10px; font-weight:760; transition:all var(--td-normal); }
+    .toast.show { opacity:1; transform:translate(-50%,0); }
+    @media(max-width:760px){
+      .form-grid{grid-template-columns:1fr}.field.full{grid-column:auto}.timing-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.custom-time-row{grid-template-columns:1fr}.reminder-card{grid-template-columns:1fr}.reminder-side{justify-content:flex-start;flex-wrap:wrap}.settings-row{grid-template-columns:1fr}.todo-entry-row{grid-template-columns:1fr}.reminders-head{align-items:flex-start}.td-modal{width:min(94vw,520px)}
+    }
+  </style>
 </head>
 <body>
-<a class="dashboard-back" href="index.html">← Dashboard</a>
-
-<main class="app">
-  <div class="app-header">
-    <img src="bjh-logo.png" class="bjh-logo" alt="BJH Bobcat">
-    <h1>Class Reminders</h1>
-    <img src="bjh-logo.png" class="bjh-logo right" alt="BJH Bobcat">
-  </div>
-
-  <div class="global-bell-row"><div data-bell-mini></div></div>
-
-  <div class="view-switch" aria-label="Class Reminders view">
-    <button id="dailyRemindersViewButton" class="selected" type="button">Daily Reminders</button>
-    <button id="todoListViewButton" type="button">To-Do List (0)</button>
-  </div>
-
-  <div id="dailyRemindersView">
-  <section class="section daily-setup-section">
-    <div class="section-title">Today's Setup</div>
-    <div class="daily-setup-grid">
-      <div class="daily-setup-item">
-        <div class="daily-setup-label">Bell Schedule</div>
-        <div class="daily-setup-control-row">
-          <div id="scheduleStatus" class="schedule-status compact-schedule-status">
-            <span class="status-dot"></span>
-            <span>Loading schedule…</span>
+  <div data-td-mobile-bar></div>
+  <div class="td-shell">
+    <div data-td-sidebar="reminders"></div>
+    <main class="td-main">
+      <div class="td-content">
+        <header class="reminders-head">
+          <div>
+            <h1 class="td-page-title">Reminders</h1>
+            <p class="td-page-subtitle">Set class-aware reminders and keep small tasks close at hand.</p>
           </div>
-          <div class="schedule-mode-wrap">
-            <label class="field-label compact-field-label" for="scheduleMode">Override</label>
-            <select id="scheduleMode" class="compact-select">
-              <option value="auto">Auto</option>
-              <option value="regular">Regular</option>
-              <option value="lateStart">Late Start</option>
-              <option value="minimum">Minimum Day</option>
-            </select>
+          <div class="reminders-head-actions">
+            <button id="reminderSettingsButton" class="td-icon-button" type="button" aria-label="Reminder settings" title="Reminder settings">⚙</button>
           </div>
+        </header>
+
+        <div class="td-segmented view-switch" role="tablist" aria-label="Reminder tools">
+          <button id="dailyRemindersViewButton" type="button" aria-selected="true">Reminders</button>
+          <button id="todoListViewButton" type="button" aria-selected="false">To-Do <span id="todoTabCount"></span></button>
         </div>
-        <div class="daily-setup-note">Auto follows your saved school calendar.</div>
+
+        <div id="dailyRemindersView" class="reminder-layout">
+          <section id="composerCard" class="td-card composer-card">
+            <div class="section-head">
+              <div>
+                <h2 id="composerTitle">New Reminder</h2>
+                <p class="section-copy">Choose a class-relative trigger or an exact time of day.</p>
+              </div>
+              <span id="editIndicator" class="edit-indicator">Editing</span>
+            </div>
+
+            <div class="form-grid">
+              <label class="field">
+                <span class="field-label">Period / Break</span>
+                <select id="reminderPeriod" class="td-select"></select>
+              </label>
+              <label class="field">
+                <span class="field-label">Day</span>
+                <input id="reminderDate" class="td-input" type="date">
+              </label>
+
+              <div class="field full student-field">
+                <label class="field-label" for="studentInput">Student <span style="font-weight:500;color:var(--td-text-muted)">(optional)</span></label>
+                <input id="studentInput" class="td-input" type="text" autocomplete="off" placeholder="Start typing a student's name…">
+                <div id="studentSuggestions" class="suggestions"></div>
+                <div id="studentMatchNote" class="field-help">Suggestions search student rosters across all active periods.</div>
+              </div>
+
+              <label class="field full">
+                <span class="field-label">Reminder</span>
+                <textarea id="reminderText" class="td-input" rows="3" placeholder="Example: Give Maya her field trip form"></textarea>
+              </label>
+
+              <div class="field full">
+                <span class="field-label">When</span>
+                <div class="timing-grid">
+                  <label class="timing-option"><input type="radio" name="timing" value="start" checked><span>Start of class</span></label>
+                  <label class="timing-option"><input type="radio" name="timing" value="after5"><span>5 min into class</span></label>
+                  <label class="timing-option"><input type="radio" name="timing" value="before10"><span>10 min before end</span></label>
+                  <label class="timing-option"><input type="radio" name="timing" value="before5"><span>5 min before end</span></label>
+                  <label class="timing-option"><input type="radio" name="timing" value="end"><span>End of class</span></label>
+                  <label class="timing-option"><input type="radio" name="timing" value="custom"><span>Custom time</span></label>
+                </div>
+                <div id="customTimingRow" class="custom-time-row">
+                  <input id="customTime" class="time-input" type="time" step="60" aria-label="Exact reminder time">
+                  <div>
+                    <div class="field-label">Exact time of day</div>
+                    <div class="field-help">Choose the exact hour and minute. This does not depend on the bell schedule.</div>
+                  </div>
+                </div>
+                <div id="timingPreview" class="timing-preview"></div>
+              </div>
+
+              <div class="field full">
+                <span class="field-label">Privacy</span>
+                <div class="privacy-row">
+                  <label class="privacy-option"><input type="radio" name="privacy" value="normal" checked><span>Normal</span></label>
+                  <label class="privacy-option"><input type="radio" name="privacy" value="private"><span>Private while projecting</span></label>
+                </div>
+              </div>
+            </div>
+
+            <div class="composer-actions">
+              <button id="cancelEditButton" class="td-button td-button-secondary" type="button" hidden>Cancel</button>
+              <button id="addReminderButton" class="td-button td-button-primary" type="button">Add Reminder</button>
+            </div>
+          </section>
+
+          <section class="list-section">
+            <div class="list-head">
+              <div class="list-title"><h2>Upcoming</h2><span id="reminderCount" class="count-pill">0</span></div>
+            </div>
+            <div id="reminderList" class="reminder-list"></div>
+            <details id="completedReminders" class="completed-reminders">
+              <summary><span>Completed</span><span id="completedReminderCount">0</span></summary>
+              <div class="completed-body">
+                <div id="completedReminderActions" class="completed-actions" hidden>
+                  <button id="clearCompletedButton" class="td-button td-button-secondary td-button-small" type="button">Clear Completed</button>
+                </div>
+                <div id="completedReminderList" class="reminder-list"></div>
+              </div>
+            </details>
+          </section>
+        </div>
+
+        <div id="todoListView" class="reminder-layout" hidden>
+          <section class="td-card composer-card">
+            <div class="section-head"><div><h2>New To-Do</h2><p class="section-copy">A lightweight list for things that do not need an alarm.</p></div></div>
+            <div class="todo-entry-row">
+              <input id="todoInput" class="td-input" type="text" autocomplete="off" maxlength="500" placeholder="What do you need to do?">
+              <button id="addTodoButton" class="td-button td-button-primary" type="button">Add</button>
+            </div>
+          </section>
+          <section class="list-section">
+            <div class="list-head"><div class="list-title"><h2>To-Do</h2><span id="todoCount" class="count-pill">0</span></div></div>
+            <div id="todoList" class="todo-list"></div>
+            <details id="completedTodos" class="completed-reminders">
+              <summary><span>Completed</span><span id="completedTodoCount">0</span></summary>
+              <div class="completed-body">
+                <div id="completedTodoActions" class="completed-actions" hidden><button id="clearCompletedTodosButton" class="td-button td-button-secondary td-button-small" type="button">Clear Completed</button></div>
+                <div id="completedTodoList" class="todo-list"></div>
+              </div>
+            </details>
+          </section>
+        </div>
       </div>
+    </main>
+  </div>
 
-      <div class="daily-setup-item notification-setup-item">
-        <div class="daily-setup-label">Desktop Notifications</div>
-        <div class="notification-setting compact-notification-setting">
-          <div class="notification-setting-copy">
-            <p>Show due reminders while you work in another browser tab.</p>
-            <div id="notificationHelp" class="notification-help"></div>
-          </div>
-          <div class="notification-controls">
-            <span id="notificationStatus" class="notification-status">Checking…</span>
-            <button id="notificationToggleButton" class="button secondary compact" type="button">Enable</button>
-          </div>
+  <div id="reminderSettingsBackdrop" class="td-modal-backdrop"></div>
+  <section id="reminderSettingsModal" class="td-modal" aria-hidden="true" aria-labelledby="reminderSettingsTitle">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:19px 20px 14px;border-bottom:1px solid var(--td-border)">
+      <div><h2 id="reminderSettingsTitle" style="margin:0;font-size:18px">Reminder Settings</h2><div class="field-help" style="margin-top:4px">Rarely changed controls stay out of the main workflow.</div></div>
+      <button id="closeReminderSettings" class="td-icon-button" type="button" aria-label="Close reminder settings">×</button>
+    </div>
+    <div style="padding:18px 20px 20px" class="settings-group">
+      <div class="settings-row">
+        <div><div class="settings-row-title">Bell schedule</div><div id="scheduleStatus" class="settings-row-copy">Loading schedule…</div></div>
+        <select id="scheduleMode" class="td-select" style="min-width:145px">
+          <option value="auto">Auto</option><option value="regular">Regular</option><option value="lateStart">Late Start</option><option value="minimum">Minimum Day</option>
+        </select>
+      </div>
+      <div class="settings-row">
+        <div><div class="settings-row-title">Desktop notifications</div><div id="notificationHelp" class="settings-row-copy"></div></div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end">
+          <span id="notificationStatus" class="settings-status">Checking…</span>
+          <button id="notificationToggleButton" class="td-button td-button-secondary td-button-small" type="button">Enable</button>
         </div>
+      </div>
+      <div class="field-help">In-dashboard reminder overlays remain active on every Teacher Dashboard page. Desktop notifications are only for when the Dashboard tab is not visible.</div>
+    </div>
+  </section>
+
+  <div id="notificationPermissionBackdrop" class="td-modal-backdrop"></div>
+  <section id="notificationPermissionModal" class="td-modal" aria-hidden="true" aria-labelledby="notificationPermissionTitle">
+    <div style="padding:20px">
+      <h2 id="notificationPermissionTitle" style="margin:0 0 9px;font-size:18px">Enable Desktop Reminders?</h2>
+      <p class="notification-permission-copy">Allow Teacher Dashboard to show due reminders while you're working in another browser tab. Clicking a notification brings Teacher Dashboard back to the front.</p>
+      <div style="display:flex;justify-content:flex-end;gap:9px;margin-top:18px">
+        <button id="notificationPermissionCancel" class="td-button td-button-secondary" type="button">Not Now</button>
+        <button id="notificationPermissionContinue" class="td-button td-button-primary" type="button">Continue</button>
       </div>
     </div>
   </section>
 
-  <section class="section">
-    <div class="section-title">New Reminder</div>
+  <div id="toast" class="toast" aria-live="polite"></div>
 
-    <div class="form-grid">
-      <div>
-        <label class="field-label" for="reminderPeriod">Period / Break</label>
-        <select id="reminderPeriod"></select>
-      </div>
+  <script src="shared/app-shell.js"></script>
+  <script src="shared/dashboard-data.js"></script>
+  <script src="shared/bell-service.js"></script>
+  <script src="shared/reminder-service.js"></script>
+  <script>
+  (() => {
+    "use strict";
+    const el = id => document.getElementById(id);
+    const periodSelect = el("reminderPeriod");
+    const dateInput = el("reminderDate");
+    const studentInput = el("studentInput");
+    const suggestions = el("studentSuggestions");
+    const matchNote = el("studentMatchNote");
+    const reminderText = el("reminderText");
+    const customTimingRow = el("customTimingRow");
+    const customTimeInput = el("customTime");
+    const timingPreview = el("timingPreview");
+    const reminderList = el("reminderList");
+    const completedReminderList = el("completedReminderList");
+    const reminderCount = el("reminderCount");
+    const completedReminderCount = el("completedReminderCount");
+    const completedReminderActions = el("completedReminderActions");
+    const clearCompletedButton = el("clearCompletedButton");
+    const scheduleMode = el("scheduleMode");
+    const scheduleStatus = el("scheduleStatus");
+    const toast = el("toast");
+    const dailyRemindersViewButton = el("dailyRemindersViewButton");
+    const todoListViewButton = el("todoListViewButton");
+    const dailyRemindersView = el("dailyRemindersView");
+    const todoListView = el("todoListView");
+    const todoInput = el("todoInput");
+    const addTodoButton = el("addTodoButton");
+    const todoList = el("todoList");
+    const todoCount = el("todoCount");
+    const todoTabCount = el("todoTabCount");
+    const completedTodos = el("completedTodos");
+    const completedTodoCount = el("completedTodoCount");
+    const completedTodoActions = el("completedTodoActions");
+    const clearCompletedTodosButton = el("clearCompletedTodosButton");
+    const completedTodoList = el("completedTodoList");
+    const notificationStatus = el("notificationStatus");
+    const notificationHelp = el("notificationHelp");
+    const notificationToggleButton = el("notificationToggleButton");
+    const notificationPermissionBackdrop = el("notificationPermissionBackdrop");
+    const notificationPermissionModal = el("notificationPermissionModal");
+    const notificationPermissionCancel = el("notificationPermissionCancel");
+    const notificationPermissionContinue = el("notificationPermissionContinue");
+    const settingsBackdrop = el("reminderSettingsBackdrop");
+    const settingsModal = el("reminderSettingsModal");
+    const composerCard = el("composerCard");
+    const composerTitle = el("composerTitle");
+    const editIndicator = el("editIndicator");
+    const addReminderButton = el("addReminderButton");
+    const cancelEditButton = el("cancelEditButton");
 
-      <div>
-        <label class="field-label" for="reminderDate">Day</label>
-        <input id="reminderDate" type="date">
-      </div>
+    let selectedStudentId = "";
+    let selectedStudentClassId = "";
+    let editingReminderId = "";
+    const revealedPrivateIds = new Set();
+    let suggestionItems = [];
+    let activeSuggestionIndex = -1;
 
-      <div class="field full student-field">
-        <label class="field-label" for="studentInput">Student <span style="font-weight:400;text-transform:none;letter-spacing:0;">(optional)</span></label>
-        <input
-          id="studentInput"
-          type="text"
-          autocomplete="off"
-          placeholder="Start typing a student's name…"
-        >
-        <div id="studentSuggestions" class="suggestions"></div>
-        <div id="studentMatchNote" class="student-match-note">
-          Suggestions search student rosters across all active periods.
-        </div>
-      </div>
-
-      <div class="field full">
-        <label class="field-label" for="reminderText">Reminder</label>
-        <textarea id="reminderText" placeholder="Example: Give Maya her field trip form"></textarea>
-      </div>
-
-      <div class="field full">
-        <label class="field-label">When</label>
-        <div class="timing-grid">
-          <label class="timing-option">
-            <input type="radio" name="timing" value="start" checked>
-            <span>Start of class</span>
-          </label>
-          <label class="timing-option">
-            <input type="radio" name="timing" value="after5">
-            <span>5 minutes into class</span>
-          </label>
-          <label class="timing-option">
-            <input type="radio" name="timing" value="custom">
-            <span>Custom reminder</span>
-          </label>
-          <label class="timing-option">
-            <input type="radio" name="timing" value="before5">
-            <span>5 minutes before class ends</span>
-          </label>
-        </div>
-        <div id="customTimingRow" class="custom-timing-row">
-          <input id="customMinutes" type="number" min="1" max="60" step="1" value="10" aria-label="Custom minutes before class ends">
-          <div class="custom-timing-copy">minutes before class ends</div>
-        </div>
-        <div id="timingPreview" class="timing-preview"></div>
-      </div>
-
-      <div class="field full">
-        <label class="field-label">Reminder Privacy</label>
-        <div class="privacy-grid">
-          <label class="privacy-option">
-            <input type="radio" name="privacy" value="normal" checked>
-            <span>
-              <strong>Normal</strong>
-              <small>Shows the student and reminder details immediately.</small>
-            </span>
-          </label>
-          <label class="privacy-option">
-            <input type="radio" name="privacy" value="private">
-            <span>
-              <strong>Private</strong>
-              <small>Hides details until you press Show—useful when projecting.</small>
-            </span>
-          </label>
-        </div>
-      </div>
-    </div>
-
-    <div class="button-row">
-      <button id="addReminderButton" class="button primary" type="button">Add Reminder</button>
-    </div>
-  </section>
-
-  <section class="section">
-    <div class="list-header">
-      <div class="section-title">Your Reminders</div>
-      <div class="list-header-actions">
-        <div id="reminderCount" class="count-pill">0 active</div>
-        <button id="clearCompletedButton" class="button secondary compact" type="button">Clear Completed</button>
-      </div>
-    </div>
-    <div id="reminderList" class="reminder-list"></div>
-  </section>
-  </div>
-
-  <div id="todoListView" hidden>
-    <section class="section">
-      <div class="section-title">New To-Do</div>
-      <div class="todo-entry-row">
-        <input id="todoInput" class="todo-input" type="text" autocomplete="off" maxlength="500" placeholder="What do you need to do?">
-        <button id="addTodoButton" class="button primary" type="button">Add</button>
-      </div>
-      <div class="small-note">Press Enter or click Add.</div>
-    </section>
-
-    <section class="section">
-      <div class="list-header">
-        <div class="section-title">To-Do List</div>
-        <div id="todoCount" class="count-pill">0 active</div>
-      </div>
-      <div id="todoList" class="todo-list"></div>
-      <details id="completedTodos" class="completed-todos">
-        <summary>Completed (<span id="completedTodoCount">0</span>)</summary>
-        <div id="completedTodoActions" class="completed-todo-actions" hidden>
-          <button id="clearCompletedTodosButton" class="button secondary compact" type="button">Clear Completed</button>
-        </div>
-        <div id="completedTodoList" class="todo-list"></div>
-      </details>
-    </section>
-  </div>
-</main>
-
-<div id="notificationPermissionBackdrop" class="notification-permission-backdrop" role="dialog" aria-modal="true" aria-labelledby="notificationPermissionTitle">
-  <div class="notification-permission-dialog">
-    <div class="notification-permission-icon" aria-hidden="true">🔔</div>
-    <h2 id="notificationPermissionTitle">Enable Desktop Reminders?</h2>
-    <p>Allow Teacher Dashboard to show important class reminders while you’re working in another browser tab. Clicking a notification will bring Teacher Dashboard back to the front.</p>
-    <div class="notification-permission-actions">
-      <button id="notificationPermissionCancel" class="button secondary" type="button">Not Now</button>
-      <button id="notificationPermissionContinue" class="button primary" type="button">Continue</button>
-    </div>
-  </div>
-</div>
-
-<div id="toast" class="toast" aria-live="polite"></div>
-
-<script src="shared/dashboard-data.js"></script>
-<script src="shared/bell-service.js"></script>
-<script src="shared/reminder-service.js"></script>
-
-<script>
-(() => {
-  "use strict";
-
-  const el = id => document.getElementById(id);
-  const periodSelect = el("reminderPeriod");
-  const dateInput = el("reminderDate");
-  const studentInput = el("studentInput");
-  const suggestions = el("studentSuggestions");
-  const matchNote = el("studentMatchNote");
-  const reminderText = el("reminderText");
-  const customTimingRow = el("customTimingRow");
-  const customMinutesInput = el("customMinutes");
-  const timingPreview = el("timingPreview");
-  const reminderList = el("reminderList");
-  const reminderCount = el("reminderCount");
-  const clearCompletedButton = el("clearCompletedButton");
-  const scheduleMode = el("scheduleMode");
-  const scheduleStatus = el("scheduleStatus");
-  const toast = el("toast");
-  const dailyRemindersViewButton = el("dailyRemindersViewButton");
-  const todoListViewButton = el("todoListViewButton");
-  const dailyRemindersView = el("dailyRemindersView");
-  const todoListView = el("todoListView");
-  const todoInput = el("todoInput");
-  const addTodoButton = el("addTodoButton");
-  const todoList = el("todoList");
-  const todoCount = el("todoCount");
-  const completedTodos = el("completedTodos");
-  const completedTodoCount = el("completedTodoCount");
-  const completedTodoActions = el("completedTodoActions");
-  const clearCompletedTodosButton = el("clearCompletedTodosButton");
-  const completedTodoList = el("completedTodoList");
-  const notificationStatus = el("notificationStatus");
-  const notificationHelp = el("notificationHelp");
-  const notificationToggleButton = el("notificationToggleButton");
-  const notificationPermissionBackdrop = el("notificationPermissionBackdrop");
-  const notificationPermissionCancel = el("notificationPermissionCancel");
-  const notificationPermissionContinue = el("notificationPermissionContinue");
-
-  let selectedStudentId = "";
-  let selectedStudentClassId = "";
-  const revealedPrivateIds = new Set();
-  let suggestionItems = [];
-  let activeSuggestionIndex = -1;
-
-  function showToast(message) {
-    toast.textContent = message;
-    toast.classList.add("show");
-    clearTimeout(showToast.timer);
-    showToast.timer = setTimeout(() => toast.classList.remove("show"), 1900);
-  }
-
-  function closeNotificationPermissionDialog() {
-    notificationPermissionBackdrop.classList.remove("visible");
-  }
-
-  function openNotificationPermissionDialog() {
-    notificationPermissionBackdrop.classList.add("visible");
-    notificationPermissionContinue.focus();
-  }
-
-  function renderNotificationSetting() {
-    const status = ReminderService.getDesktopNotificationStatus();
-    notificationStatus.className = "notification-status";
-    notificationToggleButton.disabled = false;
-
-    if (status.state === "enabled") {
-      notificationStatus.textContent = "Enabled";
-      notificationStatus.classList.add("enabled");
-      notificationToggleButton.textContent = "Turn Off";
-      notificationHelp.textContent = "Desktop notifications appear only when Teacher Dashboard is open but not currently visible.";
-      return;
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add("show");
+      clearTimeout(showToast.timer);
+      showToast.timer = setTimeout(() => toast.classList.remove("show"), 1900);
     }
 
-    notificationToggleButton.textContent = "Enable";
+    function openModal(backdrop, modal) { backdrop.classList.add("open"); modal.classList.add("open"); modal.setAttribute("aria-hidden","false"); }
+    function closeModal(backdrop, modal) { backdrop.classList.remove("open"); modal.classList.remove("open"); modal.setAttribute("aria-hidden","true"); }
+    function openSettings() { renderSchedule(); renderNotificationSetting(); openModal(settingsBackdrop, settingsModal); }
+    function closeSettings() { closeModal(settingsBackdrop, settingsModal); }
+    function closeNotificationPermissionDialog() { closeModal(notificationPermissionBackdrop, notificationPermissionModal); }
+    function openNotificationPermissionDialog() { openModal(notificationPermissionBackdrop, notificationPermissionModal); notificationPermissionContinue.focus(); }
 
-    if (status.state === "blocked") {
-      notificationStatus.textContent = "Blocked";
-      notificationStatus.classList.add("blocked");
-      notificationToggleButton.textContent = "Blocked in Chrome";
-      notificationToggleButton.disabled = true;
-      notificationHelp.textContent = "Chrome is blocking notifications for this site. Use the site controls next to the address bar to allow notifications, then reload Teacher Dashboard.";
-      return;
-    }
-
-    if (status.state === "unsupported") {
-      notificationStatus.textContent = "Unavailable";
-      notificationToggleButton.disabled = true;
-      notificationHelp.textContent = "This browser does not support desktop notifications.";
-      return;
-    }
-
-    if (status.state === "local-file") {
-      notificationStatus.textContent = "Web version required";
-      notificationToggleButton.disabled = true;
-      notificationHelp.textContent = "Desktop reminders must be enabled from the deployed HTTPS Teacher Dashboard, not from a downloaded HTML file. Open your live Dashboard site and enable them there.";
-      return;
-    }
-
-    if (status.state === "insecure") {
-      notificationStatus.textContent = "HTTPS required";
-      notificationToggleButton.disabled = true;
-      notificationHelp.textContent = "Desktop notifications require the secure HTTPS version of Teacher Dashboard.";
-      return;
-    }
-
-    if (status.permission === "granted") {
-      notificationStatus.textContent = "Off";
-      notificationHelp.textContent = "Chrome already has permission. Enable this whenever you want reminders to appear outside the Dashboard tab.";
-    } else {
-      notificationStatus.textContent = "Off";
-      notificationHelp.textContent = "Chrome will ask for notification permission only after you choose to enable this feature.";
-    }
-  }
-
-  async function enableDesktopNotifications() {
-    try {
-      const status = await ReminderService.requestDesktopNotifications();
-      renderNotificationSetting();
-
+    function renderNotificationSetting() {
+      const status = ReminderService.getDesktopNotificationStatus();
+      notificationStatus.className = "settings-status";
+      notificationToggleButton.disabled = false;
       if (status.state === "enabled") {
-        const testSent = ReminderService.sendDesktopNotificationTest();
-        notificationHelp.textContent = testSent
-          ? "A test notification was sent. Desktop notifications will appear while Teacher Dashboard is open but not currently visible. If the test does not appear on a Mac, check System Settings → Notifications → Google Chrome."
-          : "Chrome granted notification permission, but the test notification could not be created. Check your browser and operating-system notification settings.";
-        showToast(testSent ? "Desktop reminders enabled — test sent" : "Desktop reminders enabled");
-      } else if (status.state === "blocked") {
-        notificationHelp.textContent = "Chrome still reports notifications as blocked for this site. Click the site controls next to the address bar, set Notifications to Allow, then reload Teacher Dashboard.";
-        showToast("Chrome still reports notifications as blocked");
-      } else if (status.permission === "default" || status.livePermission === "default" || status.permissionsApiState === "prompt") {
-        notificationHelp.textContent = "Chrome still reports notification permission as Ask/Prompt. Use the site controls next to the address bar, set Notifications to Allow, then try again.";
-        showToast("Chrome still reports notification permission as Ask");
-      } else {
-        notificationHelp.textContent = `Chrome did not grant notification permission. Browser result: ${status.livePermission || status.permission || "unknown"}.`;
-        showToast("Desktop reminders were not enabled");
+        notificationStatus.textContent = "Enabled"; notificationStatus.classList.add("enabled"); notificationToggleButton.textContent = "Turn Off";
+        notificationHelp.textContent = "Shows due reminders while the Dashboard tab is not visible."; return;
       }
-    } catch (error) {
-      console.error(error);
-      renderNotificationSetting();
-      notificationHelp.textContent = "Desktop reminders could not be enabled. Check Chrome's site notification permission and your operating-system notification settings.";
-      showToast("Desktop reminders could not be enabled");
-    }
-  }
-
-  function handleNotificationToggle() {
-    const status = ReminderService.getDesktopNotificationStatus();
-
-    if (status.state === "enabled") {
-      ReminderService.setDesktopNotificationsEnabled(false);
-      renderNotificationSetting();
-      showToast("Desktop reminders turned off");
-      return;
+      notificationToggleButton.textContent = "Enable";
+      if (status.state === "blocked") { notificationStatus.textContent="Blocked"; notificationStatus.classList.add("blocked"); notificationToggleButton.textContent="Blocked in Chrome"; notificationToggleButton.disabled=true; notificationHelp.textContent="Allow notifications in this site's browser permissions, then reload."; return; }
+      if (status.state === "unsupported") { notificationStatus.textContent="Unavailable"; notificationToggleButton.disabled=true; notificationHelp.textContent="This browser does not support desktop notifications."; return; }
+      if (status.state === "local-file") { notificationStatus.textContent="Web version required"; notificationToggleButton.disabled=true; notificationHelp.textContent="Open the deployed HTTPS Dashboard to enable desktop notifications."; return; }
+      if (status.state === "insecure") { notificationStatus.textContent="HTTPS required"; notificationToggleButton.disabled=true; notificationHelp.textContent="Desktop notifications require HTTPS."; return; }
+      notificationStatus.textContent="Off";
+      notificationHelp.textContent=status.permission === "granted" ? "Browser permission is already granted." : "Your browser will ask for permission when you enable this.";
     }
 
-    if (status.permission === "granted") {
-      ReminderService.setDesktopNotificationsEnabled(true);
-      renderNotificationSetting();
-      showToast("Desktop reminders enabled");
-      return;
+    async function enableDesktopNotifications() {
+      try {
+        const status = await ReminderService.requestDesktopNotifications();
+        renderNotificationSetting();
+        if (status.state === "enabled") { showToast("Desktop reminders enabled"); }
+        else if (status.state === "blocked") showToast("Chrome still reports notifications as blocked");
+        else showToast("Desktop reminders were not enabled");
+      } catch (error) { console.error(error); renderNotificationSetting(); showToast("Desktop reminders could not be enabled"); }
     }
 
-    if (status.state === "needs-permission") {
-      openNotificationPermissionDialog();
-    }
-  }
-
-  function defaultReminderDate() {
-    const snapshot = BellService.getSnapshot();
-
-    if (
-      (snapshot.phase === "afterSchool" || snapshot.phase === "weekend") &&
-      snapshot.targetDateKey
-    ) {
-      const [year, month, day] = snapshot.targetDateKey.split("-").map(Number);
-      return new Date(year, month - 1, day);
+    function handleNotificationToggle() {
+      const status=ReminderService.getDesktopNotificationStatus();
+      if(status.state==="enabled"){ReminderService.setDesktopNotificationsEnabled(false);renderNotificationSetting();showToast("Desktop reminders turned off");return;}
+      if(status.permission==="granted"){ReminderService.setDesktopNotificationsEnabled(true);renderNotificationSetting();showToast("Desktop reminders enabled");return;}
+      if(status.state==="needs-permission") openNotificationPermissionDialog();
     }
 
-    return new Date();
-  }
-
-  function formatDateInput(date) {
-    return ReminderService.dateKey(date);
-  }
-
-  function formatDisplayDate(key) {
-    const parts = key.split("-").map(Number);
-    const date = new Date(parts[0], parts[1] - 1, parts[2]);
-    const today = ReminderService.dateKey();
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-
-    if (key === today) return "Today";
-    if (key === ReminderService.dateKey(tomorrow)) return "Tomorrow";
-
-    return date.toLocaleDateString([], {
-      weekday: "short",
-      month: "short",
-      day: "numeric"
-    });
-  }
-
-  function reminderScheduleKey() {
-    const dateValue = dateInput.value || formatDateInput(defaultReminderDate());
-    const [year, month, day] = dateValue.split("-").map(Number);
-    const selectedDate = new Date(year, month - 1, day, 12, 0, 0, 0);
-    const todayKey = ReminderService.dateKey();
-
-    // For today, the BellService snapshot is authoritative so this dropdown
-    // immediately follows the same global schedule override as Bell Countdown.
-    if (dateValue === todayKey) {
-      const snapshot = BellService.getSnapshot();
-      if (["regular", "lateStart", "minimum"].includes(snapshot?.scheduleKey)) {
-        return snapshot.scheduleKey;
-      }
+    function defaultReminderDate() {
+      const snapshot=BellService.getSnapshot();
+      if((snapshot.phase==="afterSchool"||snapshot.phase==="weekend")&&snapshot.targetDateKey){const [y,m,d]=snapshot.targetDateKey.split("-").map(Number);return new Date(y,m-1,d);}
+      return new Date();
     }
-
-    try {
-      if (DashboardData.isMinimumDayDate(selectedDate)) return "minimum";
-    } catch (error) {}
-
-    return selectedDate.getDay() === 3 ? "lateStart" : "regular";
-  }
-
-  function buildPeriods() {
-    const previous = periodSelect.value;
-    const classes = DashboardData.getClasses({ activeOnly: true });
-    const preferred = DashboardData.getCurrentClassId();
-    const classMap = new Map(classes.map(item => [String(item.id), item]));
-    const scheduleKey = reminderScheduleKey();
-    const schedule = DashboardData.getBellSchedule(scheduleKey) || [];
-
-    periodSelect.innerHTML = "";
-
-    // Mirror the global bell schedule exactly instead of grouping classes
-    // and breaks separately. Example: P1, P2, Snack, P3, P4, P5, Lunch, P6, P7.
-    schedule.forEach(entry => {
-      const entryName = String(entry?.name || "").trim();
-      if (!entryName) return;
-
-      const periodMatch = entryName.match(/^Period\s+(\d+)$/i);
-
-      if (periodMatch) {
-        const classId = periodMatch[1];
-        const classInfo = classMap.get(classId);
-        if (!classInfo) return;
-
-        const option = document.createElement("option");
-        option.value = `class:${classId}`;
-        option.textContent = classInfo.name;
-        periodSelect.appendChild(option);
-        return;
-      }
-
-      if (/^(Snack|Lunch)$/i.test(entryName)) {
-        const option = document.createElement("option");
-        option.value = `entry:${entryName}`;
-        option.textContent = entryName;
-        periodSelect.appendChild(option);
-      }
-    });
-
-    const allValues = [...periodSelect.options].map(option => option.value);
-
-    if (allValues.includes(previous)) {
-      periodSelect.value = previous;
-    } else if (allValues.includes(`class:${preferred}`)) {
-      periodSelect.value = `class:${preferred}`;
-    } else if (periodSelect.options.length) {
-      periodSelect.selectedIndex = 0;
-    }
-  }
-
-  function selectedTarget() {
-    const value = String(periodSelect.value || "");
-
-    if (value.startsWith("entry:")) {
-      const entryName = value.slice("entry:".length);
-      return {
-        classId: "",
-        entryName,
-        label: entryName,
-        isBreak: true
-      };
-    }
-
-    const classId = value.startsWith("class:")
-      ? value.slice("class:".length)
-      : value;
-
-    const classInfo = DashboardData.getClass(classId);
-
-    return {
-      classId,
-      entryName: "",
-      label: classInfo?.name || `Period ${classId}`,
-      isBreak: false
-    };
-  }
-
-  function allStudents() {
-    const classes = DashboardData.getClasses({ activeOnly: true });
-    const students = [];
-
-    classes.forEach(classInfo => {
-      let roster = [];
-
-      if (typeof DashboardData.getStudents === "function") {
-        roster = DashboardData.getStudents(classInfo.id) || [];
-      } else if (typeof DashboardData.getClassroomStudents === "function") {
-        roster = DashboardData.getClassroomStudents(classInfo.id) || [];
-      } else if (typeof DashboardData.getRoster === "function") {
-        roster = (DashboardData.getRoster(classInfo.id) || []).map((name, index) => ({
-          id: `manual-${classInfo.id}-${index}`,
-          name: typeof name === "string" ? name : name?.name || ""
-        }));
-      }
-
-      roster.forEach((student, index) => {
-        const normalized = typeof student === "string"
-          ? { id: `manual-${classInfo.id}-${index}`, name: student }
-          : student;
-
-        if (!normalized?.name) return;
-
-        students.push({
-          ...normalized,
-          rosterClassId: classInfo.id,
-          rosterClassName: classInfo.name || `Period ${classInfo.id}`
-        });
-      });
-    });
-
-    return students.sort((a, b) =>
-      a.name.localeCompare(b.name) ||
-      String(a.rosterClassId).localeCompare(String(b.rosterClassId), undefined, { numeric: true })
-    );
-  }
-
-  function clearStudentSelection(keepText = false) {
-    selectedStudentId = "";
-    selectedStudentClassId = "";
-    if (!keepText) studentInput.value = "";
-    matchNote.textContent = "Suggestions search student rosters across all active periods.";
-  }
-
-  function updateSelectedStudentNote() {
-    if (!selectedStudentId) return;
-    const student = allStudents().find(item =>
-      item.id === selectedStudentId &&
-      (!selectedStudentClassId || String(item.rosterClassId) === String(selectedStudentClassId))
-    );
-    if (!student) return;
-
-    const target = selectedTarget();
-    matchNote.textContent =
-      `Matched to ${student.name} · ${student.rosterClassName}. Reminder timing will use ${target.label}.`;
-  }
-
-  function chooseStudent(student) {
-    selectedStudentId = student.id;
-    selectedStudentClassId = String(student.rosterClassId || "");
-    studentInput.value = student.name;
-
-    // A roster selection should carry its class period with it so the teacher
-    // never has to choose the student and then manually correct the period.
-    const matchingPeriod = `class:${selectedStudentClassId}`;
-    const periodExists = [...periodSelect.options].some(option => option.value === matchingPeriod);
-    if (selectedStudentClassId && periodExists) {
-      periodSelect.value = matchingPeriod;
-      updateTimingControls();
-      updateTimingPreview();
-    }
-
-    suggestions.classList.remove("visible");
-    updateSelectedStudentNote();
-  }
-
-  function renderSuggestions() {
-    const query = studentInput.value.trim().toLocaleLowerCase();
-    const students = allStudents();
-
-    if (!query) {
-      suggestionItems = [];
-      suggestions.innerHTML = "";
-      suggestions.classList.remove("visible");
-      return;
-    }
-
-    suggestionItems = students
-      .map(student => {
-        const name = student.name.toLocaleLowerCase();
-        const tokens = name.split(/\s+/);
-        const rank = name.startsWith(query)
-          ? 0
-          : tokens.some(token => token.startsWith(query))
-            ? 1
-            : name.includes(query)
-              ? 2
-              : 99;
-        return { student, rank };
-      })
-      .filter(item => item.rank < 99)
-      .sort((a, b) => a.rank - b.rank || a.student.name.localeCompare(b.student.name))
-      .slice(0, 8)
-      .map(item => item.student);
-
-    suggestions.innerHTML = "";
-    activeSuggestionIndex = -1;
-
-    suggestionItems.forEach((student, index) => {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = "suggestion";
-
-      const name = document.createElement("span");
-      name.className = "suggestion-name";
-      name.textContent = student.name;
-
-      const className = document.createElement("span");
-      className.className = "suggestion-class";
-      className.textContent = student.rosterClassName;
-
-      button.append(name, className);
-      button.addEventListener("mousedown", event => {
-        event.preventDefault();
-        chooseStudent(student);
-      });
-      suggestions.appendChild(button);
-    });
-
-    suggestions.classList.toggle("visible", suggestionItems.length > 0);
-
-    const exactMatches = students.filter(student => student.name.toLocaleLowerCase() === query);
-    if (exactMatches.length === 1) {
-      const exact = exactMatches[0];
-      selectedStudentId = exact.id;
-      selectedStudentClassId = String(exact.rosterClassId || "");
-      updateSelectedStudentNote();
-    } else if (selectedStudentId) {
-      const selected = students.find(student => student.id === selectedStudentId);
-      if (!selected || selected.name.toLocaleLowerCase() !== query) {
-        selectedStudentId = "";
-        selectedStudentClassId = "";
-        matchNote.textContent = "No exact roster match yet. You can keep typing or leave the student field as free text.";
-      }
-    } else if (exactMatches.length > 1) {
-      matchNote.textContent = "Multiple students have this name. Choose the correct period from the suggestions.";
-    } else {
-      matchNote.textContent = suggestionItems.length
-        ? `${suggestionItems.length} roster match${suggestionItems.length === 1 ? "" : "es"} found.`
-        : "No roster match found. You can still use the name as free text.";
-    }
-  }
-
-  function selectedTiming() {
-    return document.querySelector('input[name="timing"]:checked')?.value || "start";
-  }
-
-  function selectedPrivacy() {
-    return document.querySelector('input[name="privacy"]:checked')?.value === "private" ? "private" : "normal";
-  }
-
-  function customMinutes() {
-    return Math.max(1, Math.min(60, Math.floor(Number(customMinutesInput.value) || 10)));
-  }
-
-  function updateTimingControls() {
-    const target = selectedTarget();
-    customTimingRow.classList.toggle("visible", selectedTiming() === "custom");
-
-    const copy = customTimingRow.querySelector(".custom-timing-copy");
-    if (copy) {
-      copy.textContent = target.isBreak
-        ? `minutes before ${target.label} ends`
-        : "minutes before class ends";
-    }
-
-    document.querySelector('input[name="timing"][value="start"] + span').textContent =
-      target.isBreak ? `Start of ${target.label}` : "Start of class";
-
-    document.querySelector('input[name="timing"][value="after5"] + span').textContent =
-      target.isBreak ? `5 minutes into ${target.label}` : "5 minutes into class";
-
-    document.querySelector('input[name="timing"][value="before5"] + span').textContent =
-      target.isBreak ? `5 minutes before ${target.label} ends` : "5 minutes before class ends";
-  }
-
-  function updateTimingPreview() {
-    updateTimingControls();
-
-    const target = selectedTarget();
-    const temp = {
-      classId: target.classId,
-      entryName: target.entryName,
-      date: dateInput.value,
-      timing: selectedTiming(),
-      customMinutes: customMinutes()
-    };
-
-    const info = ReminderService.getTriggerTime(temp);
-
-    if (!info) {
-      timingPreview.textContent = target.isBreak
-        ? `${target.label} is not part of the selected day's bell schedule.`
-        : "Choose a class and school day to preview the reminder time.";
-      return;
-    }
-
-    const triggerLabel =
-      typeof ReminderService.timingLabelForTarget === "function"
-        ? ReminderService.timingLabelForTarget(
-            selectedTiming(),
-            customMinutes(),
-            target.label,
-            target.isBreak
-          )
-        : ReminderService.timingLabel(selectedTiming(), customMinutes());
-
-    timingPreview.textContent =
-      `${target.label} · ${triggerLabel} at ` +
-      `${info.trigger.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })} · ` +
-      `${info.scheduleLabel}`;
-  }
-
-  function renderSchedule() {
-    const snapshot = BellService.getSnapshot();
-    scheduleMode.value = snapshot.scheduleMode || "auto";
-    scheduleStatus.innerHTML =
-      `<span class="status-dot"></span><span>${snapshot.scheduleLabel} · ${snapshot.scheduleMode === "auto" ? "Auto detected" : "Manual override"}</span>`;
-    updateTimingPreview();
-  }
-
-  function statusLabel(reminder) {
-    if (reminder.scheduleUnavailable) return "Not on this schedule";
-    if (reminder.status === "done") return "Done";
-    if (reminder.status === "missed") return "Missed";
-    if (reminder.status === "snoozed") return "Snoozed";
-    if (reminder.status === "alerting") return "Alerting";
-    return "Pending";
-  }
-
-  function renderReminders() {
-    const allReminders = ReminderService.getReminders();
-    const reminders = allReminders
-      .filter(item => item.date >= ReminderService.dateKey())
-      .sort((a, b) => {
-        if (a.date !== b.date) return a.date.localeCompare(b.date);
-        if (a.scheduleUnavailable !== b.scheduleUnavailable) {
-          return a.scheduleUnavailable ? 1 : -1;
-        }
-        return Number(a.triggerAt || 0) - Number(b.triggerAt || 0);
-      });
-
-    const active = reminders.filter(item => !["done", "missed"].includes(item.status));
-    const completed = allReminders.filter(item => item.status === "done");
-    reminderCount.textContent = `${active.length} active`;
-    clearCompletedButton.disabled = completed.length === 0;
-
-    reminderList.innerHTML = "";
-
-    if (reminders.length === 0) {
-      const empty = document.createElement("div");
-      empty.className = "empty-state";
-
-      const pastCount = allReminders.filter(item => item.date < ReminderService.dateKey()).length;
-      const recoveryCandidates = typeof ReminderService.getReminderRecoveryCandidates === "function"
-        ? ReminderService.getReminderRecoveryCandidates()
-        : [];
-
-      if (pastCount > 0) {
-        empty.innerHTML = `<strong>No upcoming reminders.</strong><br>${pastCount} older reminder${pastCount === 1 ? " is" : "s are"} still stored but hidden because the date has passed.`;
-      } else {
-        empty.innerHTML = "<strong>No reminders yet.</strong><br>Create one above and it will alert you while any Teacher Dashboard page is open.";
-      }
-
-      if (recoveryCandidates.length && allReminders.length === 0) {
-        const recovery = recoveryCandidates[0];
-        const recoveryWrap = document.createElement("div");
-        recoveryWrap.style.marginTop = "14px";
-
-        const recoveryNote = document.createElement("div");
-        recoveryNote.textContent = `${recovery.label} found (${recovery.count} reminder${recovery.count === 1 ? "" : "s"}).`;
-        recoveryNote.style.marginBottom = "9px";
-
-        const restore = document.createElement("button");
-        restore.type = "button";
-        restore.className = "button secondary compact";
-        restore.textContent = "Restore Reminder Backup";
-        restore.addEventListener("click", () => {
-          const confirmed = confirm(`Restore ${recovery.count} reminder${recovery.count === 1 ? "" : "s"} from ${recovery.label.toLowerCase()}?`);
-          if (!confirmed) return;
-          try {
-            ReminderService.restoreReminderBackup(recovery.source);
-            renderReminders();
-            showToast("Reminder backup restored");
-          } catch (error) {
-            console.error(error);
-            showToast(error.message || "Reminder backup could not be restored");
-          }
-        });
-
-        recoveryWrap.append(recoveryNote, restore);
-        empty.appendChild(recoveryWrap);
-      }
-
-      reminderList.appendChild(empty);
-      return;
-    }
-
-    reminders.forEach(reminder => {
-      const card = document.createElement("div");
-      card.className = `reminder-card ${reminder.status}`;
-
-      const copy = document.createElement("div");
-
-      const meta = document.createElement("div");
-      meta.className = "reminder-meta";
-      meta.textContent =
-        `${formatDisplayDate(reminder.date)} · ${reminder.className} · ${reminder.triggerLabel} · ${statusLabel(reminder)}`;
-
-      const privateHidden = reminder.privacy === "private" && !revealedPrivateIds.has(reminder.id);
-
-      const text = document.createElement("div");
-      text.className = "reminder-text";
-      text.textContent = privateHidden ? "Private reminder" : reminder.text;
-
-      copy.append(meta, text);
-
-      if (!privateHidden && reminder.studentName) {
-        const student = document.createElement("div");
-        student.className = "reminder-student";
-        student.textContent = reminder.studentName;
-        copy.appendChild(student);
-      }
-
-      const actions = document.createElement("div");
-      actions.className = "reminder-actions";
-
-      if (privateHidden) {
-        const show = document.createElement("button");
-        show.type = "button";
-        show.className = "show-button";
-        show.textContent = "Show";
-        show.addEventListener("click", () => {
-          revealedPrivateIds.add(reminder.id);
-          renderReminders();
-        });
-        actions.appendChild(show);
-      }
-
-      if (!["done", "missed"].includes(reminder.status)) {
-        const done = document.createElement("button");
-        done.type = "button";
-        done.className = "done-button";
-        done.textContent = "Done";
-        done.addEventListener("click", () => {
-          ReminderService.updateReminder(reminder.id, {
-            status: "done",
-            completedAt: new Date().toISOString(),
-            snoozeUntil: 0,
-            claimOwner: "",
-            claimUntil: 0
-          });
-          renderReminders();
-          showToast("Reminder completed");
-        });
-        actions.appendChild(done);
-      }
-
-      const remove = document.createElement("button");
-      remove.type = "button";
-      remove.className = "delete-button";
-      remove.textContent = "Delete";
-      remove.addEventListener("click", () => {
-        revealedPrivateIds.delete(reminder.id);
-        ReminderService.deleteReminder(reminder.id);
-        renderReminders();
-        showToast("Reminder deleted");
-      });
-      actions.appendChild(remove);
-
-      card.append(copy, actions);
-      reminderList.appendChild(card);
-    });
-  }
-
-  function addReminder() {
-    try {
-      const target = selectedTarget();
-
-      const reminder = ReminderService.addReminder({
-        date: dateInput.value,
-        classId: target.classId,
-        entryName: target.entryName,
-        studentId: selectedStudentId,
-        studentClassId: selectedStudentClassId,
-        studentName: studentInput.value.trim(),
-        text: reminderText.value.trim(),
-        timing: selectedTiming(),
-        customMinutes: customMinutes(),
-        privacy: selectedPrivacy()
-      });
-
-      reminderText.value = "";
-      clearStudentSelection();
-      renderReminders();
-      showToast(`Reminder set for ${reminder.className || target.label}`);
-    } catch (error) {
-      console.error(error);
-      showToast(error.message || "Reminder could not be added");
-    }
-  }
-
-  function setView(view) {
-    const showTodos = view === "todo";
-    dailyRemindersView.hidden = showTodos;
-    todoListView.hidden = !showTodos;
-    dailyRemindersViewButton.classList.toggle("selected", !showTodos);
-    todoListViewButton.classList.toggle("selected", showTodos);
-
-    if (showTodos) {
-      renderTodos();
-      setTimeout(() => todoInput.focus(), 0);
-    }
-  }
-
-  function formatTodoDate(isoString) {
-    const date = new Date(isoString);
-    if (Number.isNaN(date.getTime())) return "";
-
-    const today = new Date();
-    const sameDay =
-      date.getFullYear() === today.getFullYear() &&
-      date.getMonth() === today.getMonth() &&
-      date.getDate() === today.getDate();
-
-    if (sameDay) return "Added today";
-
-    return `Added ${date.toLocaleDateString([], {
-      month: "short",
-      day: "numeric",
-      year: date.getFullYear() === today.getFullYear() ? undefined : "numeric"
-    })}`;
-  }
-
-  function buildTodoItem(todo, completed) {
-    const row = document.createElement("label");
-    row.className = `todo-item${completed ? " completed" : ""}`;
-
-    const checkbox = document.createElement("input");
-    checkbox.type = "checkbox";
-    checkbox.checked = completed;
-    checkbox.setAttribute("aria-label", completed ? `Restore ${todo.text}` : `Complete ${todo.text}`);
-    checkbox.addEventListener("change", () => {
-      ReminderService.setTodoCompleted(todo.id, checkbox.checked);
-      renderTodos();
-      showToast(checkbox.checked ? "To-do completed" : "To-do restored");
-    });
-
-    const copy = document.createElement("div");
-    const text = document.createElement("div");
-    text.className = "todo-text";
-    text.textContent = todo.text;
-
-    const date = document.createElement("div");
-    date.className = "todo-date";
-    date.textContent = formatTodoDate(todo.createdAt);
-
-    copy.append(text, date);
-    row.append(checkbox, copy);
-    return row;
-  }
-
-  function renderTodos() {
-    const todos = ReminderService.getTodos();
-    const active = todos
-      .filter(todo => !todo.completedAt)
-      .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
-    const completed = todos
-      .filter(todo => todo.completedAt)
-      .sort((a, b) => String(b.completedAt).localeCompare(String(a.completedAt)));
-
-    todoCount.textContent = `${active.length} active`;
-    todoListViewButton.textContent = `To-Do List (${active.length})`;
-    completedTodoCount.textContent = String(completed.length);
-    completedTodoActions.hidden = completed.length === 0;
-    todoList.innerHTML = "";
-    completedTodoList.innerHTML = "";
-
-    if (!active.length) {
-      const empty = document.createElement("div");
-      empty.className = "empty-state";
-      empty.innerHTML = "<strong>Nothing on your list.</strong><br>Add a task above and it will stay here until you complete it.";
-      todoList.appendChild(empty);
-    } else {
-      active.forEach(todo => todoList.appendChild(buildTodoItem(todo, false)));
-    }
-
-    if (!completed.length) {
-      const empty = document.createElement("div");
-      empty.className = "empty-state";
-      empty.textContent = "Completed tasks will appear here.";
-      completedTodoList.appendChild(empty);
-    } else {
-      completed.forEach(todo => completedTodoList.appendChild(buildTodoItem(todo, true)));
-    }
-  }
-
-  function addTodo() {
-    const text = todoInput.value.trim();
-    if (!text) return;
-
-    try {
-      ReminderService.addTodo({ text, source: "manual" });
-      todoInput.value = "";
-      renderTodos();
-      showToast("Added to To-Do List");
-    } catch (error) {
-      console.error(error);
-      showToast(error.message || "To-do could not be added");
-    }
-  }
-
-  function clearCompletedTodos() {
-    const completedCount = ReminderService
-      .getTodos()
-      .filter(todo => todo.completedAt)
-      .length;
-
-    if (!completedCount) return;
-
-    const confirmed = confirm(
-      `Clear ${completedCount} completed to-do item${completedCount === 1 ? "" : "s"}?\n\nThis cannot be undone.`
-    );
-
-    if (!confirmed) return;
-
-    try {
-      const cleared = ReminderService.clearCompletedTodos();
-      renderTodos();
-      showToast(`Cleared ${cleared} completed to-do item${cleared === 1 ? "" : "s"}`);
-    } catch (error) {
-      console.error(error);
-      showToast(error.message || "Completed to-dos could not be cleared");
-    }
-  }
-
-  dailyRemindersViewButton.addEventListener("click", () => setView("daily"));
-  todoListViewButton.addEventListener("click", () => setView("todo"));
-  addTodoButton.addEventListener("click", addTodo);
-  clearCompletedTodosButton.addEventListener("click", clearCompletedTodos);
-  notificationToggleButton.addEventListener("click", handleNotificationToggle);
-  notificationPermissionCancel.addEventListener("click", closeNotificationPermissionDialog);
-  notificationPermissionContinue.addEventListener("click", async () => {
-    closeNotificationPermissionDialog();
-    await enableDesktopNotifications();
-  });
-  notificationPermissionBackdrop.addEventListener("click", event => {
-    if (event.target === notificationPermissionBackdrop) closeNotificationPermissionDialog();
-  });
-  todoInput.addEventListener("keydown", event => {
-    if (event.key === "Enter" && !event.isComposing) {
-      event.preventDefault();
-      addTodo();
-    }
-  });
-
-  periodSelect.addEventListener("change", () => {
-    updateSelectedStudentNote();
-    updateTimingPreview();
-  });
-
-  dateInput.addEventListener("change", () => {
-    buildPeriods();
-    updateTimingPreview();
-  });
-
-  studentInput.addEventListener("input", () => {
-    renderSuggestions();
-  });
-
-  studentInput.addEventListener("keydown", event => {
-    const buttons = [...suggestions.querySelectorAll(".suggestion")];
-    if (!buttons.length) return;
-
-    if (event.key === "ArrowDown") {
-      event.preventDefault();
-      activeSuggestionIndex = Math.min(activeSuggestionIndex + 1, buttons.length - 1);
-    } else if (event.key === "ArrowUp") {
-      event.preventDefault();
-      activeSuggestionIndex = Math.max(activeSuggestionIndex - 1, 0);
-    } else if (event.key === "Enter" && activeSuggestionIndex >= 0) {
-      event.preventDefault();
-      chooseStudent(suggestionItems[activeSuggestionIndex]);
-      return;
-    } else if (event.key === "Escape") {
-      suggestions.classList.remove("visible");
-      return;
-    } else {
-      return;
-    }
-
-    buttons.forEach((button, index) => button.classList.toggle("active", index === activeSuggestionIndex));
-    buttons[activeSuggestionIndex]?.scrollIntoView({ block: "nearest" });
-  });
-
-  studentInput.addEventListener("blur", () => {
-    setTimeout(() => suggestions.classList.remove("visible"), 120);
-  });
-
-  document.querySelectorAll('input[name="timing"]').forEach(input => {
-    input.addEventListener("change", updateTimingPreview);
-  });
-
-  customMinutesInput.addEventListener("input", updateTimingPreview);
-
-  scheduleMode.addEventListener("change", () => {
-    BellService.setScheduleMode(scheduleMode.value);
-    buildPeriods();
-    renderSchedule();
-    showToast(`${BellService.getSnapshot().scheduleLabel} schedule selected`);
-  });
-
-  el("addReminderButton").addEventListener("click", addReminder);
-
-  clearCompletedButton.addEventListener("click", () => {
-    const cleared = ReminderService.clearCompleted();
-    renderReminders();
-    showToast(cleared ? `${cleared} completed reminder${cleared === 1 ? "" : "s"} cleared` : "No completed reminders to clear");
-  });
-
-  window.addEventListener(ReminderService.changeEvent, renderReminders);
-  window.addEventListener(ReminderService.todoChangeEvent, renderTodos);
-  window.addEventListener(ReminderService.notificationChangeEvent, renderNotificationSetting);
-  window.addEventListener(DashboardData.changeEvent, () => {
-    buildPeriods();
-    renderSuggestions();
-    renderReminders();
-    updateTimingPreview();
-  });
-  window.addEventListener(BellService.changeEvent, () => {
-    buildPeriods();
-    renderSchedule();
-  });
-
-  dateInput.value = formatDateInput(defaultReminderDate());
-  buildPeriods();
-  renderSchedule();
-  updateTimingPreview();
-  renderReminders();
-  renderTodos();
-  renderNotificationSetting();
-})();
-</script>
+    function formatDateInput(date){return ReminderService.dateKey(date);}
+    function formatDisplayDate(key){const p=key.split("-").map(Number);const date=new Date(p[0],p[1]-1,p[2]);const today=ReminderService.dateKey();const tomorrow=new Date();tomorrow.setDate(tomorrow.getDate()+1);if(key===today)return"Today";if(key===ReminderService.dateKey(tomorrow))return"Tomorrow";return date.toLocaleDateString([],{weekday:"short",month:"short",day:"numeric"});}
+    function formatTimeInput(ms){const date=new Date(Number(ms)||Date.now());return `${String(date.getHours()).padStart(2,"0")}:${String(date.getMinutes()).padStart(2,"0")}`;}
+
+    function reminderScheduleKey(){const value=dateInput.value||formatDateInput(defaultReminderDate());const[y,m,d]=value.split("-").map(Number);const selected=new Date(y,m-1,d,12);if(value===ReminderService.dateKey()){const snap=BellService.getSnapshot();if(["regular","lateStart","minimum"].includes(snap?.scheduleKey))return snap.scheduleKey;}try{if(DashboardData.isMinimumDayDate(selected))return"minimum";}catch{}return selected.getDay()===3?"lateStart":"regular";}
+
+    function buildPeriods(){const previous=periodSelect.value;const classes=DashboardData.getClasses({activeOnly:true});const preferred=DashboardData.getCurrentClassId();const classMap=new Map(classes.map(item=>[String(item.id),item]));const schedule=DashboardData.getBellSchedule(reminderScheduleKey())||[];periodSelect.innerHTML="";schedule.forEach(entry=>{const name=String(entry?.name||"").trim();if(!name)return;const match=name.match(/^Period\s+(\d+)$/i);if(match){const id=match[1];const info=classMap.get(id);if(!info)return;const option=document.createElement("option");option.value=`class:${id}`;option.textContent=info.name;periodSelect.appendChild(option);return;}if(/^(Snack|Lunch)$/i.test(name)){const option=document.createElement("option");option.value=`entry:${name}`;option.textContent=name;periodSelect.appendChild(option);}});const values=[...periodSelect.options].map(o=>o.value);if(values.includes(previous))periodSelect.value=previous;else if(values.includes(`class:${preferred}`))periodSelect.value=`class:${preferred}`;else if(periodSelect.options.length)periodSelect.selectedIndex=0;}
+    function selectedTarget(){const value=String(periodSelect.value||"");if(value.startsWith("entry:")){const entryName=value.slice(6);return{classId:"",entryName,label:entryName,isBreak:true};}const classId=value.startsWith("class:")?value.slice(6):value;const info=DashboardData.getClass(classId);return{classId,entryName:"",label:info?.name||`Period ${classId}`,isBreak:false};}
+
+    function allStudents(){const classes=DashboardData.getClasses({activeOnly:true});const students=[];classes.forEach(info=>{let roster=typeof DashboardData.getStudents==="function"?(DashboardData.getStudents(info.id)||[]):[];roster.forEach((student,index)=>{const normalized=typeof student==="string"?{id:`manual-${info.id}-${index}`,name:student}:student;if(!normalized?.name)return;students.push({...normalized,rosterClassId:info.id,rosterClassName:info.name||`Period ${info.id}`});});});return students.sort((a,b)=>a.name.localeCompare(b.name)||String(a.rosterClassId).localeCompare(String(b.rosterClassId),undefined,{numeric:true}));}
+    function clearStudentSelection(keepText=false){selectedStudentId="";selectedStudentClassId="";if(!keepText)studentInput.value="";matchNote.textContent="Suggestions search student rosters across all active periods.";}
+    function updateSelectedStudentNote(){if(!selectedStudentId)return;const student=allStudents().find(item=>String(item.id)===String(selectedStudentId)&&(!selectedStudentClassId||String(item.rosterClassId)===String(selectedStudentClassId)));if(!student)return;matchNote.textContent=`Matched to ${student.name} · ${student.rosterClassName}.`;}
+    function chooseStudent(student){selectedStudentId=String(student.id);selectedStudentClassId=String(student.rosterClassId||"");studentInput.value=student.name;const target=`class:${selectedStudentClassId}`;if([...periodSelect.options].some(o=>o.value===target)){periodSelect.value=target;updateTimingPreview();}suggestions.classList.remove("visible");updateSelectedStudentNote();}
+    function renderSuggestions(){const query=studentInput.value.trim().toLocaleLowerCase();const students=allStudents();if(!query){suggestionItems=[];suggestions.innerHTML="";suggestions.classList.remove("visible");return;}suggestionItems=students.map(student=>{const name=student.name.toLocaleLowerCase();const tokens=name.split(/\s+/);const rank=name.startsWith(query)?0:tokens.some(t=>t.startsWith(query))?1:name.includes(query)?2:99;return{student,rank};}).filter(x=>x.rank<99).sort((a,b)=>a.rank-b.rank||a.student.name.localeCompare(b.student.name)).slice(0,8).map(x=>x.student);suggestions.innerHTML="";activeSuggestionIndex=-1;suggestionItems.forEach(student=>{const button=document.createElement("button");button.type="button";button.className="suggestion";button.innerHTML=`<span class="suggestion-name">${escapeHtml(student.name)}</span><span class="suggestion-class">${escapeHtml(student.rosterClassName)}</span>`;button.addEventListener("mousedown",event=>{event.preventDefault();chooseStudent(student);});suggestions.appendChild(button);});suggestions.classList.toggle("visible",suggestionItems.length>0);const exact=students.filter(s=>s.name.toLocaleLowerCase()===query);if(exact.length===1){selectedStudentId=String(exact[0].id);selectedStudentClassId=String(exact[0].rosterClassId||"");updateSelectedStudentNote();}else if(selectedStudentId){const chosen=students.find(s=>String(s.id)===String(selectedStudentId));if(!chosen||chosen.name.toLocaleLowerCase()!==query){selectedStudentId="";selectedStudentClassId="";matchNote.textContent="No exact roster match yet. You can keep typing or leave the student as free text.";}}}
+    function escapeHtml(value){return String(value??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[ch]||ch));}
+
+    function selectedTiming(){return document.querySelector('input[name="timing"]:checked')?.value||"start";}
+    function selectedPrivacy(){return document.querySelector('input[name="privacy"]:checked')?.value==="private"?"private":"normal";}
+    function selectedCustomTime(){return selectedTiming()==="custom"?String(customTimeInput.value||"").trim():"";}
+    function updateTimingControls(){const target=selectedTarget();customTimingRow.classList.toggle("visible",selectedTiming()==="custom");const map={start:target.isBreak?`Start of ${target.label}`:"Start of class",after5:target.isBreak?`5 min into ${target.label}`:"5 min into class",before10:target.isBreak?`10 min before ${target.label} ends`:"10 min before end",before5:target.isBreak?`5 min before ${target.label} ends`:"5 min before end",end:target.isBreak?`End of ${target.label}`:"End of class",custom:"Custom time"};Object.entries(map).forEach(([value,label])=>{const span=document.querySelector(`input[name="timing"][value="${value}"] + span`);if(span)span.textContent=label;});}
+    function updateTimingPreview(){updateTimingControls();const target=selectedTarget();if(selectedTiming()==="custom"&&!selectedCustomTime()){timingPreview.textContent="Choose an exact hour and minute.";return;}const temp={classId:target.classId,entryName:target.entryName,date:dateInput.value,timing:selectedTiming(),customTime:selectedCustomTime(),customMinutes:10};const info=ReminderService.getTriggerTime(temp);if(!info){timingPreview.textContent=selectedTiming()==="custom"?"Choose a valid date and time.":`${target.label} is not part of the selected day's bell schedule.`;return;}const label=ReminderService.timingLabelForTarget(selectedTiming(),10,target.label,target.isBreak,selectedCustomTime());timingPreview.textContent=`${target.label} · ${label} · ${info.trigger.toLocaleTimeString([],{hour:"numeric",minute:"2-digit"})}`;}
+    function renderSchedule(){const snap=BellService.getSnapshot();scheduleMode.value=snap.scheduleMode||"auto";scheduleStatus.textContent=`${snap.scheduleLabel} · ${snap.scheduleMode==="auto"?"Auto detected":"Manual override"}`;updateTimingPreview();}
+    function statusLabel(reminder){if(reminder.scheduleUnavailable)return"Not on schedule";if(reminder.status==="done")return"Done";if(reminder.status==="missed")return"Missed";if(reminder.status==="snoozed")return"Snoozed";if(reminder.status==="alerting")return"Alerting";return"Pending";}
+
+    function reminderMeta(reminder){const time=reminder.triggerAt?new Date(reminder.triggerAt).toLocaleTimeString([],{hour:"numeric",minute:"2-digit"}):reminder.triggerLabel;return `${formatDisplayDate(reminder.date)} · ${reminder.className} · ${time}`;}
+    function completeReminder(reminder){ReminderService.updateReminder(reminder.id,{status:"done",completedAt:new Date().toISOString(),snoozeUntil:0,claimOwner:"",claimUntil:0});renderReminders();showToast("Reminder completed");}
+    function deleteReminder(reminder){revealedPrivateIds.delete(reminder.id);ReminderService.deleteReminder(reminder.id);if(editingReminderId===reminder.id)resetComposer();renderReminders();showToast("Reminder deleted");}
+
+    function buildReminderMenu(reminder,allowEdit=true){const details=document.createElement("details");details.className="reminder-menu";const summary=document.createElement("summary");summary.textContent="•••";summary.setAttribute("aria-label","Reminder actions");summary.addEventListener("click",e=>e.stopPropagation());const menu=document.createElement("div");menu.className="reminder-menu-popover";menu.addEventListener("click",e=>e.stopPropagation());if(allowEdit){const edit=document.createElement("button");edit.type="button";edit.textContent="Edit";edit.addEventListener("click",()=>{details.open=false;startEdit(reminder);});menu.appendChild(edit);}const del=document.createElement("button");del.type="button";del.className="danger";del.textContent="Delete";del.addEventListener("click",()=>{details.open=false;deleteReminder(reminder);});menu.appendChild(del);details.append(summary,menu);return details;}
+
+    function reminderCard(reminder,{completed=false}={}){const card=document.createElement("article");card.className=`reminder-card ${reminder.status}`;if(!completed)card.addEventListener("click",()=>startEdit(reminder));const copy=document.createElement("div");copy.className="reminder-copy";const privateHidden=reminder.privacy==="private"&&!revealedPrivateIds.has(reminder.id);const text=document.createElement("div");text.className="reminder-text";text.textContent=privateHidden?"Private reminder":reminder.text;const meta=document.createElement("div");meta.className="reminder-meta";meta.textContent=reminderMeta(reminder);copy.append(text,meta);if(!privateHidden&&reminder.studentName){const student=document.createElement("div");student.className="reminder-student";student.textContent=reminder.studentName;copy.appendChild(student);}const side=document.createElement("div");side.className="reminder-side";const status=document.createElement("span");status.className=`status-pill ${reminder.status}`;status.textContent=statusLabel(reminder);side.appendChild(status);if(privateHidden){const show=document.createElement("button");show.type="button";show.className="show-button";show.textContent="Show";show.addEventListener("click",e=>{e.stopPropagation();revealedPrivateIds.add(reminder.id);renderReminders();});side.appendChild(show);}if(!completed){const done=document.createElement("button");done.type="button";done.className="done-button";done.textContent="✓ Done";done.addEventListener("click",e=>{e.stopPropagation();completeReminder(reminder);});side.appendChild(done);}side.appendChild(buildReminderMenu(reminder,!completed));card.append(copy,side);return card;}
+
+    function renderReminders(){const all=ReminderService.getReminders();const today=ReminderService.dateKey();const active=all.filter(item=>item.date>=today&&item.status!=="done").sort((a,b)=>a.date.localeCompare(b.date)||(Number(a.triggerAt||0)-Number(b.triggerAt||0)));const completed=all.filter(item=>item.status==="done").sort((a,b)=>String(b.completedAt||"").localeCompare(String(a.completedAt||"")));reminderCount.textContent=String(active.length);completedReminderCount.textContent=String(completed.length);completedReminderActions.hidden=completed.length===0;reminderList.innerHTML="";completedReminderList.innerHTML="";if(!active.length){const empty=document.createElement("div");empty.className="empty-state";const past=all.filter(item=>item.date<today&&item.status!=="done").length;empty.innerHTML=past?`<strong>No upcoming reminders.</strong><br>${past} older reminder${past===1?" is":"s are"} still stored but no longer shown here.`:"<strong>No upcoming reminders.</strong><br>Add one above and it will surface anywhere in Teacher Dashboard.";const recovery=typeof ReminderService.getReminderRecoveryCandidates==="function"?ReminderService.getReminderRecoveryCandidates():[];if(recovery.length&&all.length===0){const button=document.createElement("button");button.className="td-button td-button-secondary td-button-small";button.style.marginTop="12px";button.textContent="Restore Reminder Backup";button.addEventListener("click",()=>{if(confirm(`Restore ${recovery[0].count} reminders from ${recovery[0].label.toLowerCase()}?`)){ReminderService.restoreReminderBackup(recovery[0].source);renderReminders();}});empty.appendChild(document.createElement("br"));empty.appendChild(button);}reminderList.appendChild(empty);}else active.forEach(r=>reminderList.appendChild(reminderCard(r)));if(!completed.length){const empty=document.createElement("div");empty.className="empty-state";empty.textContent="Completed reminders will appear here.";completedReminderList.appendChild(empty);}else completed.forEach(r=>completedReminderList.appendChild(reminderCard(r,{completed:true})));}
+
+    function resetComposer(){editingReminderId="";composerTitle.textContent="New Reminder";editIndicator.classList.remove("visible");addReminderButton.textContent="Add Reminder";cancelEditButton.hidden=true;reminderText.value="";clearStudentSelection();customTimeInput.value="";document.querySelector('input[name="timing"][value="start"]').checked=true;document.querySelector('input[name="privacy"][value="normal"]').checked=true;updateTimingPreview();}
+    function startEdit(reminder){editingReminderId=reminder.id;composerTitle.textContent="Edit Reminder";editIndicator.classList.add("visible");addReminderButton.textContent="Save Changes";cancelEditButton.hidden=false;dateInput.value=reminder.date;buildPeriods();const target=reminder.entryName?`entry:${reminder.entryName}`:`class:${reminder.classId}`;if([...periodSelect.options].some(o=>o.value===target))periodSelect.value=target;studentInput.value=reminder.studentName||"";selectedStudentId=String(reminder.studentId||"");selectedStudentClassId=String(reminder.studentClassId||"");reminderText.value=reminder.text||"";let timing=reminder.timing||"start";let radio=document.querySelector(`input[name="timing"][value="${timing}"]`);if(!radio){timing="start";radio=document.querySelector('input[name="timing"][value="start"]');}radio.checked=true;customTimeInput.value=reminder.customTime||(reminder.timing==="custom"&&reminder.triggerAt?formatTimeInput(reminder.triggerAt):"");const privacy=document.querySelector(`input[name="privacy"][value="${reminder.privacy==="private"?"private":"normal"}"]`);if(privacy)privacy.checked=true;updateSelectedStudentNote();updateTimingPreview();composerCard.scrollIntoView({behavior:"smooth",block:"start"});setTimeout(()=>reminderText.focus(),250);}
+
+    function saveReminder(){try{const target=selectedTarget();const timing=selectedTiming();const customTime=selectedCustomTime();if(timing==="custom"&&!customTime)throw new Error("Choose an exact reminder time.");const payload={date:dateInput.value,classId:target.classId,entryName:target.entryName,studentId:selectedStudentId,studentClassId:selectedStudentClassId,studentName:studentInput.value.trim(),text:reminderText.value.trim(),timing,customMinutes:10,customTime,privacy:selectedPrivacy()};let reminder;if(editingReminderId){if(!payload.text)throw new Error("Enter a reminder first.");reminder=ReminderService.updateReminder(editingReminderId,{...payload,status:"pending",completedAt:"",snoozeUntil:0,alertedDueAt:0,claimOwner:"",claimUntil:0});showToast("Reminder updated");}else{reminder=ReminderService.addReminder(payload);showToast(`Reminder set for ${reminder.className||target.label}`);}resetComposer();renderReminders();}catch(error){console.error(error);showToast(error.message||"Reminder could not be saved");}}
+
+    function setView(view){const todos=view==="todo";dailyRemindersView.hidden=todos;todoListView.hidden=!todos;dailyRemindersViewButton.setAttribute("aria-selected",String(!todos));todoListViewButton.setAttribute("aria-selected",String(todos));if(todos){renderTodos();setTimeout(()=>todoInput.focus(),0);}}
+    function formatTodoDate(iso){const date=new Date(iso);if(Number.isNaN(date.getTime()))return"";const today=new Date();const same=date.toDateString()===today.toDateString();return same?"Added today":`Added ${date.toLocaleDateString([],{month:"short",day:"numeric",year:date.getFullYear()===today.getFullYear()?undefined:"numeric"})}`;}
+    function buildTodoItem(todo,completed){const row=document.createElement("label");row.className=`todo-item${completed?" completed":""}`;const checkbox=document.createElement("input");checkbox.type="checkbox";checkbox.checked=completed;checkbox.addEventListener("change",()=>{ReminderService.setTodoCompleted(todo.id,checkbox.checked);renderTodos();showToast(checkbox.checked?"To-do completed":"To-do restored");});const copy=document.createElement("div");copy.innerHTML=`<div class="todo-text">${escapeHtml(todo.text)}</div><div class="todo-date">${escapeHtml(formatTodoDate(todo.createdAt))}</div>`;row.append(checkbox,copy);return row;}
+    function renderTodos(){const todos=ReminderService.getTodos();const active=todos.filter(t=>!t.completedAt).sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt)));const completed=todos.filter(t=>t.completedAt).sort((a,b)=>String(b.completedAt).localeCompare(String(a.completedAt)));todoCount.textContent=String(active.length);todoTabCount.textContent=active.length?`(${active.length})`:"";completedTodoCount.textContent=String(completed.length);completedTodoActions.hidden=!completed.length;todoList.innerHTML="";completedTodoList.innerHTML="";if(!active.length){const e=document.createElement("div");e.className="empty-state";e.innerHTML="<strong>Nothing on your list.</strong><br>Add a task above and it will stay until you complete it.";todoList.appendChild(e);}else active.forEach(t=>todoList.appendChild(buildTodoItem(t,false)));if(!completed.length){const e=document.createElement("div");e.className="empty-state";e.textContent="Completed tasks will appear here.";completedTodoList.appendChild(e);}else completed.forEach(t=>completedTodoList.appendChild(buildTodoItem(t,true)));}
+    function addTodo(){const text=todoInput.value.trim();if(!text)return;try{ReminderService.addTodo({text,source:"manual"});todoInput.value="";renderTodos();showToast("Added to To-Do List");}catch(error){showToast(error.message||"To-do could not be added");}}
+    function clearCompletedTodos(){const count=ReminderService.getTodos().filter(t=>t.completedAt).length;if(!count)return;if(!confirm(`Clear ${count} completed to-do item${count===1?"":"s"}?\n\nThis cannot be undone.`))return;const cleared=ReminderService.clearCompletedTodos();renderTodos();showToast(`Cleared ${cleared} completed to-do item${cleared===1?"":"s"}`);}
+
+    dailyRemindersViewButton.addEventListener("click",()=>setView("daily"));todoListViewButton.addEventListener("click",()=>setView("todo"));
+    el("reminderSettingsButton").addEventListener("click",openSettings);el("closeReminderSettings").addEventListener("click",closeSettings);settingsBackdrop.addEventListener("click",closeSettings);
+    notificationToggleButton.addEventListener("click",handleNotificationToggle);notificationPermissionCancel.addEventListener("click",closeNotificationPermissionDialog);notificationPermissionContinue.addEventListener("click",async()=>{closeNotificationPermissionDialog();await enableDesktopNotifications();});notificationPermissionBackdrop.addEventListener("click",closeNotificationPermissionDialog);
+    addTodoButton.addEventListener("click",addTodo);todoInput.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.isComposing){e.preventDefault();addTodo();}});clearCompletedTodosButton.addEventListener("click",clearCompletedTodos);
+    periodSelect.addEventListener("change",()=>{updateSelectedStudentNote();updateTimingPreview();});dateInput.addEventListener("change",()=>{buildPeriods();updateTimingPreview();});
+    studentInput.addEventListener("input",renderSuggestions);studentInput.addEventListener("blur",()=>setTimeout(()=>suggestions.classList.remove("visible"),120));studentInput.addEventListener("keydown",event=>{const buttons=[...suggestions.querySelectorAll(".suggestion")];if(!buttons.length)return;if(event.key==="ArrowDown"){event.preventDefault();activeSuggestionIndex=Math.min(activeSuggestionIndex+1,buttons.length-1);}else if(event.key==="ArrowUp"){event.preventDefault();activeSuggestionIndex=Math.max(activeSuggestionIndex-1,0);}else if(event.key==="Enter"&&activeSuggestionIndex>=0){event.preventDefault();chooseStudent(suggestionItems[activeSuggestionIndex]);return;}else if(event.key==="Escape"){suggestions.classList.remove("visible");return;}else return;buttons.forEach((b,i)=>b.classList.toggle("active",i===activeSuggestionIndex));buttons[activeSuggestionIndex]?.scrollIntoView({block:"nearest"});});
+    document.querySelectorAll('input[name="timing"]').forEach(i=>i.addEventListener("change",updateTimingPreview));customTimeInput.addEventListener("input",updateTimingPreview);
+    scheduleMode.addEventListener("change",()=>{BellService.setScheduleMode(scheduleMode.value);buildPeriods();renderSchedule();showToast(`${BellService.getSnapshot().scheduleLabel} schedule selected`);});
+    addReminderButton.addEventListener("click",saveReminder);cancelEditButton.addEventListener("click",resetComposer);
+    clearCompletedButton.addEventListener("click",()=>{const cleared=ReminderService.clearCompleted();renderReminders();showToast(cleared?`Cleared ${cleared} completed reminder${cleared===1?"":"s"}`:"No completed reminders to clear");});
+    window.addEventListener(ReminderService.changeEvent,renderReminders);window.addEventListener(ReminderService.todoChangeEvent,renderTodos);window.addEventListener(ReminderService.notificationChangeEvent,renderNotificationSetting);window.addEventListener(DashboardData.changeEvent,()=>{buildPeriods();renderSuggestions();renderReminders();updateTimingPreview();});window.addEventListener(BellService.changeEvent,()=>{buildPeriods();renderSchedule();});
+    window.addEventListener("keydown",event=>{if(event.key!=="Escape")return;closeSettings();closeNotificationPermissionDialog();document.querySelectorAll("details.reminder-menu[open]").forEach(d=>d.open=false);});
+    document.addEventListener("click",event=>{document.querySelectorAll("details.reminder-menu[open]").forEach(d=>{if(!d.contains(event.target))d.open=false;});});
+
+    dateInput.value=formatDateInput(defaultReminderDate());buildPeriods();renderSchedule();updateTimingPreview();renderReminders();renderTodos();renderNotificationSetting();
+  })();
+  </script>
 </body>
 </html>

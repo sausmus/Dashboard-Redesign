@@ -240,10 +240,30 @@
     return Math.max(1, Math.min(60, Math.floor(Number(value) || 10)));
   }
 
-  function timingLabel(timing, customMinutes = 10) {
+  function normalizeExactTime(value) {
+    const match = String(value || "").trim().match(/^(\d{1,2}):(\d{2})$/);
+    if (!match) return "";
+    const hours = Number(match[1]);
+    const minutes = Number(match[2]);
+    if (!Number.isInteger(hours) || hours < 0 || hours > 23 || !Number.isInteger(minutes) || minutes < 0 || minutes > 59) return "";
+    return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+  }
+
+  function exactTimeLabel(value) {
+    const normalized = normalizeExactTime(value);
+    if (!normalized) return "";
+    const [hours, minutes] = normalized.split(":").map(Number);
+    const sample = new Date(2000, 0, 1, hours, minutes, 0, 0);
+    return sample.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  }
+
+  function timingLabel(timing, customMinutes = 10, customTime = "") {
     switch (timing) {
       case "after5": return "5 minutes into class";
-      case "custom": return `${clampCustomMinutes(customMinutes)} minutes before class ends`;
+      case "custom": {
+        const exact = exactTimeLabel(customTime);
+        return exact ? `At ${exact}` : `${clampCustomMinutes(customMinutes)} minutes before class ends`;
+      }
       case "before5": return "5 minutes before class ends";
       case "before10": return "10 minutes before class ends";
       case "end": return "End of class";
@@ -252,8 +272,12 @@
     }
   }
 
-  function timingLabelForTarget(timing, customMinutes = 10, label = "class", isBreak = false) {
-    if (!isBreak) return timingLabel(timing, customMinutes);
+  function timingLabelForTarget(timing, customMinutes = 10, label = "class", isBreak = false, customTime = "") {
+    if (timing === "custom" && normalizeExactTime(customTime)) {
+      return timingLabel(timing, customMinutes, customTime);
+    }
+
+    if (!isBreak) return timingLabel(timing, customMinutes, customTime);
 
     switch (timing) {
       case "after5": return `5 minutes into ${label}`;
@@ -267,12 +291,34 @@
   }
 
   function getTriggerTime(reminderLike) {
-    const bounds = getEntryBounds(reminderLike);
-    if (!bounds) return null;
-
     const timing = VALID_TIMINGS.has(String(reminderLike?.timing || reminderLike?.trigger || ""))
       ? String(reminderLike.timing || reminderLike.trigger)
       : "start";
+    const customTime = normalizeExactTime(reminderLike?.customTime || reminderLike?.exactTime);
+
+    // New Custom reminders are exact local times. They intentionally do not
+    // depend on the selected period's bell bounds, so they can also cover
+    // rallies, meetings, or other one-off moments. Old Custom reminders do not
+    // have customTime and continue using their original minutes-before-end logic.
+    if (timing === "custom" && customTime) {
+      const date = dateFromKey(String(reminderLike?.date || reminderLike?.targetDateKey || ""));
+      if (!date) return null;
+      const trigger = timeOnDate(customTime, date);
+      if (!trigger) return null;
+      const scheduleKey = getScheduleKeyForDate(date);
+      const bounds = getEntryBounds(reminderLike);
+      return {
+        trigger,
+        start: bounds ? new Date(bounds.start) : new Date(trigger),
+        end: bounds ? new Date(bounds.end) : new Date(trigger),
+        scheduleKey,
+        scheduleLabel: scheduleLabel(scheduleKey),
+        entry: bounds?.entry ? clone(bounds.entry) : null
+      };
+    }
+
+    const bounds = getEntryBounds(reminderLike);
+    if (!bounds) return null;
 
     const customMinutes = clampCustomMinutes(reminderLike?.customMinutes);
     let trigger;
@@ -329,6 +375,7 @@
     if (!VALID_TIMINGS.has(timing)) timing = "start";
 
     const customMinutes = timing === "before10" ? 10 : clampCustomMinutes(item.customMinutes);
+    const customTime = normalizeExactTime(item.customTime || item.exactTime);
     const completedAt = String(item.completedAt || "");
     const snoozeUntil = parseTimestamp(item.snoozeUntil || item.snoozedUntil);
 
@@ -352,6 +399,7 @@
       text: String(item.text ?? item.note ?? "").trim(),
       timing,
       customMinutes,
+      customTime,
       privacy: item.privacy === "private" ? "private" : "normal",
       status,
       triggerAt: parseTimestamp(item.triggerAt),
@@ -381,7 +429,8 @@
       next.timing,
       next.customMinutes,
       label,
-      isBreak
+      isBreak,
+      next.customTime
     );
 
     if (info) {
@@ -599,6 +648,7 @@
       text,
       timing: input.timing,
       customMinutes: input.customMinutes,
+      customTime: input.customTime || input.exactTime,
       privacy: input.privacy,
       status: "pending",
       createdAt: new Date().toISOString(),
@@ -1102,9 +1152,9 @@
         align-items: center;
         justify-content: center;
         padding: 18px;
-        background: rgba(32,33,36,.64);
-        backdrop-filter: blur(3px);
-        font-family: Arial, Helvetica, sans-serif;
+        background: var(--td-overlay, rgba(22,24,29,.48));
+        backdrop-filter: blur(4px);
+        font-family: var(--td-font-sans, Inter, ui-sans-serif, system-ui, sans-serif);
       }
       .td-reminder-backdrop.visible { display: flex; }
       .td-reminder-modal {
@@ -1112,10 +1162,11 @@
         max-height: calc(100vh - 36px);
         overflow: auto;
         padding: 26px;
-        border-radius: 20px;
-        background: #fff;
-        color: #202124;
-        box-shadow: 0 18px 60px rgba(0,0,0,.30);
+        border: 1px solid var(--td-border, #e6e4dd);
+        border-radius: var(--td-radius-xl, 24px);
+        background: var(--td-surface, #fff);
+        color: var(--td-text, #20242a);
+        box-shadow: var(--td-shadow-lg, 0 18px 60px rgba(0,0,0,.24));
         text-align: center;
       }
       .td-reminder-icon {
@@ -1126,12 +1177,12 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        background: #e8f0fe;
+        background: var(--td-accent-soft, #edf1ff);
         font-size: 30px;
       }
       .td-reminder-eyebrow {
         margin-bottom: 6px;
-        color: #5f6368;
+        color: var(--td-text-secondary, #62666e);
         font-size: 12px;
         font-weight: 800;
         letter-spacing: 1px;
@@ -1145,31 +1196,31 @@
         margin: 10px auto 0;
         padding: 5px 9px;
         border-radius: 999px;
-        background: #fef7e0;
-        color: #8a5a00;
+        background: var(--td-warning-soft, #fff7df);
+        color: var(--td-warning, #b48732);
         font-size: 12px;
         font-weight: 800;
       }
       .td-reminder-private {
         margin-top: 18px;
         padding: 22px 16px;
-        border: 1px dashed #c8ccd1;
-        border-radius: 14px;
-        background: #fafbfc;
-        color: #3c4043;
+        border: 1px dashed var(--td-border-strong, #d6d3ca);
+        border-radius: var(--td-radius-md, 14px);
+        background: var(--td-surface-soft, #f3f2ee);
+        color: var(--td-text, #20242a);
         line-height: 1.45;
       }
       .td-reminder-details {
         display: none;
         margin-top: 18px;
         padding: 16px;
-        border: 1px solid #e3e5e8;
-        border-radius: 14px;
-        background: #fafbfc;
+        border: 1px solid var(--td-border, #e6e4dd);
+        border-radius: var(--td-radius-md, 14px);
+        background: var(--td-surface-soft, #f3f2ee);
         text-align: left;
       }
       .td-reminder-details.visible { display: block; }
-      .td-reminder-student { margin-bottom: 8px; color: #1a73e8; font-size: 18px; font-weight: 800; }
+      .td-reminder-student { margin-bottom: 8px; color: var(--td-accent-strong, #334ea8); font-size: 18px; font-weight: 800; }
       .td-reminder-note { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 18px; line-height: 1.45; font-weight: 700; }
       .td-reminder-reveal { margin-top: 14px; }
       .td-reminder-actions {
@@ -1182,18 +1233,19 @@
       .td-reminder-reveal button {
         min-height: 48px;
         border: 0;
-        border-radius: 10px;
+        border: 1px solid var(--td-border, #e6e4dd);
+        border-radius: var(--td-radius-sm, 10px);
         padding: 10px 9px;
         font: inherit;
         font-size: 14px;
         font-weight: 800;
         cursor: pointer;
-        background: #e8eaed;
-        color: #202124;
+        background: var(--td-surface-soft, #f3f2ee);
+        color: var(--td-text, #20242a);
       }
-      .td-reminder-actions .done { background: #e6f4ea; color: #137333; }
-      .td-reminder-reveal button { background: #1a73e8; color: white; }
-      .td-reminder-footnote { margin-top: 13px; color: #5f6368; font-size: 12px; line-height: 1.4; }
+      .td-reminder-actions .done { background: var(--td-success-soft, #edf6ef); color: var(--td-success, #5f9270); }
+      .td-reminder-reveal button { background: var(--td-accent, #536fd4); border-color: var(--td-accent, #536fd4); color: white; }
+      .td-reminder-footnote { margin-top: 13px; color: var(--td-text-secondary, #62666e); font-size: 12px; line-height: 1.4; }
       @media (max-width: 600px) {
         .td-reminder-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       }
