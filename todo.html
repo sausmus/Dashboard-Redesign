@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>To-Do · Teacher Dashboard</title>
+  <link rel="icon" type="image/svg+xml" href="redesign-favicon.svg">
+  <link rel="stylesheet" href="shared/theme.css">
+  <script src="shared/theme.js"></script>
+  <style>
+    .todo-head { display:flex; align-items:flex-end; justify-content:space-between; gap:16px; margin-bottom:20px; }
+    .todo-layout { display:grid; gap:16px; }
+    .composer-card { padding:20px; }
+    .section-head { margin-bottom:14px; }
+    .section-head h2,.list-head h2 { margin:0; font-size:15px; letter-spacing:-.01em; }
+    .section-copy { margin:4px 0 0; color:var(--td-text-secondary); font-size:11px; line-height:1.45; }
+    .todo-entry-row { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:9px; }
+    .todo-list { display:grid; gap:8px; }
+    .todo-item { display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:10px; align-items:center; padding:11px 12px; border:1px solid var(--td-border); border-radius:13px; background:var(--td-surface); }
+    .todo-item input { margin:0; accent-color:var(--td-accent); }
+    .todo-copy { min-width:0; }
+    .todo-text { color:var(--td-text); font-size:11px; font-weight:700; line-height:1.4; overflow-wrap:anywhere; }
+    .todo-date { margin-top:3px; color:var(--td-text-muted); font-size:9px; }
+    .todo-item.completed .todo-text { text-decoration:line-through; color:var(--td-text-muted); }
+    .todo-delete { width:30px; height:30px; display:grid; place-items:center; border:0; border-radius:9px; background:transparent; color:var(--td-text-muted); cursor:pointer; font-size:15px; }
+    .todo-delete:hover { background:var(--td-danger-soft,rgba(190,60,60,.08)); color:var(--td-danger); }
+    .list-section { display:grid; gap:10px; }
+    .list-head { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+    .completed { border:1px solid var(--td-border); border-radius:14px; background:var(--td-surface); overflow:visible; }
+    .completed summary { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:12px 14px; cursor:pointer; color:var(--td-text-secondary); font-size:11px; font-weight:760; list-style:none; }
+    .completed summary::-webkit-details-marker { display:none; }
+    .summary-left { display:inline-flex; align-items:center; gap:7px; }
+    .chevron { color:var(--td-text-muted); font-size:10px; transition:transform var(--td-fast); }
+    .completed[open] .chevron { transform:rotate(90deg); }
+    .completed-body { padding:0 10px 10px; }
+    .completed-actions { display:flex; justify-content:flex-end; padding:0 4px 9px; }
+    .empty-state { padding:26px 18px; border:1px dashed var(--td-border-strong); border-radius:15px; color:var(--td-text-secondary); text-align:center; font-size:11px; line-height:1.5; }
+    .empty-state strong { color:var(--td-text); }
+    .toast { position:fixed; z-index:1000; left:50%; bottom:26px; transform:translate(-50%,18px); opacity:0; pointer-events:none; padding:9px 12px; border-radius:10px; background:var(--td-text); color:var(--td-surface); font-size:10px; font-weight:750; transition:opacity var(--td-fast),transform var(--td-fast); }
+    .toast.show { opacity:1; transform:translate(-50%,0); }
+    @media (max-width:680px) { .todo-head{align-items:flex-start;flex-direction:column}.todo-entry-row{grid-template-columns:1fr}.todo-entry-row .td-button{width:100%} }
+  </style>
+</head>
+<body>
+  <div data-td-mobile-bar></div>
+  <div class="td-shell">
+    <div data-td-sidebar="todo"></div>
+    <main class="td-main">
+      <div class="td-content">
+        <header class="todo-head">
+          <div>
+            <h1 class="td-page-title">To-Do</h1>
+            <p class="td-page-subtitle">A simple list for tasks that do not need an alarm.</p>
+          </div>
+        </header>
+
+        <div class="todo-layout">
+          <section class="td-card composer-card">
+            <div class="section-head"><h2>New To-Do</h2></div>
+            <div class="todo-entry-row">
+              <input id="todoInput" class="td-input" type="text" autocomplete="off" maxlength="500" placeholder="What do you need to do?">
+              <button id="addTodoButton" class="td-button td-button-primary" type="button">Add</button>
+            </div>
+          </section>
+
+          <section class="list-section">
+            <div class="list-head"><h2>To-Do</h2></div>
+            <div id="todoList" class="todo-list"></div>
+            <details id="completedTodos" class="completed">
+              <summary><span class="summary-left"><span class="chevron" aria-hidden="true">›</span><span>Completed</span></span></summary>
+              <div class="completed-body">
+                <div id="completedTodoActions" class="completed-actions" hidden><button id="clearCompletedTodosButton" class="td-button td-button-secondary td-button-small" type="button">Clear Completed</button></div>
+                <div id="completedTodoList" class="todo-list"></div>
+              </div>
+            </details>
+          </section>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div id="toast" class="toast" aria-live="polite"></div>
+  <script src="shared/app-shell.js"></script>
+  <script src="shared/dashboard-data.js"></script>
+  <script src="shared/bell-service.js"></script>
+  <script src="shared/reminder-service.js"></script>
+  <script>
+  (() => {
+    "use strict";
+    const el=id=>document.getElementById(id);
+    const todoInput=el("todoInput"),addTodoButton=el("addTodoButton"),todoList=el("todoList"),completedTodoActions=el("completedTodoActions"),clearCompletedTodosButton=el("clearCompletedTodosButton"),completedTodoList=el("completedTodoList"),toast=el("toast");
+    function escapeHtml(value){return String(value??"").replace(/[&<>'"]/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[ch]));}
+    function showToast(message){toast.textContent=message;toast.classList.add("show");clearTimeout(showToast.timer);showToast.timer=setTimeout(()=>toast.classList.remove("show"),1700);}
+    function formatTodoDate(iso){const date=new Date(iso);if(Number.isNaN(date.getTime()))return"";const today=new Date();const same=date.toDateString()===today.toDateString();return same?"Added today":`Added ${date.toLocaleDateString([],{month:"short",day:"numeric",year:date.getFullYear()===today.getFullYear()?undefined:"numeric"})}`;}
+    function buildTodoItem(todo,completed){const row=document.createElement("div");row.className=`todo-item${completed?" completed":""}`;const checkbox=document.createElement("input");checkbox.type="checkbox";checkbox.checked=completed;checkbox.setAttribute("aria-label",completed?`Restore ${todo.text}`:`Complete ${todo.text}`);checkbox.addEventListener("change",()=>{ReminderService.setTodoCompleted(todo.id,checkbox.checked);renderTodos();showToast(checkbox.checked?"To-do completed":"To-do restored");});const copy=document.createElement("div");copy.className="todo-copy";copy.innerHTML=`<div class="todo-text">${escapeHtml(todo.text)}</div><div class="todo-date">${escapeHtml(formatTodoDate(todo.createdAt))}</div>`;const del=document.createElement("button");del.type="button";del.className="todo-delete";del.textContent="×";del.setAttribute("aria-label",`Delete ${todo.text}`);del.addEventListener("click",()=>{if(confirm("Delete this to-do item?")){ReminderService.deleteTodo(todo.id);renderTodos();showToast("To-do deleted");}});row.append(checkbox,copy,del);return row;}
+    function renderTodos(){const todos=ReminderService.getTodos();const active=todos.filter(t=>!t.completedAt).sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt)));const completed=todos.filter(t=>t.completedAt).sort((a,b)=>String(b.completedAt).localeCompare(String(a.completedAt)));completedTodoActions.hidden=!completed.length;todoList.innerHTML="";completedTodoList.innerHTML="";if(!active.length){const e=document.createElement("div");e.className="empty-state";e.innerHTML="<strong>Nothing on your list.</strong><br>Add a task above and it will stay until you complete it.";todoList.appendChild(e);}else active.forEach(t=>todoList.appendChild(buildTodoItem(t,false)));if(!completed.length){const e=document.createElement("div");e.className="empty-state";e.textContent="Completed tasks will appear here.";completedTodoList.appendChild(e);}else completed.forEach(t=>completedTodoList.appendChild(buildTodoItem(t,true)));}
+    function addTodo(){const text=todoInput.value.trim();if(!text)return;try{ReminderService.addTodo({text,source:"manual"});todoInput.value="";renderTodos();todoInput.focus();showToast("Added to To-Do");}catch(error){showToast(error.message||"To-do could not be added");}}
+    function clearCompletedTodos(){const count=ReminderService.getTodos().filter(t=>t.completedAt).length;if(!count)return;if(!confirm(`Clear ${count} completed to-do item${count===1?"":"s"}?\n\nThis cannot be undone.`))return;const cleared=ReminderService.clearCompletedTodos();renderTodos();showToast(`Cleared ${cleared} completed item${cleared===1?"":"s"}`);}
+    addTodoButton.addEventListener("click",addTodo);todoInput.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.isComposing){e.preventDefault();addTodo();}});clearCompletedTodosButton.addEventListener("click",clearCompletedTodos);window.addEventListener(ReminderService.todoChangeEvent,renderTodos);renderTodos();
+  })();
+  </script>
+</body>
+</html>
