@@ -342,16 +342,21 @@
           rows.push('<li class="today-empty">Loading Calendar and reminders…</li>');
         } else if (!rows.length && calendarState === "disconnected") {
           rows.push('<li class="today-item today-connect"><div class="today-time">Calendar</div><div class="today-icon calendar" aria-hidden="true">□</div><div class="today-copy"><div class="today-title">Connect Google Calendar</div><div class="today-meta"><a href="settings.html#calendarPanel">Open Settings</a> to add calendar events to Today.</div></div></li>');
+        } else if (!rows.length && calendarState === "reconnect") {
+          rows.push('<li class="today-item today-connect"><div class="today-time">Calendar</div><div class="today-icon calendar" aria-hidden="true">□</div><div class="today-copy"><div class="today-title">Reconnect Google Calendar</div><div class="today-meta">Your previous permission is saved, but this browser session needs fresh Calendar access. <button id="todayCalendarReconnect" class="td-link-button" type="button">Reconnect →</button></div></div></li>');
         } else if (!rows.length && calendarState === "error") {
-          rows.push(`<li class="today-item today-connect"><div class="today-time">Calendar</div><div class="today-icon calendar" aria-hidden="true">□</div><div class="today-copy"><div class="today-title">Calendar needs attention</div><div class="today-meta">${escapeHtml(calendarError || "Reconnect Calendar in Settings.")}</div></div></li>`);
+          rows.push(`<li class="today-item today-connect"><div class="today-time">Calendar</div><div class="today-icon calendar" aria-hidden="true">□</div><div class="today-copy"><div class="today-title">Calendar needs attention</div><div class="today-meta">${escapeHtml(calendarError || "Calendar events could not be loaded.")} <a href="settings.html#calendarPanel">Open Settings</a></div></div></li>`);
         } else if (!rows.length) {
           rows.push('<li class="today-empty">Nothing else is scheduled today.</li>');
         }
 
         list.innerHTML = rows.join("");
+        const reconnectButton = el("todayCalendarReconnect");
+        if (reconnectButton) reconnectButton.addEventListener("click", reconnectCalendarFromHome);
         const sourceParts = ["Reminders"];
         if (calendarState === "ready") sourceParts.push("Google Calendar");
-        else if (CalendarService.hasConsentHint()) sourceParts.push("Calendar reconnecting");
+        else if (calendarState === "reconnect") sourceParts.push("Calendar needs reconnect");
+        else if (calendarState === "loading") sourceParts.push("Calendar loading");
         el("todaySourceNote").textContent = sourceParts.join(" + ");
         el("viewDayButton").hidden = allRows.length <= 5;
         el("viewDayButton").textContent = todayExpanded ? "Show less ↑" : "View day →";
@@ -370,10 +375,16 @@
           renderToday();
           return;
         }
+        if (!CalendarService.isConnected()) {
+          calendarState = "reconnect";
+          calendarEvents = [];
+          calendarError = "";
+          renderToday();
+          return;
+        }
         calendarState = "loading";
         renderToday();
         try {
-          if (!CalendarService.isConnected()) await CalendarService.connect({ silent: true });
           calendarEvents = await CalendarService.listEventsForDay(new Date());
           calendarState = "ready";
           calendarError = "";
@@ -382,6 +393,23 @@
           calendarEvents = [];
           calendarState = "error";
           calendarError = error?.message || "Reconnect Google Calendar in Settings.";
+        }
+        renderToday();
+      }
+
+      async function reconnectCalendarFromHome() {
+        calendarState = "loading";
+        calendarError = "";
+        renderToday();
+        try {
+          await CalendarService.connect({ force: true, silent: true });
+          calendarEvents = await CalendarService.listEventsForDay(new Date());
+          calendarState = "ready";
+        } catch (error) {
+          console.error(error);
+          calendarEvents = [];
+          calendarState = "error";
+          calendarError = error?.message || "Google Calendar could not be reconnected.";
         }
         renderToday();
       }

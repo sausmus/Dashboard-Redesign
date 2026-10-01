@@ -1902,7 +1902,7 @@
           </div>
           <button id="connectGoogleCalendarButton" class="button primary" type="button">Connect Google Calendar</button>
         </div>
-        <div class="google-calendar-help">Uses the same OAuth Web Client ID already saved for Google Classroom. Enable the <strong>Google Calendar API</strong> in that Google Cloud project. Access tokens remain memory-only.</div>
+        <div class="google-calendar-help">Uses the same OAuth Web Client ID already saved for Google Classroom. Enable the <strong>Google Calendar API</strong> in that Google Cloud project. Calendar access is kept only for the current browser-tab session and is not stored permanently.</div>
         <div id="googleCalendarStatus" class="status" aria-live="polite"></div>
       </div>
 
@@ -2467,9 +2467,10 @@
         connectGoogleCalendarButton.disabled = true;
         try {
           await CalendarService.connect({ force: true });
+          const events = await CalendarService.listEventsForDay(new Date());
           renderGoogleCalendarConnection();
           updateSettingsHubSummaries();
-          showStatus(googleCalendarStatus, "Google Calendar connected. Today will now include your primary-calendar events.");
+          showStatus(googleCalendarStatus, `Google Calendar connected and verified${events.length ? ` · ${events.length} event${events.length === 1 ? "" : "s"} found today` : " · no events scheduled today"}.`);
         } catch (error) {
           console.error(error);
           renderGoogleCalendarConnection();

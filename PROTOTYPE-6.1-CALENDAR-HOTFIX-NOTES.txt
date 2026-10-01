@@ -1,0 +1,17 @@
+TEACHER DASHBOARD REDESIGN — P6.1 CALENDAR HOTFIX
+
+Problem fixed
+-------------
+P6 originally kept the Google Calendar access token in JavaScript memory only. Connecting in Settings worked, but navigating to Home created a new page context and discarded the token. Home then attempted a silent popup OAuth request on page load, which is not reliable without a user gesture. This produced "Calendar needs attention" even immediately after a successful connection.
+
+Changes
+-------
+1. Calendar token now survives normal same-tab navigation in sessionStorage under teacherDashboard.googleCalendarSession.v1. It still expires with Google's access-token lifetime and is not stored permanently in localStorage.
+2. Settings now verifies Calendar API access immediately by fetching today's primary-calendar events after OAuth. It reports either the number of events found or that no events are scheduled today. API/configuration errors therefore appear at connection time.
+3. Home no longer attempts silent popup OAuth automatically when no active session token exists. It shows a Reconnect Google Calendar action instead.
+4. Reconnect on Home is a real user gesture, so Google's token flow can reliably reopen access without forcing the user back through Settings.
+5. A connected calendar with zero events is treated as healthy and displays the normal empty Today state, not an error.
+
+Data safety
+-----------
+No P5 Classroom/Timeliness/Docs data, class groups, Agenda data, reminders, rosters, Participation, or grading-term schemas changed. The only new key is the session-only Calendar token cache.

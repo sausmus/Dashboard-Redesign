@@ -3,6 +3,7 @@
 
   const CLIENT_ID_KEY = "teacherDashboard.classroomOAuthClientId.v1";
   const CONSENT_KEY = "teacherDashboard.googleCalendarConsent.v1";
+  const SESSION_KEY = "teacherDashboard.googleCalendarSession.v1";
   const GIS_SRC = "https://accounts.google.com/gsi/client";
   const SCOPE = "https://www.googleapis.com/auth/calendar.events.readonly";
   const API_ROOT = "https://www.googleapis.com/calendar/v3";
@@ -12,12 +13,39 @@
   let expiresAt = 0;
   let gisLoadPromise = null;
 
+  function restoreSession() {
+    try {
+      const saved = JSON.parse(sessionStorage.getItem(SESSION_KEY) || "null");
+      const token = String(saved?.accessToken || "");
+      const expiry = Number(saved?.expiresAt || 0);
+      if (token && expiry > Date.now() + 60_000) {
+        accessToken = token;
+        expiresAt = expiry;
+        return true;
+      }
+      sessionStorage.removeItem(SESSION_KEY);
+    } catch {
+      try { sessionStorage.removeItem(SESSION_KEY); } catch {}
+    }
+    return false;
+  }
+
+  function persistSession() {
+    try {
+      if (accessToken && expiresAt) sessionStorage.setItem(SESSION_KEY, JSON.stringify({ accessToken, expiresAt }));
+      else sessionStorage.removeItem(SESSION_KEY);
+    } catch {}
+  }
+
+  restoreSession();
+
   function getClientId() { return String(localStorage.getItem(CLIENT_ID_KEY) || "").trim(); }
   function hasConsentHint() { return localStorage.getItem(CONSENT_KEY) === "true"; }
   function isConnected() { return Boolean(accessToken && Date.now() < expiresAt - 60_000); }
   function clearSession() {
     accessToken = "";
     expiresAt = 0;
+    persistSession();
     window.dispatchEvent(new CustomEvent(CHANGE_EVENT, { detail: { type: "disconnected" } }));
   }
   function ensureGoogleIdentityLibrary() {
@@ -61,6 +89,7 @@
             return;
           }
           expiresAt = Date.now() + Math.max(60, Number(response?.expires_in) || 3600) * 1000;
+          persistSession();
           const granted = google.accounts.oauth2.hasGrantedAllScopes(response, SCOPE);
           if (!granted) {
             clearSession();
@@ -120,6 +149,7 @@
     isConnected,
     connect,
     clearSession,
+    restoreSession,
     listEventsForDay
   });
 })();
