@@ -17,6 +17,9 @@
   let accessToken = "";
   let expiresAt = 0;
   let gisLoadPromise = null;
+  let progressAuthorized = false;
+  const PROGRESS_CONSENT_KEY = "teacherDashboard.progressDocsConsent.v1";
+  const PROGRESS_SCOPES = `${SCOPES} https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/classroom.courseworkmaterials https://www.googleapis.com/auth/classroom.profile.emails`;
 
   function normalizeClientId(value) {
     return String(value ?? "").trim();
@@ -51,6 +54,7 @@
   function clearSession() {
     accessToken = "";
     expiresAt = 0;
+    progressAuthorized = false;
   }
 
   function isConnected() {
@@ -92,7 +96,7 @@
       throw new Error("Save your Google OAuth Web Client ID first.");
     }
 
-    if (isConnected() && !options.force) {
+    if (isConnected() && !options.force && (!options.progressDocs || progressAuthorized)) {
       return { connected: true };
     }
 
@@ -101,7 +105,7 @@
     return new Promise((resolve, reject) => {
       const tokenClient = google.accounts.oauth2.initTokenClient({
         client_id: clientId,
-        scope: SCOPES,
+        scope: options.progressDocs ? PROGRESS_SCOPES : SCOPES,
         callback: response => {
           if (response?.error) {
             clearSession();
@@ -119,6 +123,9 @@
           }
 
           localStorage.setItem(CONSENT_KEY, "true");
+          progressAuthorized = Boolean(options.progressDocs && google.accounts.oauth2.hasGrantedAllScopes(response, "https://www.googleapis.com/auth/drive.file", "https://www.googleapis.com/auth/classroom.courseworkmaterials", "https://www.googleapis.com/auth/classroom.profile.emails"));
+          if (options.progressDocs && !progressAuthorized) { clearSession(); reject(new Error("Allow Drive record and Classroom material access to sync Timeliness Docs.")); return; }
+          if (progressAuthorized) localStorage.setItem(PROGRESS_CONSENT_KEY, "true");
           resolve({ connected: true, expiresAt });
         },
         error_callback: error => {
@@ -127,7 +134,7 @@
         }
       });
 
-      const hasGrantedConsent = localStorage.getItem(CONSENT_KEY) === "true";
+      const hasGrantedConsent = localStorage.getItem(options.progressDocs ? PROGRESS_CONSENT_KEY : CONSENT_KEY) === "true";
       tokenClient.requestAccessToken({
         prompt: hasGrantedConsent ? "" : "consent"
       });
@@ -141,7 +148,7 @@
 
     const method = String(options.method || "GET").toUpperCase();
     const params = options.params && typeof options.params === "object" ? options.params : {};
-    const url = new URL(`${CLASSROOM_API}${path}`);
+    const url = new URL(`${options.apiRoot || CLASSROOM_API}${path}`);
 
     Object.entries(params).forEach(([key, value]) => {
       if (value === undefined || value === null || value === "") return;
@@ -243,6 +250,7 @@
           id: studentId,
           name,
           source: "googleClassroom",
+          email: String(student.profile?.emailAddress ?? "").trim(),
           courseId: id
         });
       }
@@ -542,7 +550,14 @@
   }
 
 
+  async function progressRequest(service, path, options = {}) {
+    const roots = {drive:"https://www.googleapis.com/drive/v3",docs:"https://docs.googleapis.com/v1",classroom:CLASSROOM_API};
+    if (!roots[service] || !path.startsWith("/")) throw new Error("Invalid progress API request.");
+    return apiRequest(path, {...options,apiRoot:roots[service]});
+  }
+
   window.ClassroomService = Object.freeze({
+    progressRequest,
     scopes: SCOPES,
     getClientId,
     setClientId,

@@ -1,0 +1,113 @@
+TEACHER DASHBOARD PROTOTYPE 5 — STUDENT PROGRESS SYNC
+
+Base: user-supplied Dashboard-Redesign-main.zip, containing corrected P4.4.
+Changed files: students.html, shared/classroom-service.js.
+New files: shared/student-progress-service.js, PROTOTYPE-5-NOTES.txt.
+
+STUDENTS
+Participation and Timeliness have explicit Sync to Classroom buttons and
+Needs setup / Changes not synced / Synced statuses. The gear shows the active
+term, assignment name, setup link, and current status. Keep using the mature
+Settings assignment setup/publish tools and existing Classroom mappings.
+Students sync only the currently selected class and active utility term.
+Grades use the existing DashboardData scaling/rounding calculations, then
+update assignedGrade and draftGrade and return turned-in submissions.
+This is a student-visible grade write, confirmed before the manual action.
+Dashboard remains authoritative; Classroom grades are never imported.
+Students without a Classroom identity, submission, or first Turn In are
+reported and remain pending. Other students continue after individual errors.
+Successful grade writes are not rolled back if a Doc/link write fails; those
+students remain pending and the result explains which operation failed.
+
+Record Late Work now shows ALL entries, each with a confirmed Delete action.
+Deletion calls the EXISTING removeTimelinessEntry API and immediately updates
+history and policy-derived score. Grace, deductions, and score minimums remain
+authoritative. Other students/terms remain unchanged. There is no reset,
+production migration, storage clear, or schema change.
+
+TIMELINESS RECORDS
+By default a manual Timeliness sync also rewrites a teacher-owned Google Doc
+for each Classroom-linked student, including students still waiting to Turn In.
+The Doc contains student name, school year, term, current score and complete
+late-assignment history. The only added permission is that student's reader
+permission, resolved from the current Classroom roster email. Existing student
+writer access is downgraded to reader; unexpected sharing stops the update.
+Records are created in the signed-in teacher's My Drive, never student-owned.
+
+Identity: record school year + Classroom course + term + Google student ID.
+Assignment recreation does not create another Doc for the same identity.
+The school year defaults to July–June and is editable in the Timeliness gear.
+Save the correct year before first sync; retain it throughout the term.
+Changing that year intentionally chooses another set of records; this option
+does NOT reset local Dashboard scores. Existing school-year reset tools retain
+their original behavior. Confirm the new year before syncing new-year data.
+
+The same Doc is rewritten on each sync; deletion also disappears on next sync.
+Doc IDs are saved before further writes. Drive appProperties locate the original
+Doc if local Doc mappings were lost. Ambiguous matches, inaccessible, trashed,
+or differently owned known Docs fail instead of silently creating replacements.
+Restore the original Doc/access in Drive and retry. Revision control prevents
+overwriting a concurrently edited Doc. Local receipts are per student and only
+complete after all selected operations succeed; concurrent local score edits
+keep status pending. Status represents the last Dashboard export, not a live
+audit of changes teachers may make independently in Classroom or Drive.
+
+PRIVATE CLASSROOM LINK WORKFLOW
+Teacher-created individual-student Classroom materials publish a private link
+to the student's record plus the Timeliness assignment (or course fallback).
+Only that student is assigned the material. This avoids trying to alter a
+student-controlled submission attachment. No class-wide list of private links
+is published. The same private material is updated on repeat sync, with a
+unique description marker to recover it after lost local mappings. If its
+audience/state changed externally, sync stops the link update for review.
+The Timeliness gear provides teacher links to created records and record/link
+counts. Options can disable Doc updates or private materials; disabling does
+not revoke or delete existing records/materials. Link publishing only runs
+when Doc updates are enabled. Classroom material failure is reported; the
+student can still access an already shared Doc through Drive.
+
+GOOGLE SETUP
+Use the existing OAuth Web Client ID and the SAME Google Cloud project that
+created the assignments. Enable Google Drive API and Google Docs API along
+with the existing Classroom API. Timeliness Doc sync requests additional
+drive.file, classroom.courseworkmaterials, and classroom.profile.emails
+permissions through Google consent. The email scope resolves the correct
+student's read-only Drive permission from their verified Classroom identity.
+drive.file permits access to files created/opened through this OAuth app;
+it does not request full-Drive access. Existing Classroom scopes are unchanged.
+The token stays in memory. Reconnect after expiry. School sharing restrictions
+or missing API/scope access are surfaced as errors rather than marked synced.
+No automatic/background Classroom, Drive, or Docs writes were introduced.
+
+STORAGE AND SAFETY
+shared/dashboard-data.js is byte-for-byte identical to the supplied repo.
+All existing localStorage keys, data schemas, rosters, and assignment mappings
+are preserved. New isolated keys:
+ teacherDashboard.studentProgressSync.v1
+   receipts keyed by utility/course/assignment/term; Doc mappings keyed by
+   school year/course/term/student; options docs, links, recordYear.
+ teacherDashboard.progressDocsConsent.v1
+   consent hint only; tokens are never stored here.
+No existing consent key was renamed or cleared for the new feature.
+Web Locks serialize sync across tabs on the same origin. Use a current browser
+and HTTPS (localhost also works) as required for Web Locks and Web Crypto.
+Use one teacher session/device for a sync at a time: Drive has no unique-key
+transaction for creation across different devices. AppProperties recovery
+prevents duplicates on normal repeated syncs and interrupted local writes.
+Keep the same OAuth client/project to preserve access and recovery identity.
+
+VALIDATION
+All 27 external and inline JavaScript blocks parsed with Node vm.Script.
+Behavior tests used the actual DashboardData API with isolated in-memory
+storage and mocked Google responses: deletion score recalculation and sibling
+preservation; manual-only writes; pending/synced/failed/Turn-In statuses;
+repeat Doc/material reuse; recovery after lost Doc mappings; deletion followed
+by sync; original DashboardData file equality. Production Google writes were
+not executed. Live Classroom/Docs delivery must be verified with a test class
+after enabling APIs and consent. Packaged ZIP contents were hash-checked against
+the finished files, and unchanged base files were checked for equality.
+
+API REFERENCES
+https://developers.google.com/workspace/classroom/reference/rest/v1/courses.courseWorkMaterials
+https://developers.google.com/workspace/classroom/reference/rest/v1/courses.courseWorkMaterials/create
+https://developers.google.com/workspace/docs/api/reference/rest/v1/documents/batchUpdate

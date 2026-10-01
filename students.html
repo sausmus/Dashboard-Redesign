@@ -529,7 +529,7 @@
                 <option value="low">Lowest participation</option>
                 <option value="high">Highest participation</option>
               </select>
-              <button id="participationSettingsButton" class="td-icon-button utility-settings-button" type="button" aria-label="Participation settings" title="Participation settings">⚙</button>
+              <span id="participationSyncStatus" role="status" class="setting-help"></span><button id="participationSyncButton" type="button" class="td-button td-button-primary td-button-small">Sync to Classroom</button><button id="participationSettingsButton" class="td-icon-button utility-settings-button" type="button" aria-label="Participation settings" title="Participation settings">⚙</button>
               <a class="td-button td-button-secondary td-button-small" href="participation-tracker.html">Full tracker →</a>
             </div>
           </div>
@@ -546,7 +546,7 @@
                 <option value="high">Highest score</option>
                 <option value="late">Most late assignments</option>
               </select>
-              <button id="timelinessSettingsButton" class="td-icon-button utility-settings-button" type="button" aria-label="Timeliness settings" title="Timeliness settings">⚙</button>
+              <span id="timelinessSyncStatus" role="status" class="setting-help"></span><button id="timelinessSyncButton" type="button" class="td-button td-button-primary td-button-small">Sync to Classroom</button><button id="timelinessSettingsButton" class="td-icon-button utility-settings-button" type="button" aria-label="Timeliness settings" title="Timeliness settings">⚙</button>
               <a class="td-button td-button-secondary td-button-small" href="participation-tracker.html?view=timeliness">Full tracker →</a>
             </div>
           </div>
@@ -609,7 +609,7 @@
         <span class="setting-help">Recording the assignment adds it to this student's Timeliness history and applies the current Timeliness policy.</span>
       </label>
       <div class="setting-row">
-        <div class="setting-label">Recent late work</div>
+        <div class="setting-label">Late-work history</div>
         <div id="lateWorkRecent" class="late-work-recent"></div>
       </div>
       <div id="lateWorkStatus" class="late-work-status" aria-live="polite"></div>
@@ -636,8 +636,8 @@
       </div>
       <div class="setting-row">
         <div class="setting-label">Google Classroom</div>
-        <div class="setting-help">Classroom assignment setup remains in Settings for now. P5 will bring the sync workflow into this cleaner Students experience.</div>
-        <a class="td-button td-button-secondary" href="settings.html#participationGradeSyncPanel">Open Classroom sync settings →</a>
+        <div class="setting-help"><span id="participationAssignmentSummary"></span> Scores are sent only when you click Sync to Classroom. Dashboard remains the source of truth.</div>
+        <a class="td-button td-button-secondary" href="settings.html#participationGradeSyncPanel">Assignment setup →</a>
       </div>
       <div class="modal-actions">
         <a class="td-button td-button-secondary" href="settings.html#gradingTermsPanel">Global grading terms</a>
@@ -654,11 +654,13 @@
         <div class="setting-label">Grading term</div>
         <select id="timelinessTermSetting" class="setting-select"></select>
         <div id="timelinessTermHelp" class="setting-help"></div>
+        <label class="setting-label" for="timelinessRecordYear">Record school year</label><input id="timelinessRecordYear" class="setting-select" type="text" placeholder="2026-2027" pattern="[0-9]{4}-[0-9]{4}"><div class="setting-help">Keep this year unchanged throughout the term to reuse the same records.</div>
+        <label><input id="timelinessDocsOption" type="checkbox"> Update student read-only Record Docs on sync</label><br><label><input id="timelinessLinksOption" type="checkbox"> Publish private Classroom record links</label><div id="timelinessDocsStatus" class="setting-help"></div><div id="timelinessRecordLinks" class="setting-help"></div>
       </div>
       <div class="setting-row">
         <div class="setting-label">Google Classroom & student record</div>
-        <div class="setting-help">P5 will connect the Timeliness grade plus the regenerated, read-only student Timeliness Doc. The existing Classroom assignment tools remain available in Settings until then.</div>
-        <a class="td-button td-button-secondary" href="settings.html#timelinessGradeSyncPanel">Open Classroom sync settings →</a>
+        <div class="setting-help"><span id="timelinessAssignmentSummary"></span> Scores are sent only when you click Sync to Classroom. Dashboard remains the source of truth.</div>
+        <a class="td-button td-button-secondary" href="settings.html#timelinessGradeSyncPanel">Assignment setup →</a>
       </div>
       <div class="modal-actions">
         <a class="td-button td-button-secondary" href="settings.html#gradingTermsPanel">Global grading terms</a>
@@ -670,6 +672,8 @@
   <script src="shared/app-shell.js"></script>
   <script src="shared/dashboard-data.js"></script>
   <script src="shared/grading-terms.js"></script>
+  <script src="shared/classroom-service.js"></script>
+  <script src="shared/student-progress-service.js"></script>
   <script src="shared/bell-service.js"></script>
   <script src="shared/reminder-service.js"></script>
   <script>
@@ -681,8 +685,61 @@
       let currentPeriod = "1";
       let currentWinner = null;
       let currentLateStudentId = null;
+      let lateWorkContext = null;
       let selectorAnimating = false;
 
+      let progressBusy = false;
+      function renderProgressStatus(utility) {
+        try {
+          const s = StudentProgressService.status(utility,currentPeriod);
+          el(utility+"SyncStatus").textContent = s;
+          el(utility+"SyncButton").disabled = progressBusy || s === "Needs setup";
+          el("saveParticipationSettings").disabled = progressBusy;
+          el("saveTimelinessSettings").disabled = progressBusy;
+          const c = StudentProgressService.context(utility,currentPeriod);
+          el(utility+"AssignmentSummary").textContent = (c.assignment?.title || c.settings.title) + " · " + gradingTermLabel(utility) + " · " + s + ".";
+          if (utility === "timeliness") {
+            const docs = c.rows.map(row => StudentProgressService.docInfo(c,row));
+            el("timelinessDocsStatus").textContent = docs.filter(d => d?.updatedAt).length + "/" + docs.length + " records updated; " + docs.filter(d => d?.linkedAt).length + " private Classroom links. Existing Docs remain in Drive when options are disabled.";
+            el("timelinessRecordLinks").replaceChildren();
+            c.rows.forEach((row,index) => {
+              if (!docs[index]?.id) return;
+              const link = document.createElement("a");
+              link.href = "https://docs.google.com/document/d/" + encodeURIComponent(docs[index].id) + "/edit";
+              link.textContent = row.name + " · Open record";
+              link.target = "_blank"; link.rel = "noopener"; link.style.display = "block";
+              el("timelinessRecordLinks").append(link);
+            });
+          }
+        } catch(e) { el(utility+"SyncStatus").textContent = e.message; }
+      }
+      async function syncProgress(utility) {
+        if (progressBusy) return;
+        const classId = currentPeriod;
+        if (!window.confirm("Sync " + gradingTermLabel(utility) + " " + utility + " for " + classLabel(classId) + "? Dashboard scores will replace Classroom grades and be returned to students. Timeliness record options apply. Students waiting for Turn In are skipped.")) return;
+        progressBusy = true; renderProgressStatus("participation"); renderProgressStatus("timeliness");
+        try {
+          const result = await StudentProgressService.sync(utility,classId, message => el(utility+"SyncStatus").textContent = message);
+          window.alert(result.syncedCount + " students fully synced. " + result.missingSubmissionCount + " waiting; " + result.failedCount + " errors." + (result.errors.length ? "\n\n" + result.errors.join("\n") : ""));
+        } catch(e) { window.alert(e.message || "Sync failed. Dashboard data remains saved."); }
+        finally { progressBusy = false; renderProgressStatus("participation"); renderProgressStatus("timeliness"); }
+      }
+      el("participationSyncButton").addEventListener("click", () => syncProgress("participation"));
+      el("timelinessSyncButton").addEventListener("click", () => syncProgress("timeliness"));
+      el("lateWorkRecent").addEventListener("click", event => {
+        const button = event.target.closest("[data-delete-late]");
+        if (!button || !currentLateStudentId) return;
+        const {classId, termId} = lateWorkContext;
+        const record = DashboardData.getTimelinessRecord(classId,currentLateStudentId,termId);
+        const entry = record.entries.find(item => String(item.id) === button.dataset.deleteLate);
+        if (!entry || !window.confirm('Delete "' + timelinessEntryLabel(entry) + '"? The score will be recalculated using the current policy.')) return;
+        try {
+          DashboardData.removeTimelinessEntry(classId,currentLateStudentId,entry.id,termId);
+          const updated = DashboardData.getTimelinessRecord(classId,currentLateStudentId,termId);
+          renderLateWorkRecent(updated); el("lateWorkStudentScore").textContent = updated.score + "/" + updated.startingPoints;
+          renderRoster(); renderTimeliness(); el("lateWorkStatus").textContent = "Entry deleted. Sync to update Classroom and the student record.";
+        } catch(e) { el("lateWorkStatus").textContent = e.message; }
+      });
       const wait = ms => new Promise(resolve => window.setTimeout(resolve, ms));
 
       function activeClasses() {
@@ -883,6 +940,7 @@
       }
 
       function renderParticipation() {
+        renderProgressStatus("participation");
         const rows = DashboardData.getParticipationForClass(currentPeriod) || [];
         const goal = DashboardData.getParticipationGoal();
         const sort = sortValue("participation");
@@ -908,6 +966,7 @@
       }
 
       function renderTimeliness() {
+        renderProgressStatus("timeliness");
         const rows = DashboardData.getTimelinessForClass(currentPeriod) || [];
         const policy = DashboardData.getTimelinessPolicy();
         const sort = sortValue("timeliness");
@@ -928,9 +987,9 @@
       }
 
       function renderLateWorkRecent(record) {
-        const recent = (record?.entries || []).slice().reverse().slice(0, 4);
+        const recent = (record?.entries || []).slice().reverse();
         el("lateWorkRecent").innerHTML = recent.length
-          ? recent.map(entry => `<div class="late-work-recent-item"><span title="${escapeHtml(timelinessEntryLabel(entry))}">${escapeHtml(timelinessEntryLabel(entry))}</span><span class="late-work-recent-date">${escapeHtml(formatEntryDate(entry.createdAt))}</span></div>`).join("")
+          ? recent.map(entry => `<div class="late-work-recent-item"><span title="${escapeHtml(timelinessEntryLabel(entry))}">${escapeHtml(timelinessEntryLabel(entry))}</span><span class="late-work-recent-date">${escapeHtml(formatEntryDate(entry.createdAt))}</span><button type="button" class="td-button td-button-small" data-delete-late="${escapeHtml(entry.id)}" aria-label="Delete ${escapeHtml(timelinessEntryLabel(entry))}">Delete</button></div>`).join("")
           : `<div class="setting-help">No late assignments recorded for this term yet.</div>`;
       }
 
@@ -939,6 +998,7 @@
         if (!student) return;
         const record = DashboardData.getTimelinessRecord(currentPeriod, student.id);
         currentLateStudentId = String(student.id);
+        lateWorkContext = {classId:currentPeriod,termId:DashboardData.getActiveTimelinessTermId()};
         el("lateWorkStudentName").textContent = student.name;
         el("lateWorkStudentMeta").textContent = `${classLabel(currentPeriod)} · ${gradingTermLabel("timeliness")}`;
         el("lateWorkStudentScore").textContent = `${record.score}/${record.startingPoints}`;
@@ -953,6 +1013,7 @@
 
       function closeLateWorkModal() {
         currentLateStudentId = null;
+        lateWorkContext = null;
         el("lateWorkModalBackdrop").classList.remove("open");
         el("lateWorkModal").classList.remove("open");
         el("lateWorkModal").setAttribute("aria-hidden", "true");
@@ -968,7 +1029,7 @@
           return;
         }
         try {
-          DashboardData.addTimelinessEntry(currentPeriod, currentLateStudentId, assignment);
+          DashboardData.addTimelinessEntry(lateWorkContext.classId, currentLateStudentId, assignment, lateWorkContext.termId);
           closeLateWorkModal();
           renderTimeliness();
           renderRoster();
@@ -1168,6 +1229,11 @@
 
 
       function openUtilityModal(utility) {
+        renderProgressStatus(utility);
+        const options = StudentProgressService.options();
+        el("timelinessDocsOption").checked = options.docs;
+        el("timelinessLinksOption").checked = options.links;
+        el("timelinessRecordYear").value = options.recordYear;
         const modal = el(`${utility}Modal`);
         const backdrop = el(`${utility}ModalBackdrop`);
         if (!modal || !backdrop) return;
@@ -1211,6 +1277,9 @@
       }
 
       function saveTimelinessUtilitySettings() {
+        const recordYear = el("timelinessRecordYear").value.trim();
+        if (!/^\d{4}-\d{4}$/.test(recordYear) || Number(recordYear.slice(5)) !== Number(recordYear.slice(0,4))+1) { window.alert("Enter a school year such as 2026-2027."); return; }
+        StudentProgressService.options({docs:el("timelinessDocsOption").checked,links:el("timelinessLinksOption").checked,recordYear});
         const service = TeacherDashboardGradingTerms;
         const config = service.getConfig();
         const value = el("timelinessTermSetting").value;
