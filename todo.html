@@ -39,12 +39,16 @@
     .toast { position:fixed; z-index:1000; left:50%; bottom:26px; transform:translate(-50%,18px); opacity:0; pointer-events:none; padding:9px 12px; border-radius:10px; background:var(--td-text); color:var(--td-surface); font-size:10px; font-weight:750; transition:opacity var(--td-fast),transform var(--td-fast); }
     .toast.show { opacity:1; transform:translate(-50%,0); }
     @media (max-width:680px) { .todo-head{align-items:flex-start;flex-direction:column}.todo-entry-row{grid-template-columns:1fr}.todo-entry-row .td-button{width:100%} }
+
+    .attention-hub-nav { display:flex; align-items:center; gap:8px; margin:0 0 18px; }
+    .attention-hub-nav .td-segmented { width:auto; }
+    .attention-hub-nav a { text-decoration:none; }
   </style>
 </head>
 <body>
   <div data-td-mobile-bar></div>
   <div class="td-shell">
-    <div data-td-sidebar="todo"></div>
+    <div data-td-sidebar="reminders"></div>
     <main class="td-main">
       <div class="td-content">
         <header class="todo-head">
@@ -53,6 +57,13 @@
             <p class="td-page-subtitle">A simple list for tasks that do not need an alarm.</p>
           </div>
         </header>
+        <nav class="attention-hub-nav" aria-label="Reminders and To-Do">
+          <div class="td-segmented" role="tablist" aria-label="Attention tools">
+            <a role="tab" href="reminders.html" aria-selected="false">Reminders</a>
+            <a role="tab" href="todo.html" aria-selected="true">To-Do</a>
+          </div>
+        </nav>
+
 
         <div class="todo-layout">
           <section class="td-card composer-card">

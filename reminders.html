@@ -97,6 +97,10 @@
     @media(max-width:760px){
       .form-grid{grid-template-columns:1fr}.field.full{grid-column:auto}.timing-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.custom-time-row{grid-template-columns:1fr}.reminder-card{grid-template-columns:1fr}.reminder-side{justify-content:flex-start;flex-wrap:wrap}.settings-row{grid-template-columns:1fr}.reminders-head{align-items:flex-start}.td-modal{width:min(94vw,520px)}
     }
+
+    .attention-hub-nav { display:flex; align-items:center; gap:8px; margin:0 0 18px; }
+    .attention-hub-nav .td-segmented { width:auto; }
+    .attention-hub-nav a { text-decoration:none; }
   </style>
 </head>
 <body>
@@ -114,6 +118,13 @@
             <button id="reminderSettingsButton" class="td-icon-button" type="button" aria-label="Reminder settings" title="Reminder settings">⚙</button>
           </div>
         </header>
+        <nav class="attention-hub-nav" aria-label="Reminders and To-Do">
+          <div class="td-segmented" role="tablist" aria-label="Attention tools">
+            <a role="tab" href="reminders.html" aria-selected="true">Reminders</a>
+            <a role="tab" href="todo.html" aria-selected="false">To-Do</a>
+          </div>
+        </nav>
+
 
         <div class="reminder-layout">
           <section id="composerCard" class="td-card composer-card">
