@@ -61,7 +61,7 @@
     const doc = await ClassroomService.progressRequest("docs", `/documents/${saved.id}`);
     const end = doc.body?.content?.at(-1)?.endIndex;
     if (!end) throw new Error("Unsupported document structure; record was not rewritten.");
-    const text = `${student.name}\n${options().recordYear} · ${label} · Timeliness Record\nCurrent score: ${record.score} / ${record.startingPoints}\nLate assignments: ${record.entries.length}\n\n${record.entries.length ? record.entries.map((e,i) => `${i+1}. ${e.note || e.assignment || e.title || "Late assignment"} — ${new Date(e.createdAt).toLocaleDateString()}`).join("\n") : "No late assignments recorded."}\n\nTeacher Dashboard is the source of this record. Contact your teacher about corrections.\n`;
+    const text = `${student.name}\n${options().recordYear} · ${label} · Timeliness Record\nCurrent score: ${record.score} / ${record.startingPoints}\nLate assignments: ${record.entries.length}\n\n${record.entries.length ? record.entries.map((e,i) => `${i+1}. ${e.note || e.assignment || e.title || "Late assignment"} — ${new Date(e.createdAt).toLocaleDateString()}`).join("\n") : "No late assignments recorded."}\n`;
     const requests = [];
     if (end > 2) requests.push({deleteContentRange:{range:{startIndex:1,endIndex:end-1}}});
     requests.push({insertText:{location:{index:1},text}});
@@ -103,8 +103,8 @@
       const submissions = await ClassroomService.listStudentSubmissions(c.mapping.courseId,c.assignment.courseWorkId);
       const roster = withDocs ? await ClassroomService.listStudents(c.mapping.courseId) : [];
       const result = {syncedCount:0,missingSubmissionCount:0,failedCount:0,errors:[]};
-      for (const student of selectedRows) {
-        onProgress(`Syncing ${student.name}…`);
+      for (const [index, student] of selectedRows.entries()) {
+        onProgress(`Syncing ${student.name}… ${index + 1}/${selectedRows.length} · ${selectedRows.length - index - 1} remaining after this student`);
         const before = fingerprint(c,student);
         const pending = read(); pending.receipts[key(c)] ||= {}; delete pending.receipts[key(c)][student.id]; write(pending);
         let docError = null;

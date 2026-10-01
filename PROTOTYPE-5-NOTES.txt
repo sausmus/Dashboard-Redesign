@@ -1,5 +1,13 @@
 TEACHER DASHBOARD PROTOTYPE 5 — ONE-STUDENT ASSIGNMENT ATTACHMENT TEST
 
+SYNC PROGRESS / DOC TEXT FOLLOW-UP
+Manual sync now shows the student's name, position/total (for example 13/36),
+and the number remaining after that student. The total reflects the actual
+run scope, including a one-student test (1/1). The closing source-of-record /
+contact-your-teacher paragraph is removed from generated Timeliness Docs.
+Existing Docs lose that paragraph the next time they are successfully rewritten.
+Only shared/student-progress-service.js and these notes change in this patch.
+
 TEACHER-OWNED READ-ONLY LINK UPDATE (SUPERSEDES NATIVE-FILE PATCH)
 Record attachments now use link:{url:existingDocUrl}, never a native Drive file.
 Returning a Classroom submission transfers ownership of native Drive attachments
