@@ -20,7 +20,7 @@
   };
   const ready = c => Boolean(c.assignment?.courseWorkId && c.mapping?.courseId === c.assignment.courseId && Number(c.assignment.maxPoints) === Number(c.settings.assignmentPoints) && c.assignment.state === "PUBLISHED");
   const key = c => JSON.stringify([c.utility, c.mapping?.courseId, c.assignment?.courseWorkId, c.termId]);
-  const fingerprint = (c, student) => JSON.stringify({student, settings:c.settings.title, policy:c.utility === "timeliness" ? DashboardData.getTimelinessRecord(c.classId, student.id, c.termId) : null, delivery:"submission-attachment-v1", options:c.utility === "timeliness" ? read().options : null});
+  const fingerprint = (c, student) => JSON.stringify({student, settings:c.settings.title, policy:c.utility === "timeliness" ? DashboardData.getTimelinessRecord(c.classId, student.id, c.termId) : null, delivery:"native-drive-attachment-v1", options:c.utility === "timeliness" ? read().options : null});
   function status(utility, classId) {
     const c = context(utility, classId);
     if (!ready(c)) return "Needs setup";
@@ -70,16 +70,16 @@
     saved = {...saved, updatedAt:new Date().toISOString()}; saveDoc(k,saved);
     return saved;
   }
-  const testKey = c => JSON.stringify([options().recordYear,c.mapping?.courseId,c.assignment?.courseWorkId,c.termId]);
+  const testKey = c => JSON.stringify(["native-drive-v1",options().recordYear,c.mapping?.courseId,c.assignment?.courseWorkId,c.termId]);
   function tested(c) { return Boolean(read().attachmentTests?.[testKey(c)]); }
   async function attachDoc(c,student,submission,doc) {
     const path = "/courses/" + encodeURIComponent(c.mapping.courseId) + "/courseWork/" + encodeURIComponent(c.assignment.courseWorkId) + "/studentSubmissions/" + encodeURIComponent(submission.id);
     const current = await ClassroomService.progressRequest("classroom",path);
     const attachments = current.assignmentSubmission?.attachments || [];
-    const containsDoc = attachments.some(a => a.driveFile?.id === doc.id || a.link?.url?.match(/docs\.google\.com\/document\/d\/([^/?#]+)/)?.[1] === doc.id);
+    const containsDoc = attachments.some(a => a.driveFile?.id === doc.id);
     if (!containsDoc) {
       if (attachments.length >= 20) throw new Error("Submission has 20 attachments; nothing was replaced.");
-      await ClassroomService.progressRequest("classroom",path+":modifyAttachments",{method:"POST",body:{addAttachments:[{link:{url:doc.url}}]}});
+      await ClassroomService.progressRequest("classroom",path+":modifyAttachments",{method:"POST",body:{addAttachments:[{driveFile:{id:doc.id}}]}});
     }
     const saved = {...doc,attachedAssignments:{...doc.attachedAssignments,[c.assignment.courseWorkId]:new Date().toISOString()}};
     saveDoc(documentKey(c,student),saved);

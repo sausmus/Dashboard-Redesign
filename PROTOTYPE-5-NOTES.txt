@@ -1,5 +1,19 @@
 TEACHER DASHBOARD PROTOTYPE 5 — ONE-STUDENT ASSIGNMENT ATTACHMENT TEST
 
+NATIVE DRIVE ATTACHMENT UPDATE
+New attachments use driveFile:{id:existingDocId}, rather than a web link. This
+requests Classroom's native file presentation; the exact preview and student
+read-only access must still be verified live. The one-student tester is retained.
+Native-file tests use a new versioned test identity, so the previous web-link
+test does not unlock full-class native attachment delivery. Rerun one student.
+Matching native files are not added again on subsequent syncs. An existing web
+link alone does not count as a native file. For the previously tested student,
+one native file is added alongside the old link to the SAME Doc. No new Doc is
+created. The API supports adding attachments, not removing/replacing the old
+link; this patch leaves all existing attachments intact. The old Google Sign In
+tile may remain alongside the native file. No separate Classwork posts are made.
+This incremental patch changes only shared/student-progress-service.js and notes.
+
 This package replaces the earlier separate-Classroom-material workflow.
 NO separate Classwork material or post is created by this version.
 Existing Docs, assignments, local Dashboard records and mappings are preserved.
@@ -34,7 +48,7 @@ session, with detailed errors. Grade success can coexist with attachment failure
 that student stays pending and the test does not unlock class attachment sync.
 
 ATTACHMENT IMPLEMENTATION
-Uses Classroom studentSubmissions.modifyAttachments to add a Doc link inside
+Uses Classroom studentSubmissions.modifyAttachments to add a native Drive file inside
 the student's existing assignment submission. Teacher-owned Docs stay reader-
 shared with the student. No template or Make a copy for each student is needed.
 Reads existing submission attachments before adding; matching Doc links/files
