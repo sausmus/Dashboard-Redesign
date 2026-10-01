@@ -4,7 +4,7 @@
   const read = () => {
     const data = JSON.parse(localStorage.getItem(KEY) || '{"receipts":{},"docs":{},"options":{}}');
     const now = new Date(), year = now.getFullYear() - (now.getMonth() < 6 ? 1 : 0);
-    data.options = {docs:true,links:true,recordYear:`${year}-${year+1}`, ...data.options};
+    data.options = {docs:true,attachments:true,recordYear:`${year}-${year+1}`, ...data.options};
     return data;
   };
   const write = data => localStorage.setItem(KEY, JSON.stringify(data));
@@ -20,7 +20,7 @@
   };
   const ready = c => Boolean(c.assignment?.courseWorkId && c.mapping?.courseId === c.assignment.courseId && Number(c.assignment.maxPoints) === Number(c.settings.assignmentPoints) && c.assignment.state === "PUBLISHED");
   const key = c => JSON.stringify([c.utility, c.mapping?.courseId, c.assignment?.courseWorkId, c.termId]);
-  const fingerprint = (c, student) => JSON.stringify({student, settings:c.settings.title, policy:c.utility === "timeliness" ? DashboardData.getTimelinessRecord(c.classId, student.id, c.termId) : null, options:c.utility === "timeliness" ? read().options : null});
+  const fingerprint = (c, student) => JSON.stringify({student, settings:c.settings.title, policy:c.utility === "timeliness" ? DashboardData.getTimelinessRecord(c.classId, student.id, c.termId) : null, delivery:"submission-attachment-v1", options:c.utility === "timeliness" ? read().options : null});
   function status(utility, classId) {
     const c = context(utility, classId);
     if (!ready(c)) return "Needs setup";
@@ -68,51 +68,53 @@
     await ClassroomService.progressRequest("docs", `/documents/${saved.id}:batchUpdate`, {method:"POST",body:{requests,writeControl:{requiredRevisionId:doc.revisionId}}});
     if (!studentPermission) await ClassroomService.progressRequest("drive", `/files/${saved.id}/permissions`, {method:"POST",params:{sendNotificationEmail:false},body:{type:"user",role:"reader",emailAddress:person.email}});
     saved = {...saved, updatedAt:new Date().toISOString()}; saveDoc(k,saved);
-    if (options().links) {
-      // A private material is teacher-writable; submission attachments are student-controlled.
-      const marker = `Teacher Dashboard record ${digest}`;
-      if (!saved.materialId) {
-        let pageToken = "", matches = [];
-        do {
-          const page = await ClassroomService.progressRequest("classroom", `/courses/${c.mapping.courseId}/courseWorkMaterials`, {params:{pageSize:100,pageToken,courseWorkMaterialStates:"PUBLISHED"}});
-          matches.push(...(page.courseWorkMaterial || []).filter(m => m.description?.includes(marker)));
-          pageToken = page.nextPageToken || "";
-        } while (pageToken);
-        if (matches.length > 1) throw new Error("Multiple Classroom record links found; resolve before syncing.");
-        if (matches[0]) { saved.materialId = matches[0].id; saveDoc(k,saved); }
-      }
-      const body = {title:`${label} Timeliness Record`,description:`Your record for ${c.assignment.title || c.settings.title}.\n${marker}`,materials:[{link:{url:saved.url}},{link:{url:c.assignment.alternateLink || `https://classroom.google.com/c/${c.mapping.courseId}`}}],state:"PUBLISHED",assigneeMode:"INDIVIDUAL_STUDENTS",individualStudentsOptions:{studentIds:[student.googleId]}};
-      if (saved.materialId) {
-        const existing = await ClassroomService.progressRequest("classroom", `/courses/${c.mapping.courseId}/courseWorkMaterials/${saved.materialId}`);
-        if (existing.state !== "PUBLISHED" || existing.assigneeMode !== "INDIVIDUAL_STUDENTS" || existing.individualStudentsOptions?.studentIds?.length !== 1 || existing.individualStudentsOptions.studentIds[0] !== student.googleId) throw new Error("Classroom record link audience changed. Restore its private audience before syncing.");
-        await ClassroomService.progressRequest("classroom", `/courses/${c.mapping.courseId}/courseWorkMaterials/${saved.materialId}`,{method:"PATCH",params:{updateMask:"title,description,materials"},body:{title:body.title,description:body.description,materials:body.materials}});
-      } else {
-        const material = await ClassroomService.progressRequest("classroom", `/courses/${c.mapping.courseId}/courseWorkMaterials`,{method:"POST",body});
-        saved.materialId = material.id;
-      }
-      saved.linkedAt = new Date().toISOString(); saveDoc(k,saved);
-    }
     return saved;
   }
-  async function sync(utility,classId,onProgress = () => {}) {
+  const testKey = c => JSON.stringify([options().recordYear,c.mapping?.courseId,c.assignment?.courseWorkId,c.termId]);
+  function tested(c) { return Boolean(read().attachmentTests?.[testKey(c)]); }
+  async function attachDoc(c,student,submission,doc) {
+    const path = "/courses/" + encodeURIComponent(c.mapping.courseId) + "/courseWork/" + encodeURIComponent(c.assignment.courseWorkId) + "/studentSubmissions/" + encodeURIComponent(submission.id);
+    const current = await ClassroomService.progressRequest("classroom",path);
+    const attachments = current.assignmentSubmission?.attachments || [];
+    const containsDoc = attachments.some(a => a.driveFile?.id === doc.id || a.link?.url?.match(/docs\.google\.com\/document\/d\/([^/?#]+)/)?.[1] === doc.id);
+    if (!containsDoc) {
+      if (attachments.length >= 20) throw new Error("Submission has 20 attachments; nothing was replaced.");
+      await ClassroomService.progressRequest("classroom",path+":modifyAttachments",{method:"POST",body:{addAttachments:[{link:{url:doc.url}}]}});
+    }
+    const saved = {...doc,attachedAssignments:{...doc.attachedAssignments,[c.assignment.courseWorkId]:new Date().toISOString()}};
+    saveDoc(documentKey(c,student),saved);
+  }
+  async function sync(utility,classId,onProgress = () => {}, selection = {}) {
     const c = context(utility,classId);
     if (!ready(c)) throw new Error("Use the gear → Assignment setup to create/publish the matching assignment first.");
+    const testStudentId = selection.testStudentId ? String(selection.testStudentId) : "";
+    if (testStudentId && utility !== "timeliness") throw new Error("One-student record testing is for Timeliness.");
+    const selectedRows = testStudentId ? c.rows.filter(row => String(row.id) === testStudentId && row.eligible) : c.rows;
+    if (testStudentId && selectedRows.length !== 1) throw new Error("Choose exactly one Classroom-linked student in the selected period.");
+    const withDocs = utility === "timeliness" && (Boolean(testStudentId) || options().docs);
+    const withAttachments = withDocs && (Boolean(testStudentId) || options().attachments);
+    if (withAttachments && !testStudentId && !tested(c)) throw new Error("Test attachment with one student in the Timeliness gear before syncing records for the full class.");
     const run = async () => {
-      await ClassroomService.connect({progressDocs:utility === "timeliness" && options().docs});
+      await ClassroomService.connect({progressDocs:withDocs});
       const live = await ClassroomService.getCourseWork(c.mapping.courseId,c.assignment.courseWorkId);
       if (live.state !== "PUBLISHED" || Number(live.maxPoints) !== Number(c.settings.assignmentPoints)) throw new Error("Classroom assignment changed. Review setup in Settings first.");
       const submissions = await ClassroomService.listStudentSubmissions(c.mapping.courseId,c.assignment.courseWorkId);
-      const roster = utility === "timeliness" && options().docs ? await ClassroomService.listStudents(c.mapping.courseId) : [];
+      const roster = withDocs ? await ClassroomService.listStudents(c.mapping.courseId) : [];
       const result = {syncedCount:0,missingSubmissionCount:0,failedCount:0,errors:[]};
-      for (const student of c.rows) {
+      for (const student of selectedRows) {
         onProgress(`Syncing ${student.name}…`);
         const before = fingerprint(c,student);
         const pending = read(); pending.receipts[key(c)] ||= {}; delete pending.receipts[key(c)][student.id]; write(pending);
         let docError = null;
-        if (student.eligible && utility === "timeliness" && options().docs) {
-          try { await syncDoc(c,student,roster); } catch (e) { docError=e; }
-        }
         const submission = submissions.find(s => s.userId === student.googleId);
+        if (student.eligible && withDocs) {
+          try {
+            if (withAttachments && !submission) throw new Error("No Classroom submission found; no record created.");
+            const doc = await syncDoc(c,student,roster);
+            if (withAttachments) await attachDoc(c,student,submission,doc);
+          } catch (e) { docError=e; }
+        }
+
         if (!student.eligible || !submission || !["TURNED_IN","RETURNED"].includes(submission.state)) {
           result.missingSubmissionCount++;
           result.errors.push(`${student.name}: ${docError ? "Record: " + docError.message + "; " : ""}grade waiting for Classroom link / Turn In.`); continue;
@@ -125,11 +127,14 @@
           result.syncedCount++;
         } catch(e) { result.failedCount++; result.errors.push(`${student.name}: ${e.message}`); }
       }
-      DashboardData[`mark${prefix(utility)}GradeSynced`](classId,c.termId,result);
+      if (testStudentId && result.syncedCount === 1 && !result.failedCount && !result.missingSubmissionCount) {
+        const data = read(); data.attachmentTests ||= {}; data.attachmentTests[testKey(c)] = {studentId:testStudentId,at:new Date().toISOString()}; write(data);
+      }
+      if (!testStudentId) DashboardData[`mark${prefix(utility)}GradeSynced`](classId,c.termId,result);
       return result;
     };
     if (!navigator.locks) throw new Error("Use a current browser supporting Web Locks to prevent duplicate records across tabs.");
     return navigator.locks.request("teacherDashboard.progressSync", {ifAvailable:true}, lock => {if (!lock) throw new Error("Another Dashboard tab is syncing. Wait for it to finish."); return run();});
   }
-  window.StudentProgressService = Object.freeze({status,context,options,sync,docInfo});
+  window.StudentProgressService = Object.freeze({status,context,options,sync,docInfo,tested});
 })();

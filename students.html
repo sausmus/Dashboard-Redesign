@@ -655,7 +655,7 @@
         <select id="timelinessTermSetting" class="setting-select"></select>
         <div id="timelinessTermHelp" class="setting-help"></div>
         <label class="setting-label" for="timelinessRecordYear">Record school year</label><input id="timelinessRecordYear" class="setting-select" type="text" placeholder="2026-2027" pattern="[0-9]{4}-[0-9]{4}"><div class="setting-help">Keep this year unchanged throughout the term to reuse the same records.</div>
-        <label><input id="timelinessDocsOption" type="checkbox"> Update student read-only Record Docs on sync</label><br><label><input id="timelinessLinksOption" type="checkbox"> Publish private Classroom record links</label><div id="timelinessDocsStatus" class="setting-help"></div><div id="timelinessRecordLinks" class="setting-help"></div>
+        <label><input id="timelinessDocsOption" type="checkbox"> Update student read-only Record Docs on sync</label><br><label><input id="timelinessAttachmentsOption" type="checkbox"> Attach each record inside the existing Timeliness assignment</label><div id="timelinessDocsStatus" class="setting-help"></div><div id="timelinessRecordLinks" class="setting-help"></div><label class="setting-label" for="timelinessTestStudent">Test with one student</label><select id="timelinessTestStudent" class="setting-select"></select><button id="timelinessTestButton" class="td-button td-button-primary" type="button">Test selected student only</button><div class="setting-help">Updates only this student’s record, attachment, and grade. Creates no Classwork posts. Full-class record attachments stay blocked until one student succeeds. Uses the saved term and record year; save changes before testing.</div><label class="setting-label" for="timelinessSyncReport">Last sync result (select text to copy)</label><textarea id="timelinessSyncReport" class="setting-select" rows="5" readonly></textarea>
       </div>
       <div class="setting-row">
         <div class="setting-label">Google Classroom & student record</div>
@@ -697,11 +697,12 @@
           el(utility+"SyncButton").disabled = progressBusy || s === "Needs setup";
           el("saveParticipationSettings").disabled = progressBusy;
           el("saveTimelinessSettings").disabled = progressBusy;
+          el("timelinessTestButton").disabled = progressBusy || s === "Needs setup";
           const c = StudentProgressService.context(utility,currentPeriod);
           el(utility+"AssignmentSummary").textContent = (c.assignment?.title || c.settings.title) + " · " + gradingTermLabel(utility) + " · " + s + ".";
           if (utility === "timeliness") {
             const docs = c.rows.map(row => StudentProgressService.docInfo(c,row));
-            el("timelinessDocsStatus").textContent = docs.filter(d => d?.updatedAt).length + "/" + docs.length + " records updated; " + docs.filter(d => d?.linkedAt).length + " private Classroom links. Existing Docs remain in Drive when options are disabled.";
+            el("timelinessDocsStatus").textContent = docs.filter(d => d?.updatedAt).length + "/" + docs.length + " records updated; " + docs.filter(d => d?.attachedAssignments?.[c.assignment?.courseWorkId]).length + " records attached inside this assignment. Existing Docs remain in Drive when options are disabled.";
             el("timelinessRecordLinks").replaceChildren();
             c.rows.forEach((row,index) => {
               if (!docs[index]?.id) return;
@@ -714,18 +715,34 @@
           }
         } catch(e) { el(utility+"SyncStatus").textContent = e.message; }
       }
-      async function syncProgress(utility) {
+      async function syncProgress(utility, testStudentId = "") {
         if (progressBusy) return;
         const classId = currentPeriod;
-        if (!window.confirm("Sync " + gradingTermLabel(utility) + " " + utility + " for " + classLabel(classId) + "? Dashboard scores will replace Classroom grades and be returned to students. Timeliness record options apply. Students waiting for Turn In are skipped.")) return;
+        const testStudent = testStudentId ? DashboardData.getStudent(classId,testStudentId) : null;
+        if (testStudentId && !testStudent) return;
+        const message = testStudent
+          ? "Test only " + testStudent.name + " in " + classLabel(classId) + "? This updates their Timeliness Doc, attaches it inside their existing assignment, and updates/returns their grade. No other student will be changed and no Classwork post will be created."
+          : "Sync " + gradingTermLabel(utility) + " " + utility + " for " + classLabel(classId) + "? Dashboard scores will replace Classroom grades and be returned to students. Timeliness record options apply. Students waiting for Turn In are skipped.";
+        if (!window.confirm(message)) return;
         progressBusy = true; renderProgressStatus("participation"); renderProgressStatus("timeliness");
         try {
-          const result = await StudentProgressService.sync(utility,classId, message => el(utility+"SyncStatus").textContent = message);
-          window.alert(result.syncedCount + " students fully synced. " + result.missingSubmissionCount + " waiting; " + result.failedCount + " errors." + (result.errors.length ? "\n\n" + result.errors.join("\n") : ""));
-        } catch(e) { window.alert(e.message || "Sync failed. Dashboard data remains saved."); }
+          const result = await StudentProgressService.sync(utility,classId, message => el(utility+"SyncStatus").textContent = message, {testStudentId});
+          const report = result.syncedCount + " students fully synced. " + result.missingSubmissionCount + " waiting; " + result.failedCount + " errors." + (result.errors.length ? "\n\n" + result.errors.join("\n") : "");
+          if (utility === "timeliness") el("timelinessSyncReport").value = report;
+          window.alert(report);
+        } catch(e) {
+          const report = e.message || "Sync failed. Dashboard data remains saved.";
+          if (utility === "timeliness") el("timelinessSyncReport").value = report;
+          window.alert(report);
+        }
         finally { progressBusy = false; renderProgressStatus("participation"); renderProgressStatus("timeliness"); }
       }
       el("participationSyncButton").addEventListener("click", () => syncProgress("participation"));
+      el("timelinessTestButton").addEventListener("click", () => {
+        const studentId = el("timelinessTestStudent").value;
+        if (!studentId) { window.alert("Choose one student first."); return; }
+        syncProgress("timeliness",studentId);
+      });
       el("timelinessSyncButton").addEventListener("click", () => syncProgress("timeliness"));
       el("lateWorkRecent").addEventListener("click", event => {
         const button = event.target.closest("[data-delete-late]");
@@ -1269,7 +1286,10 @@
         renderProgressStatus(utility);
         const options = StudentProgressService.options();
         el("timelinessDocsOption").checked = options.docs;
-        el("timelinessLinksOption").checked = options.links;
+        el("timelinessAttachmentsOption").checked = options.attachments;
+        const testSelect = el("timelinessTestStudent"); testSelect.replaceChildren();
+        testSelect.add(new Option("Choose one student…", ""));
+        StudentProgressService.context("timeliness",currentPeriod).rows.filter(row => row.eligible).forEach(row => testSelect.add(new Option(row.name,row.id)));
         el("timelinessRecordYear").value = options.recordYear;
         const modal = el(`${utility}Modal`);
         const backdrop = el(`${utility}ModalBackdrop`);
@@ -1316,7 +1336,7 @@
       function saveTimelinessUtilitySettings() {
         const recordYear = el("timelinessRecordYear").value.trim();
         if (!/^\d{4}-\d{4}$/.test(recordYear) || Number(recordYear.slice(5)) !== Number(recordYear.slice(0,4))+1) { window.alert("Enter a school year such as 2026-2027."); return; }
-        StudentProgressService.options({docs:el("timelinessDocsOption").checked,links:el("timelinessLinksOption").checked,recordYear});
+        StudentProgressService.options({docs:el("timelinessDocsOption").checked,attachments:el("timelinessAttachmentsOption").checked,recordYear});
         const service = TeacherDashboardGradingTerms;
         const config = service.getConfig();
         const value = el("timelinessTermSetting").value;

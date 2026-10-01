@@ -1,129 +1,114 @@
-TEACHER DASHBOARD PROTOTYPE 5 — STUDENT PROGRESS SYNC
+TEACHER DASHBOARD PROTOTYPE 5 — ONE-STUDENT ASSIGNMENT ATTACHMENT TEST
 
-STUDENTS FOLLOW-UP FIX
-Student grids reserve their normal responsive columns even when search returns
-only one or two matches. Cards retain their regular width instead of expanding
-to fill the empty results area; existing padding and height rules are preserved.
-Search stays in the current tab and filters Roster, Participation, and
-Timeliness across all active periods. It persists when switching tabs.
-Matching utility cards carry their actual class IDs, so profile, point changes,
-and late-work recording affect the correct student even in another period.
-Student Selector shows matching students with profile and Select student
-actions. Selecting one switches to that student's period. Random selection
-uses search matches in the selected period without shrinking the saved pool.
-Manual Classroom sync still applies to the selected period's full roster;
-search is a display filter, not a change to Classroom synchronization scope.
-The profile's Timeliness History now has confirmed per-entry Delete actions;
-history, profile score, utility cards, and pending sync status refresh immediately.
+This package replaces the earlier separate-Classroom-material workflow.
+NO separate Classwork material or post is created by this version.
+Existing Docs, assignments, local Dashboard records and mappings are preserved.
+Previously created/deleted Classroom materials are not touched or recreated.
 
-Base: user-supplied Dashboard-Redesign-main.zip, containing corrected P4.4.
-Changed files: students.html, shared/classroom-service.js.
-New files: shared/student-progress-service.js, PROTOTYPE-5-NOTES.txt.
+TEST FIRST
+1. Install all changed files, including both shared service files. Reload Students.
+2. Choose the intended period, then Timeliness -> gear.
+3. Review the saved term and Record school year. Save changes before testing.
+4. Under Test with one student, choose exactly one Classroom-linked student.
+5. Click Test selected student only and confirm the named student.
+6. In the EXISTING Timeliness assignment, open that student's work and check
+   for their Timeliness Record link. The student should be able to view the Doc
+   but not edit it. No additional Classwork post should appear.
 
-STUDENTS
-Participation and Timeliness have explicit Sync to Classroom buttons and
-Needs setup / Changes not synced / Synced statuses. The gear shows the active
-term, assignment name, setup link, and current status. Keep using the mature
-Settings assignment setup/publish tools and existing Classroom mappings.
-Students sync only the currently selected class and active utility term.
-Grades use the existing DashboardData scaling/rounding calculations, then
-update assignedGrade and draftGrade and return turned-in submissions.
-This is a student-visible grade write, confirmed before the manual action.
-Dashboard remains authoritative; Classroom grades are never imported.
-Students without a Classroom identity, submission, or first Turn In are
-reported and remain pending. Other students continue after individual errors.
-Successful grade writes are not rolled back if a Doc/link write fails; those
-students remain pending and the result explains which operation failed.
+The test runs record rewriting, attachment delivery, and grade synchronization
+for ONLY the selected student. It may read class roster/submission metadata to
+identify them, but does not write grades, Docs, or attachments for classmates.
+It reuses that student's existing teacher-owned Doc when present. A new Doc
+is created only if that student's record identity has no existing Doc.
+The test explicitly includes Docs and attachments even if regular-sync options
+are disabled. It uses SAVED settings, not unsaved gear checkbox/year edits.
+For complete success, the student must have a TURNED_IN or RETURNED submission.
 
-Record Late Work now shows ALL entries, each with a confirmed Delete action.
-Deletion calls the EXISTING removeTimelinessEntry API and immediately updates
-history and policy-derived score. Grace, deductions, and score minimums remain
-authoritative. Other students/terms remain unchanged. There is no reset,
-production migration, storage clear, or schema change.
+Full-class record attachment sync is blocked until one student's test succeeds
+for that course, assignment, term, and school year. After success, full-class
+sync remains a separate explicit action; it is never started automatically.
+Verify the student-facing result before choosing the full-class action.
+Grade-only sync remains available by disabling Doc updates in the gear.
+The gear includes a copyable Last sync result field, retained for this page
+session, with detailed errors. Grade success can coexist with attachment failure;
+that student stays pending and the test does not unlock class attachment sync.
 
-TIMELINESS RECORDS
-By default a manual Timeliness sync also rewrites a teacher-owned Google Doc
-for each Classroom-linked student, including students still waiting to Turn In.
-The Doc contains student name, school year, term, current score and complete
-late-assignment history. The only added permission is that student's reader
-permission, resolved from the current Classroom roster email. Existing student
-writer access is downgraded to reader; unexpected sharing stops the update.
-Records are created in the signed-in teacher's My Drive, never student-owned.
+ATTACHMENT IMPLEMENTATION
+Uses Classroom studentSubmissions.modifyAttachments to add a Doc link inside
+the student's existing assignment submission. Teacher-owned Docs stay reader-
+shared with the student. No template or Make a copy for each student is needed.
+Reads existing submission attachments before adding; matching Doc links/files
+are reused, unrelated attachments remain unchanged, and no attachment is removed.
+The 20-attachment API limit is checked. Record identity remains school year +
+course + grading term + Google student ID, independent of assignment recreation.
+Docs are rewritten with current score and complete late-work history on sync.
+Drive appProperties recover the same Doc after lost local Doc mappings.
+Known inaccessible/trashed/incorrectly owned Docs fail rather than create a
+replacement. Unexpected sharing stops rewriting; student writer access is
+downgraded to reader. Revision control protects against concurrent Doc edits.
 
-Identity: record school year + Classroom course + term + Google student ID.
-Assignment recreation does not create another Doc for the same identity.
-The school year defaults to July–June and is editable in the Timeliness gear.
-Save the correct year before first sync; retain it throughout the term.
-Changing that year intentionally chooses another set of records; this option
-does NOT reset local Dashboard scores. Existing school-year reset tools retain
-their original behavior. Confirm the new year before syncing new-year data.
-
-The same Doc is rewritten on each sync; deletion also disappears on next sync.
-Doc IDs are saved before further writes. Drive appProperties locate the original
-Doc if local Doc mappings were lost. Ambiguous matches, inaccessible, trashed,
-or differently owned known Docs fail instead of silently creating replacements.
-Restore the original Doc/access in Drive and retry. Revision control prevents
-overwriting a concurrently edited Doc. Local receipts are per student and only
-complete after all selected operations succeed; concurrent local score edits
-keep status pending. Status represents the last Dashboard export, not a live
-audit of changes teachers may make independently in Classroom or Drive.
-
-PRIVATE CLASSROOM LINK WORKFLOW
-Teacher-created individual-student Classroom materials publish a private link
-to the student's record plus the Timeliness assignment (or course fallback).
-Only that student is assigned the material. This avoids trying to alter a
-student-controlled submission attachment. No class-wide list of private links
-is published. The same private material is updated on repeat sync, with a
-unique description marker to recover it after lost local mappings. If its
-audience/state changed externally, sync stops the link update for review.
-The Timeliness gear provides teacher links to created records and record/link
-counts. Options can disable Doc updates or private materials; disabling does
-not revoke or delete existing records/materials. Link publishing only runs
-when Doc updates are enabled. Classroom material failure is reported; the
-student can still access an already shared Doc through Drive.
+Google requires the same Cloud project/OAuth client project that created the
+assignment. An attachment permission failure is reported without making a new
+assignment or falling back to Classwork posts. Whether your existing assignment
+accepts teacher-side attachment delivery must be confirmed by the live test.
 
 GOOGLE SETUP
-Use the existing OAuth Web Client ID and the SAME Google Cloud project that
-created the assignments. Enable Google Drive API and Google Docs API along
-with the existing Classroom API. Timeliness Doc sync requests additional
-drive.file, classroom.courseworkmaterials, and classroom.profile.emails
-permissions through Google consent. The email scope resolves the correct
-student's read-only Drive permission from their verified Classroom identity.
-drive.file permits access to files created/opened through this OAuth app;
-it does not request full-Drive access. Existing Classroom scopes are unchanged.
-The token stays in memory. Reconnect after expiry. School sharing restrictions
-or missing API/scope access are surfaced as errors rather than marked synced.
-No automatic/background Classroom, Drive, or Docs writes were introduced.
+Keep the existing OAuth client and Classroom assignment mappings. Enable Drive
+API and Docs API in that same Cloud project alongside Classroom API.
+Doc sync uses drive.file and classroom.profile.emails plus the existing
+classroom.coursework.students scope. classroom.courseworkmaterials is no longer
+requested or used. Previously granted Google permissions are not automatically
+revoked by installing this patch. Tokens remain memory-only.
 
-STORAGE AND SAFETY
-shared/dashboard-data.js is byte-for-byte identical to the supplied repo.
-All existing localStorage keys, data schemas, rosters, and assignment mappings
-are preserved. New isolated keys:
- teacherDashboard.studentProgressSync.v1
-   receipts keyed by utility/course/assignment/term; Doc mappings keyed by
-   school year/course/term/student; options docs, links, recordYear.
- teacherDashboard.progressDocsConsent.v1
-   consent hint only; tokens are never stored here.
-No existing consent key was renamed or cleared for the new feature.
-Web Locks serialize sync across tabs on the same origin. Use a current browser
-and HTTPS (localhost also works) as required for Web Locks and Web Crypto.
-Use one teacher session/device for a sync at a time: Drive has no unique-key
-transaction for creation across different devices. AppProperties recovery
-prevents duplicates on normal repeated syncs and interrupted local writes.
-Keep the same OAuth client/project to preserve access and recovery identity.
+OTHER P5 FEATURES RETAINED
+Manual Participation/Timeliness grade sync uses existing grade calculations,
+updates assigned/draft grades, and returns turned-in submissions. Dashboard
+remains source of truth; Classroom grades are never imported. Per-student
+receipts show Needs setup / Changes not synced / Synced and stay pending after
+skips, failures or local edits. Status represents a successful export, not a live
+audit of external edits in Classroom or Drive. No background Google writes.
+Full-class sync applies to the selected period's roster, regardless of search.
+Students waiting for first Turn In are reported; eligible Doc updates may still
+run even if the grade cannot yet be returned.
 
-VALIDATION
-All 27 external and inline JavaScript blocks parsed with Node vm.Script.
-Behavior tests used the actual DashboardData API with isolated in-memory
-storage and mocked Google responses: deletion score recalculation and sibling
-preservation; manual-only writes; pending/synced/failed/Turn-In statuses;
-repeat Doc/material reuse; recovery after lost Doc mappings; deletion followed
-by sync; original DashboardData file equality. Production Google writes were
-not executed. Live Classroom/Docs delivery must be verified with a test class
-after enabling APIs and consent. Packaged ZIP contents were hash-checked against
-the finished files, and unchanged base files were checked for equality.
+Search persists across tabs without switching to Roster. Roster, Participation
+and Timeliness show matches across active periods with correct class identity.
+Selector shows search matches and a Select student action; random selection uses
+matches in the current period without shrinking the stored pool.
+Student cards retain normal responsive width when results are filtered.
+Late-work modal and profile history both offer confirmed per-entry deletion,
+using the existing removeTimelinessEntry API with immediate score/history refresh.
 
-API REFERENCES
-https://developers.google.com/workspace/classroom/reference/rest/v1/courses.courseWorkMaterials
-https://developers.google.com/workspace/classroom/reference/rest/v1/courses.courseWorkMaterials/create
+STORAGE
+shared/dashboard-data.js remains byte-identical to the supplied corrected P4.4.
+No existing storage key/schema, score, roster or assignment mapping is cleared,
+migrated or reset. The isolated teacherDashboard.studentProgressSync.v1 key
+retains Docs/receipts/options and adds:
+ - options.attachments (replaces the UI's obsolete private-post option)
+ - attachmentTests keyed by school year/course/assignment/term
+ - per-Doc attachedAssignments timestamps
+Old options.links/materialId/linkedAt fields are retained but ignored, and are
+never used to create/update deleted materials. teacherDashboard.progressDocsConsent.v1
+remains only a consent hint; no access token is persisted.
+Save the correct Record school year once per academic year; changing it selects
+a different set of record identities without resetting Dashboard scores.
+Web Locks serialize sync across same-origin tabs; use HTTPS or localhost and a
+current browser. Use one device for sync at a time: Drive creation has no unique-
+key transaction across devices. Keep the same OAuth project for recovery.
+
+PACKAGES AND VALIDATION
+Changed ZIP contains students.html, shared/classroom-service.js,
+shared/student-progress-service.js and this PROTOTYPE-5-NOTES.txt. Install all four.
+Full ZIP contains the complete latest repo, including prior search/card fixes.
+All 27 JavaScript blocks parsed. Tests with actual DashboardData and mocked Google
+responses verified one-student write scope, initial class-sync gate, attachment
+deduplication, preserving unrelated attachments, repeat Doc reuse/recovery,
+manual-only writes, deletion/data preservation and pending/failure statuses.
+Mock Classroom material requests explicitly fail, detecting any separate-post
+regression. Live Google writes were not executed; the one-student test is the
+required verification of your assignment's permissions and student visibility.
+
+REFERENCES
+https://developers.google.com/workspace/classroom/guides/manage-coursework
+https://developers.google.com/workspace/classroom/reference/rest/v1/courses.courseWork.studentSubmissions/modifyAttachments
 https://developers.google.com/workspace/docs/api/reference/rest/v1/documents/batchUpdate

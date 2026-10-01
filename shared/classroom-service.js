@@ -19,7 +19,7 @@
   let gisLoadPromise = null;
   let progressAuthorized = false;
   const PROGRESS_CONSENT_KEY = "teacherDashboard.progressDocsConsent.v1";
-  const PROGRESS_SCOPES = `${SCOPES} https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/classroom.courseworkmaterials https://www.googleapis.com/auth/classroom.profile.emails`;
+  const PROGRESS_SCOPES = `${SCOPES} https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/classroom.profile.emails`;
 
   function normalizeClientId(value) {
     return String(value ?? "").trim();
@@ -123,7 +123,7 @@
           }
 
           localStorage.setItem(CONSENT_KEY, "true");
-          progressAuthorized = Boolean(options.progressDocs && google.accounts.oauth2.hasGrantedAllScopes(response, "https://www.googleapis.com/auth/drive.file", "https://www.googleapis.com/auth/classroom.courseworkmaterials", "https://www.googleapis.com/auth/classroom.profile.emails"));
+          progressAuthorized = Boolean(options.progressDocs && google.accounts.oauth2.hasGrantedAllScopes(response, "https://www.googleapis.com/auth/drive.file", "https://www.googleapis.com/auth/classroom.profile.emails"));
           if (options.progressDocs && !progressAuthorized) { clearSession(); reject(new Error("Allow Drive record and Classroom material access to sync Timeliness Docs.")); return; }
           if (progressAuthorized) localStorage.setItem(PROGRESS_CONSENT_KEY, "true");
           resolve({ connected: true, expiresAt });
