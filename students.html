@@ -483,7 +483,7 @@
           <div id="rosterList" class="student-list"></div>
         </section>
 
-        <section id="pickerView" class="view-panel" data-panel="picker" hidden>
+        <section id="pickerView" class="view-panel" data-panel="picker" hidden><div id="pickerSearchMatches" class="score-list" hidden></div>
           <div class="picker-layout">
             <article class="td-card picker-stage">
               <button id="pickerSettingsButton" class="td-icon-button picker-settings" type="button" aria-label="Student Selector settings">⚙</button>
@@ -686,6 +686,7 @@
       let currentWinner = null;
       let currentLateStudentId = null;
       let lateWorkContext = null;
+      let profileContext = null;
       let selectorAnimating = false;
 
       let progressBusy = false;
@@ -907,6 +908,19 @@
         DashboardData.setCurrentClass?.(currentPeriod);
       }
 
+      function searchQuery() { return el("studentSearch").value.trim().toLocaleLowerCase(); }
+      function matchingStudents() {
+        const query = searchQuery();
+        const source = query ? allStudents() : (DashboardData.getStudents(currentPeriod) || []).map(s => ({...s,classId:currentPeriod,className:classLabel(currentPeriod)}));
+        return source.filter(s => !query || s.name.toLocaleLowerCase().includes(query));
+      }
+      function utilityRows(utility) {
+        const cache = new Map();
+        return matchingStudents().map(student => {
+          if (!cache.has(student.classId)) cache.set(student.classId, utility === "participation" ? participationMap(student.classId) : timelinessMap(student.classId));
+          return {...cache.get(student.classId).get(String(student.id)),classId:student.classId,className:student.className};
+        });
+      }
       function renderRoster() {
         const query = el("studentSearch").value.trim().toLocaleLowerCase();
         const source = query ? allStudents() : (DashboardData.getStudents(currentPeriod) || []).map(student => ({ ...student, classId: currentPeriod, className: classLabel(currentPeriod) }));
@@ -941,7 +955,7 @@
 
       function renderParticipation() {
         renderProgressStatus("participation");
-        const rows = DashboardData.getParticipationForClass(currentPeriod) || [];
+        const rows = utilityRows("participation");
         const goal = DashboardData.getParticipationGoal();
         const sort = sortValue("participation");
         rows.sort((a, b) => {
@@ -949,25 +963,25 @@
           if (sort === "high") return b.points - a.points || compareNames(a, b, "last");
           return compareNames(a, b, "last");
         });
-        el("participationCopy").textContent = `${classLabel(currentPeriod)} · ${gradingTermLabel("participation")} · Goal ${goal}`;
+        el("participationCopy").textContent = `${searchQuery() ? "Search matches across active periods" : classLabel(currentPeriod)} · ${gradingTermLabel("participation")} · Goal ${goal}`;
         el("participationList").innerHTML = rows.length ? rows.map(student => `<article class="td-card score-row">
-          <div class="score-name"><button type="button" data-profile-id="${escapeHtml(student.id)}">${escapeHtml(student.name)}</button><span>${student.points >= goal ? "At goal or above" : `${goal - student.points} to goal`}</span></div>
+          <div class="score-name"><button type="button" data-profile-id="${escapeHtml(student.id)}" data-period="${escapeHtml(student.classId)}">${escapeHtml(student.name)}</button><span>${escapeHtml(student.className)} · ${student.points >= goal ? "At goal or above" : `${goal - student.points} to goal`}</span></div>
           <div class="score-display">${student.points}/${goal}</div>
-          <div class="score-controls"><button type="button" data-adjust="-1" data-student-id="${escapeHtml(student.id)}" aria-label="Remove participation point from ${escapeHtml(student.name)}">−</button><button type="button" data-adjust="1" data-student-id="${escapeHtml(student.id)}" aria-label="Add participation point to ${escapeHtml(student.name)}">+</button></div>
-        </article>`).join("") : '<div class="td-card td-empty">No roster yet.</div>';
+          <div class="score-controls"><button type="button" data-adjust="-1" data-student-id="${escapeHtml(student.id)}" data-period="${escapeHtml(student.classId)}" aria-label="Remove participation point from ${escapeHtml(student.name)}">−</button><button type="button" data-adjust="1" data-student-id="${escapeHtml(student.id)}" data-period="${escapeHtml(student.classId)}" aria-label="Add participation point to ${escapeHtml(student.name)}">+</button></div>
+        </article>`).join("") : '<div class="td-card td-empty">No students found.</div>';
 
         el("participationList").querySelectorAll("[data-adjust]").forEach(button => button.addEventListener("click", () => {
-          DashboardData.adjustParticipationPoints(currentPeriod, button.dataset.studentId, Number(button.dataset.adjust));
+          DashboardData.adjustParticipationPoints(button.dataset.period, button.dataset.studentId, Number(button.dataset.adjust));
           renderParticipation();
           renderRoster();
           renderPickerSide();
         }));
-        el("participationList").querySelectorAll("[data-profile-id]").forEach(button => button.addEventListener("click", () => openProfile(button.dataset.profileId, currentPeriod)));
+        el("participationList").querySelectorAll("[data-profile-id]").forEach(button => button.addEventListener("click", () => openProfile(button.dataset.profileId, button.dataset.period)));
       }
 
       function renderTimeliness() {
         renderProgressStatus("timeliness");
-        const rows = DashboardData.getTimelinessForClass(currentPeriod) || [];
+        const rows = utilityRows("timeliness");
         const policy = DashboardData.getTimelinessPolicy();
         const sort = sortValue("timeliness");
         rows.sort((a, b) => {
@@ -976,14 +990,14 @@
           if (sort === "late") return b.lateCount - a.lateCount || compareNames(a, b, "last");
           return compareNames(a, b, "last");
         });
-        el("timelinessCopy").textContent = `${classLabel(currentPeriod)} · ${gradingTermLabel("timeliness")} · Starts at ${policy.startingPoints}`;
+        el("timelinessCopy").textContent = `${searchQuery() ? "Search matches across active periods" : classLabel(currentPeriod)} · ${gradingTermLabel("timeliness")} · Starts at ${policy.startingPoints}`;
         el("timelinessList").innerHTML = rows.length ? rows.map(student => `<article class="td-card score-row">
-          <div class="score-name"><button type="button" data-profile-id="${escapeHtml(student.id)}">${escapeHtml(student.name)}</button><span>${student.lateCount ? `${student.lateCount} late submission${student.lateCount === 1 ? "" : "s"}` : "No late submissions recorded"}</span></div>
+          <div class="score-name"><button type="button" data-profile-id="${escapeHtml(student.id)}" data-period="${escapeHtml(student.classId)}">${escapeHtml(student.name)}</button><span>${escapeHtml(student.className)} · ${student.lateCount ? `${student.lateCount} late submission${student.lateCount === 1 ? "" : "s"}` : "No late submissions recorded"}</span></div>
           <div class="score-display">${student.score}/${student.startingPoints}</div>
-          <div class="score-open"><button class="td-button td-button-secondary td-button-small record-late-button" type="button" data-record-late-id="${escapeHtml(student.id)}">Record Late Work</button></div>
-        </article>`).join("") : '<div class="td-card td-empty">No roster yet.</div>';
-        el("timelinessList").querySelectorAll("[data-profile-id]").forEach(button => button.addEventListener("click", () => openProfile(button.dataset.profileId, currentPeriod)));
-        el("timelinessList").querySelectorAll("[data-record-late-id]").forEach(button => button.addEventListener("click", () => openLateWorkModal(button.dataset.recordLateId)));
+          <div class="score-open"><button class="td-button td-button-secondary td-button-small record-late-button" type="button" data-record-late-id="${escapeHtml(student.id)}" data-period="${escapeHtml(student.classId)}">Record Late Work</button></div>
+        </article>`).join("") : '<div class="td-card td-empty">No students found.</div>';
+        el("timelinessList").querySelectorAll("[data-profile-id]").forEach(button => button.addEventListener("click", () => openProfile(button.dataset.profileId, button.dataset.period)));
+        el("timelinessList").querySelectorAll("[data-record-late-id]").forEach(button => button.addEventListener("click", () => openLateWorkModal(button.dataset.recordLateId, button.dataset.period)));
       }
 
       function renderLateWorkRecent(record) {
@@ -993,14 +1007,14 @@
           : `<div class="setting-help">No late assignments recorded for this term yet.</div>`;
       }
 
-      function openLateWorkModal(studentId) {
-        const student = DashboardData.getStudent(currentPeriod, studentId);
+      function openLateWorkModal(studentId, period = currentPeriod) {
+        const student = DashboardData.getStudent(period, studentId);
         if (!student) return;
-        const record = DashboardData.getTimelinessRecord(currentPeriod, student.id);
+        const record = DashboardData.getTimelinessRecord(period, student.id);
         currentLateStudentId = String(student.id);
-        lateWorkContext = {classId:currentPeriod,termId:DashboardData.getActiveTimelinessTermId()};
+        lateWorkContext = {classId:period,termId:DashboardData.getActiveTimelinessTermId()};
         el("lateWorkStudentName").textContent = student.name;
-        el("lateWorkStudentMeta").textContent = `${classLabel(currentPeriod)} · ${gradingTermLabel("timeliness")}`;
+        el("lateWorkStudentMeta").textContent = `${classLabel(period)} · ${gradingTermLabel("timeliness")}`;
         el("lateWorkStudentScore").textContent = `${record.score}/${record.startingPoints}`;
         el("lateWorkAssignmentInput").value = "";
         el("lateWorkStatus").textContent = "";
@@ -1052,14 +1066,14 @@
       async function pickStudent() {
         if (selectorAnimating) return;
 
-        const students = DashboardData.getStudents(currentPeriod) || [];
+        const students = (DashboardData.getStudents(currentPeriod) || []).filter(student => !searchQuery() || student.name.toLocaleLowerCase().includes(searchQuery()));
         if (!students.length) {
           el("pickerName").textContent = "No roster yet";
-          el("pickerMeta").textContent = "Add or sync students in Settings first.";
+          el("pickerMeta").textContent = searchQuery() ? "No matches in this period. Select a matching student above to use their period." : "Add or sync students in Settings first.";
           return;
         }
 
-        const poolIds = ensurePool(currentPeriod, students);
+        const poolIds = ensurePool(currentPeriod, DashboardData.getStudents(currentPeriod) || []);
         const poolSet = new Set(poolIds.map(String));
         const candidates = students.filter(student => poolSet.has(String(student.id)));
         const eligible = candidates.length ? candidates : students;
@@ -1094,6 +1108,7 @@
 
         await wait(100);
         currentWinner = winner;
+        if (searchQuery() && !winner.name.toLocaleLowerCase().includes(searchQuery())) currentWinner = null;
         selectorAnimating = false;
         el("pickButton").disabled = false;
         renderPickerWinner();
@@ -1134,7 +1149,27 @@
         }
       }
 
+      function renderPickerSearch() {
+        const box = el("pickerSearchMatches"); box.hidden = !searchQuery();
+        box.replaceChildren();
+        if (!searchQuery()) return;
+        const matches = matchingStudents();
+        if (!matches.length) box.textContent = "No students found.";
+        matches.forEach(student => {
+          const row = document.createElement("article"); row.className = "td-card score-row";
+          const name = document.createElement("button"); name.className = "td-button td-button-secondary"; name.textContent = student.name + " · " + student.className;
+          name.addEventListener("click", () => openProfile(student.id,student.classId));
+          const select = document.createElement("button"); select.className = "td-button td-button-primary"; select.textContent = "Select student"; select.disabled = selectorAnimating;
+          select.addEventListener("click", () => {
+            if (selectorAnimating) return;
+            currentPeriod = student.classId; el("periodSelect").value = currentPeriod; DashboardData.setCurrentClass?.(currentPeriod);
+            currentWinner = student; renderPickerWinner(); renderPickerSide(); switchView("picker");
+          });
+          row.append(name,select); box.append(row);
+        });
+      }
       function renderPickerSide() {
+        renderPickerSearch();
         const students = DashboardData.getStudents(currentPeriod) || [];
         const state = readPickerSettings();
         const pool = ensurePool(currentPeriod, students);
@@ -1193,12 +1228,13 @@
           </div>
           <section class="profile-section"><div class="profile-section-head"><h3>Reminders</h3><a class="section-link" href="reminders.html">All reminders →</a></div>${reminders.length ? `<ul class="profile-list">${reminders.map(item => `<li>${escapeHtml(item.text)}<div class="profile-muted">${escapeHtml(item.className || classLabel(period))} · ${escapeHtml(item.triggerLabel || "Upcoming")}</div></li>`).join("")}</ul>` : '<div class="profile-muted">No active reminders attached to this student.</div>'}</section>
           <section class="profile-section"><div class="profile-section-head"><h3>Writing</h3><a class="section-link" href="writing.html">Open Writing →</a></div><div class="profile-muted">Writing Workspace assignments and Grading Assistant results will populate here as the unified Writing service is connected. The profile is already reserved as their single student-level home.</div></section>
-          <section class="profile-section"><div class="profile-section-head"><h3>Timeliness history</h3></div>${lateEntries.length ? `<ul class="profile-list">${lateEntries.slice().reverse().map(item => `<li>${escapeHtml(timelinessEntryLabel(item))}<div class="profile-muted">${escapeHtml(formatEntryDate(item.createdAt))}</div></li>`).join("")}</ul>` : '<div class="profile-muted">No late-work entries for the active term.</div>'}</section>`;
+          <section class="profile-section"><div class="profile-section-head"><h3>Timeliness history</h3></div>${lateEntries.length ? `<ul class="profile-list">${lateEntries.slice().reverse().map(item => `<li>${escapeHtml(timelinessEntryLabel(item))}<div class="profile-muted">${escapeHtml(formatEntryDate(item.createdAt))}</div><button type="button" class="td-button td-button-secondary td-button-small" data-profile-delete="${escapeHtml(item.id)}">Delete</button></li>`).join("")}</ul>` : '<div class="profile-muted">No late-work entries for the active term.</div>'}</section>`;
       }
 
       function openProfile(studentId, period) {
         const student = DashboardData.getStudent(period, studentId);
         if (!student) return;
+        profileContext = {studentId:String(studentId),period:String(period),termId:DashboardData.getActiveTimelinessTermId()};
         el("profileName").textContent = student.name;
         el("profilePeriod").textContent = classLabel(period);
         el("profileBody").innerHTML = renderProfileBody(student, period);
@@ -1208,6 +1244,7 @@
       }
 
       function closeProfile() {
+        profileContext = null;
         el("drawerBackdrop").classList.remove("open");
         el("profileDrawer").classList.remove("open");
         el("profileDrawer").setAttribute("aria-hidden", "true");
@@ -1324,7 +1361,22 @@
         renderRoster(); renderParticipation(); renderTimeliness(); renderPickerWinner(); renderPickerSide();
         switchView(currentView);
       });
-      el("studentSearch").addEventListener("input", () => { if (currentView !== "roster") switchView("roster"); else renderRoster(); });
+      el("studentSearch").addEventListener("input", () => {
+        if (currentWinner && searchQuery() && !currentWinner.name.toLocaleLowerCase().includes(searchQuery())) currentWinner = null;
+        renderRoster(); renderParticipation(); renderTimeliness(); renderPickerWinner(); renderPickerSide();
+      });
+      el("profileBody").addEventListener("click", event => {
+        const button = event.target.closest("[data-profile-delete]");
+        if (!button || !profileContext) return;
+        const {studentId,period,termId} = profileContext;
+        const record = DashboardData.getTimelinessRecord(period,studentId,termId);
+        const entry = record.entries.find(item => String(item.id) === button.dataset.profileDelete);
+        if (!entry || !window.confirm('Delete "' + timelinessEntryLabel(entry) + '"? The Timeliness score will be recalculated.')) return;
+        try {
+          DashboardData.removeTimelinessEntry(period,studentId,entry.id,termId);
+          openProfile(studentId,period); renderRoster(); renderParticipation(); renderTimeliness(); renderPickerSide();
+        } catch(e) { window.alert(e.message || "Could not delete the late assignment."); }
+      });
 
       ["roster", "participation", "timeliness"].forEach(view => {
         el(`${view}Sort`).addEventListener("change", () => {

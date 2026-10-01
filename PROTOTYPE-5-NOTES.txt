@@ -1,5 +1,18 @@
 TEACHER DASHBOARD PROTOTYPE 5 — STUDENT PROGRESS SYNC
 
+STUDENTS FOLLOW-UP FIX
+Search stays in the current tab and filters Roster, Participation, and
+Timeliness across all active periods. It persists when switching tabs.
+Matching utility cards carry their actual class IDs, so profile, point changes,
+and late-work recording affect the correct student even in another period.
+Student Selector shows matching students with profile and Select student
+actions. Selecting one switches to that student's period. Random selection
+uses search matches in the selected period without shrinking the saved pool.
+Manual Classroom sync still applies to the selected period's full roster;
+search is a display filter, not a change to Classroom synchronization scope.
+The profile's Timeliness History now has confirmed per-entry Delete actions;
+history, profile score, utility cards, and pending sync status refresh immediately.
+
 Base: user-supplied Dashboard-Redesign-main.zip, containing corrected P4.4.
 Changed files: students.html, shared/classroom-service.js.
 New files: shared/student-progress-service.js, PROTOTYPE-5-NOTES.txt.
