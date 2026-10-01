@@ -304,14 +304,13 @@
       z-index:30;
       top:calc(100% + 8px);
       right:0;
-      width:min(620px, calc(100vw - 90px));
-      max-height:320px;
-      overflow:auto;
+      width:min(680px, calc(100vw - 90px));
       padding:14px;
       border:1px solid var(--td-border);
       border-radius:18px;
       background:var(--td-surface);
       box-shadow:var(--td-shadow-lg);
+      overflow:visible;
     }
 
     .pool-popover[hidden] {
@@ -367,6 +366,52 @@
       text-align:center;
     }
 
+    .picker-mode-toggle {
+      border:1px solid color-mix(in srgb, var(--td-accent) 22%, var(--td-border));
+      border-radius:999px;
+      padding:6px 10px;
+      background:var(--td-accent-soft);
+      color:var(--td-accent-strong);
+      font:inherit;
+      font-size:10px;
+      font-weight:800;
+      cursor:pointer;
+      transition:transform var(--td-fast), border-color var(--td-fast), background var(--td-fast);
+    }
+    .picker-mode-toggle:hover { transform:translateY(-1px); border-color:color-mix(in srgb, var(--td-accent) 40%, var(--td-border)); }
+    .picker-mode-toggle:focus-visible { outline:none; box-shadow:0 0 0 3px color-mix(in srgb, var(--td-accent) 18%, transparent); }
+
+    .record-late-button { min-width:118px; white-space:nowrap; }
+    .late-work-student {
+      display:flex; align-items:flex-start; justify-content:space-between; gap:12px;
+      padding:12px 13px; border:1px solid var(--td-border); border-radius:13px; background:var(--td-surface-soft);
+    }
+    .late-work-student strong { display:block; color:var(--td-text); font-size:13px; }
+    .late-work-student span { display:block; margin-top:3px; color:var(--td-text-secondary); font-size:10px; }
+    .late-work-score { flex:0 0 auto; color:var(--td-text); font-size:14px; font-weight:800; }
+    .late-work-input {
+      width:100%; min-height:44px; padding:10px 12px; border:1px solid var(--td-border); border-radius:12px;
+      background:var(--td-surface); color:var(--td-text); font:inherit; font-size:12px;
+    }
+    .late-work-input:focus { outline:none; border-color:var(--td-accent); box-shadow:0 0 0 3px color-mix(in srgb, var(--td-accent) 18%, transparent); }
+    .late-work-recent { display:grid; gap:7px; }
+    .late-work-recent-item {
+      display:flex; align-items:center; justify-content:space-between; gap:12px; padding:8px 10px;
+      border-radius:10px; background:var(--td-surface-soft); color:var(--td-text); font-size:10px;
+    }
+    .late-work-recent-item span:first-child { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .late-work-recent-date { flex:0 0 auto; color:var(--td-text-muted); font-size:9px; }
+    .late-work-status { min-height:16px; color:#b84d4d; font-size:10px; line-height:1.4; }
+
+    @media (min-width: 1180px) {
+      .pool-popover { width:min(780px, calc(100vw - 110px)); }
+      .pool-grid { grid-template-columns:repeat(5, minmax(0, 1fr)); }
+    }
+
+    @media (max-height: 620px) and (min-width: 681px) {
+      .pool-popover { max-height:calc(100vh - 120px); overflow:auto; }
+    }
+
     @media (max-width: 900px) {
       .picker-layout { grid-template-columns:1fr; }
       .picker-stage { min-height:360px; }
@@ -382,7 +427,7 @@
       .participation-head .view-toolbar-actions, .timeliness-head .view-toolbar-actions { margin-left:0; }
       .compact-select { min-width:min(100%, 220px); }
       .pool-grid { grid-template-columns:repeat(2, minmax(0, 1fr)); }
-      .pool-popover { right:auto; left:0; width:min(520px, calc(100vw - 56px)); }
+      .pool-popover { right:auto; left:0; width:min(520px, calc(100vw - 56px)); max-height:calc(100vh - 120px); overflow:auto; }
       .student-row .metric.timeliness { display:block; }
       .profile-grid { grid-template-columns:1fr; }
       .radio-cards { grid-template-columns:1fr; }
@@ -454,7 +499,7 @@
             <aside class="td-card picker-side">
               <h3>Current class</h3>
               <p id="pickerSideCopy" class="picker-side-copy"></p>
-              <div class="picker-stat"><span>Selection mode</span><strong id="pickerModeStat">Balanced</strong></div>
+              <div class="picker-stat"><span>Selection mode</span><button id="pickerModeStat" class="picker-mode-toggle" type="button" aria-label="Toggle selection mode">Balanced</button></div>
               <div class="picker-stat"><span>Participation goal</span><strong id="pickerGoalStat">5</strong></div>
               <div class="picker-stat picker-stat-remaining">
                 <button id="pickerRemainingButton" class="picker-stat-trigger" type="button" aria-expanded="false" aria-controls="pickerPoolPopover">
@@ -546,6 +591,35 @@
   </section>
 
 
+
+  <div id="lateWorkModalBackdrop" class="td-modal-backdrop"></div>
+  <section id="lateWorkModal" class="td-modal" aria-hidden="true" aria-labelledby="lateWorkModalTitle">
+    <div class="modal-head">
+      <h2 id="lateWorkModalTitle">Record Late Work</h2>
+      <button id="closeLateWorkModal" class="td-icon-button" type="button" aria-label="Close Record Late Work">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="late-work-student">
+        <div><strong id="lateWorkStudentName">Student</strong><span id="lateWorkStudentMeta"></span></div>
+        <div id="lateWorkStudentScore" class="late-work-score">25/25</div>
+      </div>
+      <label class="setting-row">
+        <span class="setting-label">Late assignment</span>
+        <input id="lateWorkAssignmentInput" class="late-work-input" type="text" maxlength="180" placeholder="e.g. The Monkey's Paw Questions" autocomplete="off">
+        <span class="setting-help">Recording the assignment adds it to this student's Timeliness history and applies the current Timeliness policy.</span>
+      </label>
+      <div class="setting-row">
+        <div class="setting-label">Recent late work</div>
+        <div id="lateWorkRecent" class="late-work-recent"></div>
+      </div>
+      <div id="lateWorkStatus" class="late-work-status" aria-live="polite"></div>
+      <div class="modal-actions">
+        <button id="cancelLateWork" class="td-button td-button-secondary" type="button">Cancel</button>
+        <button id="recordLateWorkButton" class="td-button td-button-primary" type="button">Record Late Work</button>
+      </div>
+    </div>
+  </section>
+
   <div id="participationModalBackdrop" class="td-modal-backdrop"></div>
   <section id="participationModal" class="td-modal" aria-hidden="true" aria-labelledby="participationModalTitle">
     <div class="modal-head"><h2 id="participationModalTitle">Participation settings</h2><button id="closeParticipationModal" class="td-icon-button" type="button" aria-label="Close Participation settings">×</button></div>
@@ -606,6 +680,7 @@
       let currentView = "roster";
       let currentPeriod = "1";
       let currentWinner = null;
+      let currentLateStudentId = null;
       let selectorAnimating = false;
 
       const wait = ms => new Promise(resolve => window.setTimeout(resolve, ms));
@@ -664,6 +739,18 @@
         const primaryB = mode === "first" ? bb.first : bb.last;
         return primaryA.localeCompare(primaryB, undefined, { sensitivity: "base" }) ||
           aa.full.localeCompare(bb.full, undefined, { sensitivity: "base" });
+      }
+
+      function timelinessEntryLabel(entry) {
+        const value = String(entry?.note || entry?.assignment || entry?.assignmentName || entry?.title || "").trim();
+        if (!value || /^late:\d+:/i.test(value)) return "Late submission";
+        return value;
+      }
+
+      function formatEntryDate(value) {
+        if (!value) return "";
+        const date = new Date(value);
+        return Number.isNaN(date.getTime()) ? "" : date.toLocaleDateString();
       }
 
       function readSortSettings() {
@@ -737,6 +824,17 @@
         const state = readPickerSettings();
         state.pools[period] = (DashboardData.getStudents(period) || []).map(student => String(student.id));
         savePickerSettings(state);
+        renderPickerSide();
+      }
+
+      function togglePickerMode() {
+        const state = readPickerSettings();
+        state.mode = state.mode === "balanced" ? "random" : "balanced";
+        savePickerSettings(state);
+        document.querySelectorAll('input[name="pickerMode"]').forEach(input => {
+          input.checked = input.value === state.mode;
+        });
+        renderPickerWinner();
         renderPickerSide();
       }
 
@@ -823,9 +921,60 @@
         el("timelinessList").innerHTML = rows.length ? rows.map(student => `<article class="td-card score-row">
           <div class="score-name"><button type="button" data-profile-id="${escapeHtml(student.id)}">${escapeHtml(student.name)}</button><span>${student.lateCount ? `${student.lateCount} late submission${student.lateCount === 1 ? "" : "s"}` : "No late submissions recorded"}</span></div>
           <div class="score-display">${student.score}/${student.startingPoints}</div>
-          <div class="score-open"><button class="td-button td-button-secondary td-button-small" type="button" data-profile-id="${escapeHtml(student.id)}">View</button></div>
+          <div class="score-open"><button class="td-button td-button-secondary td-button-small record-late-button" type="button" data-record-late-id="${escapeHtml(student.id)}">Record Late Work</button></div>
         </article>`).join("") : '<div class="td-card td-empty">No roster yet.</div>';
         el("timelinessList").querySelectorAll("[data-profile-id]").forEach(button => button.addEventListener("click", () => openProfile(button.dataset.profileId, currentPeriod)));
+        el("timelinessList").querySelectorAll("[data-record-late-id]").forEach(button => button.addEventListener("click", () => openLateWorkModal(button.dataset.recordLateId)));
+      }
+
+      function renderLateWorkRecent(record) {
+        const recent = (record?.entries || []).slice().reverse().slice(0, 4);
+        el("lateWorkRecent").innerHTML = recent.length
+          ? recent.map(entry => `<div class="late-work-recent-item"><span title="${escapeHtml(timelinessEntryLabel(entry))}">${escapeHtml(timelinessEntryLabel(entry))}</span><span class="late-work-recent-date">${escapeHtml(formatEntryDate(entry.createdAt))}</span></div>`).join("")
+          : `<div class="setting-help">No late assignments recorded for this term yet.</div>`;
+      }
+
+      function openLateWorkModal(studentId) {
+        const student = DashboardData.getStudent(currentPeriod, studentId);
+        if (!student) return;
+        const record = DashboardData.getTimelinessRecord(currentPeriod, student.id);
+        currentLateStudentId = String(student.id);
+        el("lateWorkStudentName").textContent = student.name;
+        el("lateWorkStudentMeta").textContent = `${classLabel(currentPeriod)} · ${gradingTermLabel("timeliness")}`;
+        el("lateWorkStudentScore").textContent = `${record.score}/${record.startingPoints}`;
+        el("lateWorkAssignmentInput").value = "";
+        el("lateWorkStatus").textContent = "";
+        renderLateWorkRecent(record);
+        el("lateWorkModalBackdrop").classList.add("open");
+        el("lateWorkModal").classList.add("open");
+        el("lateWorkModal").setAttribute("aria-hidden", "false");
+        requestAnimationFrame(() => el("lateWorkAssignmentInput").focus());
+      }
+
+      function closeLateWorkModal() {
+        currentLateStudentId = null;
+        el("lateWorkModalBackdrop").classList.remove("open");
+        el("lateWorkModal").classList.remove("open");
+        el("lateWorkModal").setAttribute("aria-hidden", "true");
+        el("lateWorkStatus").textContent = "";
+      }
+
+      function recordLateWork() {
+        if (!currentLateStudentId) return;
+        const assignment = el("lateWorkAssignmentInput").value.trim();
+        if (!assignment) {
+          el("lateWorkStatus").textContent = "Enter the late assignment first.";
+          el("lateWorkAssignmentInput").focus();
+          return;
+        }
+        try {
+          DashboardData.addTimelinessEntry(currentPeriod, currentLateStudentId, assignment);
+          closeLateWorkModal();
+          renderTimeliness();
+          renderRoster();
+        } catch (error) {
+          el("lateWorkStatus").textContent = error?.message || "Could not record the late assignment.";
+        }
       }
 
       function chooseWeighted(students) {
@@ -976,11 +1125,6 @@
         const t = DashboardData.getTimelinessRecord(period, student.id);
         const reminders = remindersForStudent(student, period);
         const lateEntries = t?.entries || [];
-        const lateEntryText = entry => {
-          const value = String(entry?.note || entry?.assignment || entry?.assignmentName || entry?.title || "").trim();
-          if (!value || /^late:\d+:/i.test(value)) return "Late submission";
-          return value;
-        };
         return `
           <div class="profile-grid">
             <section class="profile-section"><div class="profile-section-head"><h3>Participation</h3><a class="section-link" href="students.html?period=${encodeURIComponent(period)}&view=participation">Open →</a></div><div class="profile-big">${p ? `${p.points}/${p.goal}` : "—"}</div><div class="profile-muted">Current participation credit</div></section>
@@ -988,7 +1132,7 @@
           </div>
           <section class="profile-section"><div class="profile-section-head"><h3>Reminders</h3><a class="section-link" href="reminders.html">All reminders →</a></div>${reminders.length ? `<ul class="profile-list">${reminders.map(item => `<li>${escapeHtml(item.text)}<div class="profile-muted">${escapeHtml(item.className || classLabel(period))} · ${escapeHtml(item.triggerLabel || "Upcoming")}</div></li>`).join("")}</ul>` : '<div class="profile-muted">No active reminders attached to this student.</div>'}</section>
           <section class="profile-section"><div class="profile-section-head"><h3>Writing</h3><a class="section-link" href="writing.html">Open Writing →</a></div><div class="profile-muted">Writing Workspace assignments and Grading Assistant results will populate here as the unified Writing service is connected. The profile is already reserved as their single student-level home.</div></section>
-          <section class="profile-section"><div class="profile-section-head"><h3>Timeliness history</h3></div>${lateEntries.length ? `<ul class="profile-list">${lateEntries.slice().reverse().map(item => `<li>${escapeHtml(lateEntryText(item))}<div class="profile-muted">${item.createdAt ? new Date(item.createdAt).toLocaleDateString() : ""}</div></li>`).join("")}</ul>` : '<div class="profile-muted">No late-work entries for the active term.</div>'}</section>`;
+          <section class="profile-section"><div class="profile-section-head"><h3>Timeliness history</h3></div>${lateEntries.length ? `<ul class="profile-list">${lateEntries.slice().reverse().map(item => `<li>${escapeHtml(timelinessEntryLabel(item))}<div class="profile-muted">${escapeHtml(formatEntryDate(item.createdAt))}</div></li>`).join("")}</ul>` : '<div class="profile-muted">No late-work entries for the active term.</div>'}</section>`;
       }
 
       function openProfile(studentId, period) {
@@ -1124,12 +1268,25 @@
         });
       });
 
+      el("pickerModeStat").addEventListener("click", togglePickerMode);
+
       el("pickerRemainingButton").addEventListener("click", event => {
         event.stopPropagation();
         togglePoolPopover();
       });
       el("pickerPoolPopover").addEventListener("click", event => event.stopPropagation());
       document.addEventListener("click", () => setPoolPopover(false));
+
+      el("closeLateWorkModal").addEventListener("click", closeLateWorkModal);
+      el("cancelLateWork").addEventListener("click", closeLateWorkModal);
+      el("lateWorkModalBackdrop").addEventListener("click", closeLateWorkModal);
+      el("recordLateWorkButton").addEventListener("click", recordLateWork);
+      el("lateWorkAssignmentInput").addEventListener("keydown", event => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          recordLateWork();
+        }
+      });
 
       el("participationSettingsButton").addEventListener("click", () => openUtilityModal("participation"));
       el("timelinessSettingsButton").addEventListener("click", () => openUtilityModal("timeliness"));
@@ -1172,6 +1329,7 @@
         if (event.key === "Escape") {
           closeProfile();
           closePickerModal();
+          closeLateWorkModal();
           closeUtilityModal("participation");
           closeUtilityModal("timeliness");
           setPoolPopover(false);
