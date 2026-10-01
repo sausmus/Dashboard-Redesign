@@ -128,6 +128,11 @@
       .today-item { grid-template-columns: 68px 34px minmax(0, 1fr); padding-inline: 14px; gap: 9px; }
       .now-card { min-height: 0; }
     }
+
+    .today-connect { color:var(--td-text-secondary); }
+    .today-connect a { color:var(--td-accent-strong); font-weight:700; text-decoration:none; }
+    .today-footer .td-link-button { border:0; padding:0; background:transparent; color:var(--td-accent-strong); font:inherit; font-size:11px; font-weight:750; cursor:pointer; }
+
   </style>
 </head>
 <body>
@@ -166,9 +171,9 @@
             </div>
 
             <div class="now-actions" aria-label="Current class shortcuts">
-              <a class="now-action" href="agenda.html">
+              <a class="now-action" id="agendaShortcut" href="agenda.html">
                 <span class="now-action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M8 2.5v4M16 2.5v4M3 9h18"/><path d="M7.5 13h3M7.5 16.5h6"/></svg></span>
-                <span><strong>Agenda</strong><span>Open today's lesson plan</span></span>
+                <span><strong>Agenda</strong><span id="agendaShortcutCopy">Open today's lesson plan</span></span>
               </a>
               <a class="now-action" id="studentsShortcut" href="students.html">
                 <span class="now-action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M3.5 19c.5-3.2 2.4-5 5.5-5s5 1.8 5.5 5"/><circle cx="17.5" cy="9.5" r="2.2"/><path d="M15.5 15.5c2.8-.4 4.6.7 5 3.5"/></svg></span>
@@ -186,7 +191,7 @@
             <ul id="todayList" class="today-list"></ul>
             <div class="today-footer">
               <span id="todaySourceNote" class="today-source-note">Dashboard reminders</span>
-              <a class="section-link" href="reminders.html">View day →</a>
+              <button id="viewDayButton" class="td-link-button" type="button">View day →</button>
             </div>
           </article>
         </section>
@@ -196,11 +201,18 @@
 
   <script src="shared/app-shell.js"></script>
   <script src="shared/dashboard-data.js"></script>
+  <script src="shared/class-groups.js"></script>
+  <script src="shared/agenda-service.js"></script>
+  <script src="shared/calendar-service.js"></script>
   <script src="shared/bell-service.js"></script>
   <script src="shared/reminder-service.js"></script>
   <script>
     (() => {
       const el = id => document.getElementById(id);
+      let calendarEvents = [];
+      let calendarState = "disconnected";
+      let calendarError = "";
+      let todayExpanded = false;
 
       function updateGreeting() {
         const now = new Date();
@@ -234,8 +246,8 @@
           title = s.nextEntry?.name ? `Up next: ${s.nextEntry.name}` : "Passing period";
           caption = s.nextEntry?.name ? `until ${s.nextEntry.name}` : "until the next class";
         } else if (s.countdownType === "schoolStart") {
-          kicker = s.phase === "afterSchool" ? "Next school day" : "Before school";
-          title = s.targetDayLabel ? `${s.targetDayLabel} · First Bell` : "First Bell";
+          kicker = s.phase === "afterSchool" ? "Planning" : "Before school";
+          title = s.phase === "afterSchool" ? (s.targetDayLabel ? `${s.targetDayLabel} planning` : "Next school day") : (s.targetDayLabel ? `${s.targetDayLabel} · First Bell` : "First Bell");
           caption = s.phase === "afterSchool" ? "until the next school day" : "until First Bell";
         } else if (s.entry?.name && !/^Period\s+\d+$/i.test(s.entry.name)) {
           kicker = s.entry.name;
@@ -248,14 +260,30 @@
           subtitle = info?.name && info.name !== s.entry.name ? info.name : "";
         }
 
+        const currentClass = BellService.getAutomaticClassId?.() || DashboardData.getCurrentClassId?.();
+        if (currentClass) {
+          const group = ClassGroups.getGroupForClass(currentClass);
+          const context = AgendaService.getContext(new Date(), currentClass);
+          const contextParts = [];
+          if (group) contextParts.push(group.name);
+          if (context.isException) contextParts.push("one-day Agenda exception");
+          else if (context.scope === "all") contextParts.push("shared Agenda: all classes");
+          else if (context.scope.startsWith("group:") && context.group) contextParts.push(`shared Agenda: ${context.group.name}`);
+          if (contextParts.length && !subtitle.includes(contextParts[0])) subtitle = [subtitle, ...contextParts].filter(Boolean).join(" · ");
+          el("agendaShortcut").href = `agenda.html?period=${encodeURIComponent(currentClass)}`;
+          el("agendaShortcutCopy").textContent = context.scope.startsWith("group:") && context.group ? `Open ${context.group.name} lesson plan` : (context.isException ? "Open this class's exception agenda" : "Open today's lesson plan");
+          el("studentsShortcut").href = `students.html?period=${encodeURIComponent(currentClass)}`;
+        } else {
+          el("agendaShortcut").href = "agenda.html";
+          el("agendaShortcutCopy").textContent = "Plan upcoming lessons";
+          el("studentsShortcut").href = "students.html";
+        }
+
         el("nowKicker").innerHTML = `<span class="now-kicker-dot"></span><span>${kicker}</span>`;
         el("nowClass").textContent = title;
         el("nowClassSubtitle").textContent = subtitle;
         el("nowCountdown").textContent = s.displayCountdown || BellService.formatCountdown?.(s.remainingSeconds || 0) || "--:--";
         el("nowCountdownCaption").textContent = caption;
-
-        const currentClass = BellService.getAutomaticClassId?.() || DashboardData.getCurrentClassId?.();
-        el("studentsShortcut").href = currentClass ? `students.html?period=${encodeURIComponent(currentClass)}` : "students.html";
       }
 
       function reminderTime(reminder) {
@@ -264,44 +292,98 @@
         return new Date(ts).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
       }
 
+      function eventTime(event) {
+        if (event?.start?.date && !event?.start?.dateTime) return "All day";
+        const value = event?.start?.dateTime || event?.start?.date;
+        if (!value) return "—";
+        const date = new Date(value);
+        return Number.isNaN(date.getTime()) ? "—" : date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+      }
+
+      function eventTimestamp(event) {
+        if (event?.start?.date && !event?.start?.dateTime) {
+          const [y, m, d] = String(event.start.date).split("-").map(Number);
+          return new Date(y, (m || 1) - 1, d || 1, 0, 0, 0, 0).getTime() - 1;
+        }
+        return new Date(event?.start?.dateTime || event?.start?.date || 0).getTime() || 0;
+      }
+
+      function buildTodayRows() {
+        const todayKey = ReminderService.dateKey();
+        const reminders = ReminderService.getReminders()
+          .filter(item => item.date === todayKey && !["done", "missed"].includes(item.status))
+          .map(item => ({ type: "reminder", timestamp: Number(item.snoozeUntil || item.triggerAt || 0), item }));
+        const events = calendarEvents
+          .filter(event => event?.status !== "cancelled")
+          .map(item => ({ type: "calendar", timestamp: eventTimestamp(item), item }));
+        return [...reminders, ...events].sort((a, b) => a.timestamp - b.timestamp);
+      }
+
       function renderToday() {
         const list = el("todayList");
         if (!window.ReminderService) {
           list.innerHTML = '<li class="today-empty">Today’s feed is loading…</li>';
           return;
         }
-        const todayKey = ReminderService.dateKey();
-        const reminders = ReminderService.getReminders()
-          .filter(item => item.date === todayKey && !["done", "missed"].includes(item.status))
-          .sort((a, b) => Number(a.snoozeUntil || a.triggerAt || 0) - Number(b.snoozeUntil || b.triggerAt || 0))
-          .slice(0, 4);
 
-        const rows = reminders.map(item => `
-          <li class="today-item">
-            <div class="today-time">${reminderTime(item)}</div>
-            <div class="today-icon" aria-hidden="true">♢</div>
-            <div class="today-copy">
-              <div class="today-title">${escapeHtml(item.text || "Class reminder")}</div>
-              <div class="today-meta">${escapeHtml(item.studentName ? `${item.studentName} · ${item.className || "Reminder"}` : (item.className || item.triggerLabel || "Dashboard reminder"))}</div>
-            </div>
-          </li>`);
+        const allRows = buildTodayRows();
+        const limit = todayExpanded ? allRows.length : 5;
+        const rows = allRows.slice(0, limit).map(row => {
+          if (row.type === "reminder") {
+            const item = row.item;
+            return `<li class="today-item"><div class="today-time">${escapeHtml(reminderTime(item))}</div><div class="today-icon" aria-hidden="true">♢</div><div class="today-copy"><div class="today-title">${escapeHtml(item.text || "Class reminder")}</div><div class="today-meta">${escapeHtml(item.studentName ? `${item.studentName} · ${item.className || "Reminder"}` : (item.className || item.triggerLabel || "Dashboard reminder"))}</div></div></li>`;
+          }
+          const event = row.item;
+          const location = String(event.location || "").trim();
+          return `<li class="today-item"><div class="today-time">${escapeHtml(eventTime(event))}</div><div class="today-icon calendar" aria-hidden="true">□</div><div class="today-copy"><div class="today-title">${escapeHtml(event.summary || "Calendar event")}</div><div class="today-meta">${escapeHtml(location || (event.start?.date && !event.start?.dateTime ? "Google Calendar · all day" : "Google Calendar"))}</div></div></li>`;
+        });
 
-        // Calendar is intentionally a seam in Prototype 2: once OAuth is wired,
-        // calendar events enter this same chronological feed rather than a new card.
-        if (rows.length < 4) {
-          rows.push(`
-            <li class="today-item calendar-placeholder">
-              <div class="today-time">Calendar</div>
-              <div class="today-icon calendar" aria-hidden="true">□</div>
-              <div class="today-copy">
-                <div class="today-title">Google Calendar events will appear here</div>
-                <div class="today-meta">Calendar connection is the next integration step.</div>
-              </div>
-            </li>`);
+        if (!rows.length && calendarState === "loading") {
+          rows.push('<li class="today-empty">Loading Calendar and reminders…</li>');
+        } else if (!rows.length && calendarState === "disconnected") {
+          rows.push('<li class="today-item today-connect"><div class="today-time">Calendar</div><div class="today-icon calendar" aria-hidden="true">□</div><div class="today-copy"><div class="today-title">Connect Google Calendar</div><div class="today-meta"><a href="settings.html#calendarPanel">Open Settings</a> to add calendar events to Today.</div></div></li>');
+        } else if (!rows.length && calendarState === "error") {
+          rows.push(`<li class="today-item today-connect"><div class="today-time">Calendar</div><div class="today-icon calendar" aria-hidden="true">□</div><div class="today-copy"><div class="today-title">Calendar needs attention</div><div class="today-meta">${escapeHtml(calendarError || "Reconnect Calendar in Settings.")}</div></div></li>`);
+        } else if (!rows.length) {
+          rows.push('<li class="today-empty">Nothing else is scheduled today.</li>');
         }
 
-        list.innerHTML = rows.length ? rows.join("") : '<li class="today-empty">Nothing else is scheduled today.</li>';
-        el("todaySourceNote").textContent = "Reminders + Google Calendar";
+        list.innerHTML = rows.join("");
+        const sourceParts = ["Reminders"];
+        if (calendarState === "ready") sourceParts.push("Google Calendar");
+        else if (CalendarService.hasConsentHint()) sourceParts.push("Calendar reconnecting");
+        el("todaySourceNote").textContent = sourceParts.join(" + ");
+        el("viewDayButton").hidden = allRows.length <= 5;
+        el("viewDayButton").textContent = todayExpanded ? "Show less ↑" : "View day →";
+      }
+
+      async function refreshCalendar() {
+        if (!window.CalendarService || !CalendarService.getClientId()) {
+          calendarState = "disconnected";
+          calendarEvents = [];
+          renderToday();
+          return;
+        }
+        if (!CalendarService.hasConsentHint()) {
+          calendarState = "disconnected";
+          calendarEvents = [];
+          renderToday();
+          return;
+        }
+        calendarState = "loading";
+        renderToday();
+        try {
+          if (!CalendarService.isConnected()) await CalendarService.connect({ silent: true });
+          calendarEvents = await CalendarService.listEventsForDay(new Date());
+          calendarState = "ready";
+          calendarError = "";
+        } catch (error) {
+          console.error(error);
+          calendarEvents = [];
+          calendarState = "error";
+          calendarError = error?.message || "Reconnect Google Calendar in Settings.";
+        }
+        renderToday();
       }
 
       function escapeHtml(value) {
@@ -311,10 +393,16 @@
       updateGreeting();
       renderNow();
       renderToday();
+      refreshCalendar();
       setInterval(renderNow, 1000);
       setInterval(renderToday, 30000);
+      setInterval(refreshCalendar, 5 * 60 * 1000);
       window.addEventListener(BellService?.changeEvent || "teacher-dashboard-bell-changed", renderNow);
       window.addEventListener(ReminderService?.changeEvent || "teacher-dashboard-reminders-changed", renderToday);
+      window.addEventListener(ClassGroups?.changeEvent || "teacher-dashboard-class-groups-changed", renderNow);
+      window.addEventListener(AgendaService?.changeEvent || "teacher-dashboard-agenda-changed", renderNow);
+      window.addEventListener(CalendarService?.changeEvent || "teacher-dashboard-google-calendar-changed", () => { if (CalendarService.isConnected()) refreshCalendar(); else renderToday(); });
+      el("viewDayButton").addEventListener("click", () => { todayExpanded = !todayExpanded; renderToday(); });
     })();
   </script>
 </body>

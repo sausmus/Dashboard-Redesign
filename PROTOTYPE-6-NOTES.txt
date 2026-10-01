@@ -1,0 +1,78 @@
+TEACHER DASHBOARD — PROTOTYPE 6
+CLASS GROUPS, SHARED AGENDA, TODAY + GOOGLE CALENDAR
+
+SOURCE OF TRUTH
+---------------
+This build starts from the attached latest P5 repo, including the one-student Timeliness Record attachment test, teacher-owned read-only Doc-link workflow, per-student sync receipts, manual-only grade/doc writes, and Timeliness-entry deletion. P5 services and storage mappings are preserved.
+
+1. CLASS GROUPS / LINKED CLASSES
+--------------------------------
+Settings > Classes & Rosters now includes Class Groups. A teacher can name a preparation/course and link two or more active periods, for example:
+  Drama -> P3 + P4
+  English 12 -> P1 + P2
+  Honors English -> P6 + P7
+
+Groups are context only. They NEVER merge rosters, Participation, Timeliness, Google Classroom courses, grade assignments, student IDs, reminders, or P5 Timeliness Docs. Each class remains independently identifiable everywhere student-specific data matters.
+
+One period can belong to only one Class Group. Saving a group moves selected periods out of any previous group so Agenda scope is never ambiguous.
+
+New storage key:
+  teacherDashboard.classGroups.v1
+
+2. AGENDA SHARING
+-----------------
+The old single checkbox "Use same agenda for all periods" is replaced by a scope control:
+  This class only
+  Class group — <name> (when the selected class belongs to a group)
+  All classes
+
+Agenda continues using the existing bjhAgenda_v1_YYYY-MM-DD keys. Existing Agenda history is not migrated or rewritten. P6 only adds optional fields inside a day's existing object when the teacher uses new sharing controls:
+  groupAgendas
+  scopeByPeriod
+
+Legacy shared=true days still resolve exactly as the old all-periods Agenda until explicitly changed.
+
+Class-group sharing points linked periods to one shared group record for that date. It does not copy/paste content between periods. Choosing "This class only" on one linked period seeds that period from the currently visible shared content and creates a one-day exception without dismantling the Class Group.
+
+Agenda navigation now shows one main tab per Class Group/course plus ungrouped classes. When a group is selected, a smaller period row remains available so the teacher can inspect or create a one-period exception.
+
+3. HOME / NOW CONTEXT
+---------------------
+Home now recognizes Class Groups and the active class's Agenda scope. The Agenda shortcut deep-links to the current period and labels group-shared or exception context. After school the Now card uses a Planning label rather than presenting the next school day as if class were currently in session.
+
+4. GOOGLE CALENDAR + TODAY
+--------------------------
+Settings > School Calendar now has a Google Calendar connection alongside the existing minimum-day tools. It reuses the already-saved Google OAuth Web Client ID but uses a separate memory-only token and the narrow read-only scope:
+  https://www.googleapis.com/auth/calendar.events.readonly
+
+Enable the Google Calendar API in the SAME Google Cloud project used by the Dashboard OAuth client. Calendar access is read-only; P6 never creates, edits, deletes, or responds to Calendar events.
+
+Home Today merges Dashboard Reminders and events from the user's primary Google Calendar into one chronological feed. All-day events are supported. The compact Home feed shows five items; View day expands the same card to the full day's list and Show less collapses it again.
+
+Calendar access tokens are not persisted. A consent hint is stored at:
+  teacherDashboard.googleCalendarConsent.v1
+On Home, the Dashboard attempts to reacquire read-only Calendar access without a consent prompt after the user has connected once. If Google/browser policy prevents silent reacquisition, Today shows a reconnect message instead of fabricating Calendar data.
+
+5. DATA SAFETY / P5 PRESERVATION
+--------------------------------
+No P5 storage key, Classroom assignment mapping, student-progress receipt, Drive Doc mapping, Timeliness Record, Participation score, roster, or grading-term schema is cleared or migrated.
+
+Unchanged P5 core files include:
+  shared/classroom-service.js
+  shared/student-progress-service.js
+  shared/dashboard-data.js
+  students.html
+
+P6 adds:
+  shared/class-groups.js
+  shared/agenda-service.js
+  shared/calendar-service.js
+
+P6 modifies:
+  settings.html
+  agenda.html
+  index.html
+
+6. GOOGLE CALENDAR SETUP LIMITATION
+-----------------------------------
+Live Calendar writes/reads were not executed during packaging. The implementation uses Google Identity Services and Calendar API v3 events.list against the primary calendar. The user's OAuth project must have Calendar API enabled and allow the calendar.events.readonly scope.

@@ -132,6 +132,16 @@
       .week-title{order:-1;width:100%}.data-controls{justify-content:center}.day-tabs{gap:4px}.day-tab{padding:8px 2px}.day-name{font-size:11px}.day-date{font-size:10px}
       .period-tabs{grid-template-columns:repeat(4,1fr)}.period-visibility-list{grid-template-columns:1fr}.editor{font-size:21px;min-height:280px}
     }
+
+    .agenda-share-control{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+    .agenda-share-control label{font-size:11px;font-weight:700;color:var(--muted)}
+    .agenda-share-select{border:1px solid var(--border);border-radius:10px;padding:8px 32px 8px 10px;background:#fff;color:var(--text);font:inherit;font-size:12px;font-weight:700}
+    .group-period-tabs{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}
+    .group-period-tabs[hidden]{display:none!important}
+    .group-period-button{border:1px solid var(--border);background:#fff;border-radius:999px;padding:6px 10px;font-size:11px;font-weight:700;color:var(--muted)}
+    .group-period-button.active{background:var(--blue-light);color:var(--blue);border-color:var(--blue)}
+    .period-button .tab-subtitle{display:block;margin-top:2px;font-size:9px;font-weight:600;opacity:.72}
+
   </style>
   <link rel="stylesheet" href="shared/theme.css">
   <script src="shared/theme.js"></script>
@@ -175,14 +185,15 @@
       <div class="period-header">
         <div class="selected-date-title" id="selectedDateTitle"></div>
         <div class="period-header-controls">
-          <label class="shared-toggle">
-            <input type="checkbox" id="sharedAgendaToggle">
-            Use same agenda for all periods
-          </label>
+          <div class="agenda-share-control">
+            <label for="agendaShareScope">Share this agenda with</label>
+            <select id="agendaShareScope" class="agenda-share-select"></select>
+          </div>
         </div>
       </div>
       <div class="period-tabs" id="periodTabs"></div>
-      <div class="shared-message" id="sharedMessage">✓ This agenda is being used for all active periods.</div>
+      <div class="group-period-tabs" id="groupPeriodTabs" hidden></div>
+      <div class="shared-message" id="sharedMessage"></div>
     </div>
 
     <div class="card agenda-card">
@@ -241,11 +252,11 @@
   <button id="exitPresent">Exit Full Screen</button>
 
 <script src="shared/dashboard-data.js"></script>
+<script src="shared/class-groups.js"></script>
+<script src="shared/agenda-service.js"></script>
 <script src="shared/bell-service.js"></script>
   <script src="shared/reminder-service.js"></script>
 <script>
-const STORAGE_PREFIX="bjhAgenda_v1_";
-
 let visiblePeriods=loadVisiblePeriods();
 let weekMonday=getMonday(new Date());
 let selectedDate=chooseInitialDate();
@@ -255,9 +266,10 @@ let savedRange=null;
 
 const dayTabs=document.getElementById("dayTabs");
 const periodTabs=document.getElementById("periodTabs");
+const groupPeriodTabs=document.getElementById("groupPeriodTabs");
 const agendaEditor=document.getElementById("agendaEditor");
 const homeworkEditor=document.getElementById("homeworkEditor");
-const sharedToggle=document.getElementById("sharedAgendaToggle");
+const agendaShareScope=document.getElementById("agendaShareScope");
 const sharedMessage=document.getElementById("sharedMessage");
 const selectedDateTitle=document.getElementById("selectedDateTitle");
 const agendaHeading=document.getElementById("agendaHeading");
@@ -282,10 +294,8 @@ function formatShortDate(date){return date.toLocaleDateString(undefined,{month:"
 function formatLongDate(date){return date.toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric",year:"numeric"})}
 function formatWeekTitle(monday){const friday=addDays(monday,4),same=monday.getMonth()===friday.getMonth();return same?`${monday.toLocaleDateString(undefined,{month:"long"})} ${monday.getDate()}–${friday.getDate()}, ${friday.getFullYear()}`:`${formatShortDate(monday)} – ${formatShortDate(friday)}, ${friday.getFullYear()}`}
 
-function emptyPeriodData(){return{agenda:"",homework:""}}
-function defaultDayData(){const periods={};for(let i=1;i<=7;i++)periods[i]=emptyPeriodData();return{shared:true,sharedAgenda:"",sharedHomework:"",periods}}
-function getDayData(date=selectedDate){const key=STORAGE_PREFIX+dateKey(date),stored=localStorage.getItem(key);if(!stored)return defaultDayData();try{const data=JSON.parse(stored);if(!data.periods)data.periods={};for(let i=1;i<=7;i++)if(!data.periods[i])data.periods[i]=emptyPeriodData();if(typeof data.shared!=="boolean")data.shared=true;if(data.sharedAgenda===undefined)data.sharedAgenda="";if(data.sharedHomework===undefined)data.sharedHomework="";return data}catch(e){console.error(e);return defaultDayData()}}
-function saveDayData(data,date=selectedDate){localStorage.setItem(STORAGE_PREFIX+dateKey(date),JSON.stringify(data));showSaved()}
+function getDayData(date=selectedDate){return AgendaService.readDay(date)}
+function saveDayData(data,date=selectedDate){AgendaService.saveDay(date,data);showSaved()}
 function showSaved(){saveStatus.textContent="Saving...";clearTimeout(showSaved.timer);showSaved.timer=setTimeout(()=>saveStatus.textContent="Saved",350)}
 
 function dashboardDataAvailable(){
@@ -339,6 +349,8 @@ function getClassDisplayName(period){
 }
 
 function chooseInitialPeriod(){
+  const queryPeriod=Number(new URLSearchParams(location.search).get("period"));
+  if(visiblePeriods.includes(queryPeriod))return queryPeriod;
   if(dashboardDataAvailable()&&typeof DashboardData.getCurrentClassId==="function"){
     try{
       const current=Number(DashboardData.getCurrentClassId());
@@ -389,6 +401,7 @@ function refreshFromDashboardSettings(){
 
 window.addEventListener("focus",refreshFromDashboardSettings);
 window.addEventListener("storage",refreshFromDashboardSettings);
+window.addEventListener(window.ClassGroups?.changeEvent||"teacher-dashboard-class-groups-changed",()=>{renderPeriodTabs();loadEditors()});
 
 // Follow the global bell-driven class when it changes. Manual period clicks
 // remain respected because BellService only changes the shared class when the
@@ -408,10 +421,43 @@ if(dashboardDataAvailable()&&DashboardData.changeEvent){
   });
 }
 
-function loadEditors(){const data=getDayData();sharedToggle.checked=data.shared;if(data.shared){agendaEditor.innerHTML=data.sharedAgenda||"";homeworkEditor.innerHTML=data.sharedHomework||"";sharedMessage.style.display="block"}else{const p=data.periods[selectedPeriod];agendaEditor.innerHTML=p.agenda||"";homeworkEditor.innerHTML=p.homework||"";sharedMessage.style.display="none"}updateLabels();renderPeriodTabs()}
-function saveEditors(){const data=getDayData();if(data.shared){data.sharedAgenda=agendaEditor.innerHTML;data.sharedHomework=homeworkEditor.innerHTML}else{data.periods[selectedPeriod]={agenda:agendaEditor.innerHTML,homework:homeworkEditor.innerHTML}}saveDayData(data)}
-
-sharedToggle.addEventListener("change",()=>{saveEditors();const data=getDayData(),on=sharedToggle.checked;if(on&&!data.sharedAgenda&&!data.sharedHomework){data.sharedAgenda=data.periods[selectedPeriod]?.agenda||"";data.sharedHomework=data.periods[selectedPeriod]?.homework||""}data.shared=on;saveDayData(data);loadEditors()});
+function currentGroup(){return window.ClassGroups?.getGroupForClass?.(String(selectedPeriod))||null}
+function renderShareScope(){
+  const data=getDayData();
+  const scope=AgendaService.resolveScope(data,String(selectedPeriod));
+  const group=currentGroup();
+  const options=[`<option value="period">This class only</option>`];
+  if(group)options.push(`<option value="group:${group.id}">Class group — ${escapeAgendaHtml(group.name)}</option>`);
+  options.push(`<option value="all">All classes</option>`);
+  agendaShareScope.innerHTML=options.join("");
+  agendaShareScope.value=scope.startsWith("group:")&&group?`group:${group.id}`:(scope==="all"?"all":"period");
+  if(scope==="all"){
+    sharedMessage.textContent="✓ This agenda is shared with all active classes.";
+    sharedMessage.style.display="block";
+  }else if(scope.startsWith("group:")&&group){
+    sharedMessage.textContent=`✓ Shared with ${group.name}: ${group.classIds.map(id=>getClassDisplayName(Number(id))).join(" · ")}`;
+    sharedMessage.style.display="block";
+  }else if(group){
+    sharedMessage.textContent=`This class is a one-day exception from ${group.name}.`;
+    sharedMessage.style.display="block";
+  }else{
+    sharedMessage.style.display="none";
+  }
+}
+function escapeAgendaHtml(value){return String(value??"").replace(/[&<>\"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'\"':"&quot;","'":"&#39;"}[ch]))}
+function loadEditors(){
+  const content=AgendaService.getContent(selectedDate,String(selectedPeriod));
+  agendaEditor.innerHTML=content.agenda||"";
+  homeworkEditor.innerHTML=content.homework||"";
+  renderShareScope();
+  updateLabels();
+  renderPeriodTabs();
+}
+function saveEditors(){AgendaService.saveContent(selectedDate,String(selectedPeriod),agendaEditor.innerHTML,homeworkEditor.innerHTML);showSaved()}
+agendaShareScope.addEventListener("change",()=>{
+  saveEditors();
+  try{AgendaService.setScope(selectedDate,String(selectedPeriod),agendaShareScope.value);loadEditors()}catch(error){alert(error.message||"Agenda sharing could not be changed.");loadEditors()}
+});
 
 function renderWeek(){weekTitle.textContent=formatWeekTitle(weekMonday);dayTabs.innerHTML="";const names=["Monday","Tuesday","Wednesday","Thursday","Friday"];for(let i=0;i<5;i++){const date=addDays(weekMonday,i),button=document.createElement("button");button.className="day-tab";if(dateKey(date)===dateKey(selectedDate))button.classList.add("active");button.innerHTML=`<div class="day-name">${names[i]}</div><div class="day-date">${formatShortDate(date)}</div>`;button.addEventListener("click",()=>{saveEditors();selectedDate=cloneDate(date);dateJump.value=dateKey(selectedDate);renderWeek();loadEditors()});dayTabs.appendChild(button)}}
 
@@ -422,25 +468,50 @@ dateJump.addEventListener("change",()=>{if(!dateJump.value)return;saveEditors();
 
 function renderPeriodTabs(){
   periodTabs.innerHTML="";
+  groupPeriodTabs.innerHTML="";
+  groupPeriodTabs.hidden=true;
   ensureSelectedPeriodVisible();
 
-  for(const i of visiblePeriods){
+  const groups=(window.ClassGroups?.getGroups?.()||[]).map(group=>({...group,classIds:group.classIds.filter(id=>visiblePeriods.includes(Number(id)))})).filter(group=>group.classIds.length>=2);
+  const groupedIds=new Set(groups.flatMap(group=>group.classIds.map(String)));
+  const entries=[...groups.map(group=>({type:"group",group})),...visiblePeriods.filter(period=>!groupedIds.has(String(period))).map(period=>({type:"period",period}))];
+
+  for(const entry of entries){
     const b=document.createElement("button");
     b.className="period-button";
-    b.textContent=getClassDisplayName(i);
-    b.title=`Period ${i}`;
-
-    if(i===selectedPeriod)b.classList.add("active");
-
-    b.addEventListener("click",()=>{
-      saveEditors();
-      selectedPeriod=i;
-      syncCurrentClass(i);
-      renderPeriodTabs();
-      loadEditors();
-    });
-
+    if(entry.type==="group"){
+      const group=entry.group;
+      const active=group.classIds.includes(String(selectedPeriod));
+      b.innerHTML=`${escapeAgendaHtml(group.name)}<span class="tab-subtitle">${group.classIds.map(id=>`P${id}`).join(" · ")}</span>`;
+      b.title=group.classIds.map(id=>getClassDisplayName(Number(id))).join(" · ");
+      if(active)b.classList.add("active");
+      b.addEventListener("click",()=>{
+        saveEditors();
+        if(!group.classIds.includes(String(selectedPeriod)))selectedPeriod=Number(group.classIds[0]);
+        syncCurrentClass(selectedPeriod);
+        loadEditors();
+      });
+    }else{
+      const i=entry.period;
+      b.textContent=getClassDisplayName(i);
+      b.title=`Period ${i}`;
+      if(i===selectedPeriod)b.classList.add("active");
+      b.addEventListener("click",()=>{saveEditors();selectedPeriod=i;syncCurrentClass(i);loadEditors()});
+    }
     periodTabs.appendChild(b);
+  }
+
+  const selectedGroup=groups.find(group=>group.classIds.includes(String(selectedPeriod)));
+  if(selectedGroup){
+    groupPeriodTabs.hidden=false;
+    for(const id of selectedGroup.classIds){
+      const period=Number(id);
+      const b=document.createElement("button");
+      b.className="group-period-button"+(period===selectedPeriod?" active":"");
+      b.textContent=`P${id} · ${getClassDisplayName(period)}`;
+      b.addEventListener("click",()=>{saveEditors();selectedPeriod=period;syncCurrentClass(period);loadEditors()});
+      groupPeriodTabs.appendChild(b);
+    }
   }
 }
 function detectInitialPeriod(){
@@ -448,7 +519,13 @@ function detectInitialPeriod(){
   const match=entry.match(/^Period\\s+(\\d+)$/i);
   return match?Math.max(1,Math.min(7,Number(match[1]))):1
 }
-function updateLabels(){selectedDateTitle.textContent=formatLongDate(selectedDate);const data=getDayData();agendaHeading.textContent=data.shared?"Agenda • All Periods":`Agenda • ${getClassDisplayName(selectedPeriod)}`}
+function updateLabels(){
+  selectedDateTitle.textContent=formatLongDate(selectedDate);
+  const context=AgendaService.getContext(selectedDate,String(selectedPeriod));
+  if(context.scope==="all")agendaHeading.textContent="Agenda • All Classes";
+  else if(context.scope.startsWith("group:")&&context.group)agendaHeading.textContent=`Agenda • ${context.group.name}`;
+  else agendaHeading.textContent=`Agenda • ${getClassDisplayName(selectedPeriod)}${context.isException?" · One-day exception":""}`;
+}
 
 agendaEditor.addEventListener("focus",()=>activeEditor=agendaEditor);
 homeworkEditor.addEventListener("focus",()=>activeEditor=homeworkEditor);
