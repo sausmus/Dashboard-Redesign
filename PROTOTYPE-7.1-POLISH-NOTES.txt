@@ -1,0 +1,75 @@
+TEACHER DASHBOARD — PROTOTYPE 7.1 POLISH
+SHARED STUDENT SEARCH + SCOREBOARD TEAM NAMES + THEME AUDIT
+
+Built from the uploaded Dashboard-Redesign-main.zip as the sole source of truth.
+No destructive storage migrations were performed.
+
+1. Shared Student Search
+------------------------
+• Added shared/student-search.js as the single reusable roster-search behavior.
+• Reminders, To-Do, and Student Profile “Avoid pairing with” now use the same interaction.
+• Search fields begin blank and show no student list until the teacher types.
+• Results are compact cards formatted as: Student Name · P#.
+• Keyboard navigation (up/down/Enter/Escape) is supported.
+• Exact unique name matches can still resolve to a roster student.
+
+2. Reminders Student Search
+---------------------------
+• Replaced the older long suggestion rows with the shared compact student search.
+• Period now sits immediately beside the student name (for example: Matthew Krukow · P6).
+• Existing reminder studentId/studentClassId/studentName fields remain unchanged.
+• Existing reminders and free-text legacy student names remain editable.
+
+3. To-Do Student Search
+-----------------------
+• Replaced the roster <select> dropdown with the same blank autocomplete used by Reminders.
+• No names display until typing begins.
+• Selecting a student preserves the P7 student-linked To-Do fields already in teacherDashboard.todos.v1.
+• Existing To-Do records remain fully compatible.
+
+4. Avoid Pairing With
+---------------------
+• Replaced the open checkbox list in Student Profiles with the shared blank autocomplete.
+• Selected pairing restrictions appear as compact removable chips beneath the field.
+• Search is limited to classmates and excludes the student whose profile is open.
+• The same teacherDashboard.studentProfiles.v1 pairing data continues to feed Group Maker.
+• No new Seating/Grouping header or profile navigation was added.
+
+5. Scoreboard Team Names
+------------------------
+• Added a Team Names action to Scoreboard.
+• Each active period can receive a student-chosen team name.
+• Team names change Scoreboard-facing labels only; underlying period IDs, rosters, Classroom mappings,
+  Participation, Timeliness, and other Dashboard data are untouched.
+• Add Points/history controls show the custom team name together with the underlying class label when useful.
+• Standings, leaders, score history, competition results, and competition entry rows use the custom team name.
+• Team names persist inside the existing bjhScoreboard_v1 object as an optional teamNames map.
+• Existing scoreboard data requires no migration.
+• Scoreboard backup/restore now preserves teamNames while still accepting older backups.
+
+6. Word Hive
+------------
+• The latest repo already contained the P7 collapsible Found Words list and session-persistent collapse state.
+• That implementation was preserved; no scoring, saved-game, or competition logic was changed.
+
+7. Global Theme Audit
+---------------------
+• Verified every root HTML page loads both shared/theme.css and shared/theme.js.
+• Added shared theme bridging for older legacy/game surfaces so dark mode and master accent choices carry
+  through more consistently instead of leaving fixed white/Google-blue surfaces behind.
+• Added a lightweight td-standalone-themed marker to legacy standalone tools that still use older page CSS.
+• Preserved game-specific semantic colors (correct/incorrect tiles, Hive hexes, Jeopardy clues, etc.).
+
+DATA SAFETY
+-----------
+Preserved existing P5/P6/P7 storage and behavior, including Classroom sync, Timeliness Docs, Calendar,
+Class Groups, Agenda, Reminders, To-Do records, Participation, Timeliness, Scoreboard history/competitions,
+student notes, pairing restrictions, and Word Hive saved games.
+
+VALIDATION
+----------
+• Parsed every inline JavaScript block with Node syntax checking.
+• Parsed every shared JavaScript file with Node syntax checking.
+• Ran data-level tests for shared student search ranking, class filtering, and P# period labels.
+• Verified every local script/stylesheet/image reference resolves to an existing file.
+• Verified every root HTML page includes the global theme stylesheet and theme script.

@@ -759,3 +759,159 @@ body.projector-mode .td-main {
   .td-main-legacy { padding-top: 26px; }
   .td-legacy-page-head { flex-direction: column; }
 }
+
+/* =========================================================
+   SHARED STUDENT SEARCH
+   Used anywhere a teacher attaches/links another Dashboard item to a student.
+   ========================================================= */
+.td-student-search { position: relative; min-width: 0; }
+.td-student-search-results {
+  position: absolute;
+  z-index: 120;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  display: none;
+  gap: 4px;
+  max-height: 260px;
+  overflow: auto;
+  padding: 6px;
+  border: 1px solid var(--td-border);
+  border-radius: 13px;
+  background: var(--td-surface);
+  box-shadow: var(--td-shadow-md);
+}
+.td-student-search-results.visible { display: grid; justify-items: start; }
+.td-student-search-result {
+  width: fit-content;
+  max-width: 100%;
+  min-height: 32px;
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-start;
+  gap: 5px;
+  padding: 6px 9px;
+  border: 1px solid var(--td-border);
+  border-radius: 9px;
+  background: var(--td-surface);
+  color: var(--td-text);
+  text-align: left;
+  cursor: pointer;
+}
+.td-student-search-result:hover,
+.td-student-search-result.active {
+  background: var(--td-accent-softer);
+}
+.td-student-search-result-name { font-size: 11px; font-weight: 750; }
+.td-student-search-result-period { color: var(--td-text-muted); font-size: 10px; font-weight: 700; white-space: nowrap; }
+.td-student-search-selected {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 7px;
+}
+.td-student-search-selected[hidden] { display: none !important; }
+.td-student-search-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 28px;
+  padding: 4px 6px 4px 9px;
+  border: 1px solid var(--td-border);
+  border-radius: var(--td-radius-pill);
+  background: var(--td-surface-soft);
+  color: var(--td-text-secondary);
+  font-size: 10px;
+  font-weight: 720;
+}
+.td-student-search-chip-remove {
+  width: 19px;
+  height: 19px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--td-text-muted);
+  line-height: 1;
+  cursor: pointer;
+}
+.td-student-search-chip-remove:hover { background: var(--td-surface-hover); color: var(--td-text); }
+
+/* =========================================================
+   GLOBAL THEME AUDIT — LEGACY / GAME SURFACE BRIDGE
+   Keep older tools visually tied to the master theme while preserving
+   app-specific semantic colors such as correct/incorrect game feedback.
+   ========================================================= */
+:root[data-color-mode="dark"] .card,
+:root[data-color-mode="dark"] .game-card,
+:root[data-color-mode="dark"] .found-card,
+:root[data-color-mode="dark"] .competition-tile,
+:root[data-color-mode="dark"] .history-item,
+:root[data-color-mode="dark"] .standing,
+:root[data-color-mode="dark"] dialog {
+  background: var(--td-surface) !important;
+  color: var(--td-text) !important;
+  border-color: var(--td-border) !important;
+}
+:root[data-color-mode="dark"] .standing.leader {
+  background: color-mix(in srgb, var(--td-warning-soft) 16%, var(--td-surface)) !important;
+}
+:root[data-color-mode="dark"] .bar-track,
+:root[data-color-mode="dark"] .source-badge,
+:root[data-color-mode="dark"] .found-header > span {
+  background: var(--td-surface-soft) !important;
+  color: var(--td-text-secondary) !important;
+}
+:root[data-color-mode="dark"] body.td-standalone-themed button:not(.td-button):not(.hex):not(.key):not(.clue):not(.primary):not(.green):not(.active):not(.danger-button),
+:root[data-color-mode="dark"] body.td-standalone-themed .button:not(.primary):not(.green) {
+  background-color: var(--td-surface) !important;
+  color: var(--td-text) !important;
+  border-color: var(--td-border) !important;
+}
+:root[data-color-mode="dark"] .dashboard-back,
+:root[data-color-mode="dark"] .back-link {
+  background: var(--td-surface) !important;
+  color: var(--td-accent-strong) !important;
+  border-color: var(--td-border) !important;
+}
+
+
+:root[data-color-mode="dark"] body.td-standalone-themed .topbar,
+:root[data-color-mode="dark"] body.td-standalone-themed .pulse-card,
+:root[data-color-mode="dark"] body.td-standalone-themed .setup,
+:root[data-color-mode="dark"] body.td-standalone-themed .frame-fallback,
+:root[data-color-mode="dark"] body.td-standalone-themed .group-card,
+:root[data-color-mode="dark"] body.td-standalone-themed .group-method-box {
+  background: var(--td-surface) !important;
+  color: var(--td-text) !important;
+  border-color: var(--td-border) !important;
+}
+
+/* Legacy pages use these common classes heavily. Make the master accent
+   authoritative even if the original page CSS used fixed Google blue. */
+.td-main-legacy .card,
+.td-main-legacy .modal {
+  border-color: var(--td-border);
+  background: var(--td-surface);
+  color: var(--td-text);
+}
+.td-main-legacy .button:not(.primary):not(.green),
+.td-main-legacy select,
+.td-main-legacy input,
+.td-main-legacy textarea {
+  border-color: var(--td-border);
+  background: var(--td-surface);
+  color: var(--td-text);
+}
+.td-main-legacy .button:not(.primary):not(.green):hover { background: var(--td-surface-soft); }
+.td-main-legacy .button.primary { background: var(--td-accent) !important; border-color: var(--td-accent) !important; }
+.td-main-legacy .season-name:hover,
+.td-main-legacy .season-name:focus,
+.td-main-legacy select:focus,
+.td-main-legacy input:focus,
+.td-main-legacy textarea:focus {
+  border-color: var(--td-accent) !important;
+  box-shadow: 0 0 0 3px rgba(var(--td-accent-rgb), .12) !important;
+}

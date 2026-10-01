@@ -689,6 +689,7 @@
 
   <script src="shared/app-shell.js"></script>
   <script src="shared/dashboard-data.js"></script>
+  <script src="shared/student-search.js"></script>
   <script src="shared/student-profile-service.js"></script>
   <script src="shared/grading-terms.js"></script>
   <script src="shared/classroom-service.js"></script>
@@ -706,6 +707,7 @@
       let currentLateStudentId = null;
       let lateWorkContext = null;
       let profileContext = null;
+      let pairingSearch = null;
       let selectorAnimating = false;
 
       let progressBusy = false;
@@ -826,15 +828,38 @@
 
       function renderNotesSection(student, period) {
         const profile = StudentProfileService.getProfile(period, student.id);
-        const classmates = (DashboardData.getStudents(period) || []).filter(item => String(item.id) !== String(student.id));
-        const avoided = new Set(profile.avoidPairingWith.map(String));
         const notes = profile.notes || [];
         const notesHtml = notes.length
           ? `<ul class="profile-notes-list">${notes.map(note => `<li><div class="profile-note-row"><span>${escapeHtml(note.text)}</span><span class="profile-note-actions"><button type="button" data-note-edit="${escapeHtml(note.id)}" aria-label="Edit note">✎</button><button type="button" data-note-delete="${escapeHtml(note.id)}" aria-label="Delete note">×</button></span></div></li>`).join("")}</ul>`
           : '<div class="profile-muted">No notes yet.</div>';
-        const selectedNames = classmates.filter(item => avoided.has(String(item.id))).map(item => item.name);
-        const pairingLabel = selectedNames.length ? selectedNames.join(", ") : "Select students…";
-        return `<section class="profile-section"><div class="profile-section-head"><h3>Notes</h3></div>${notesHtml}<div class="profile-note-composer"><input class="td-input" data-note-input type="text" maxlength="400" placeholder="Add a quick note…"><button type="button" class="td-button td-button-secondary td-button-small" data-note-add>Add</button></div><div class="avoid-pairing"><div class="avoid-pairing-label">Avoid pairing with</div><details class="avoid-select"><summary><span>${escapeHtml(pairingLabel)}</span><span aria-hidden="true">⌄</span></summary><div class="avoid-options">${classmates.length ? classmates.sort((a,b)=>a.name.localeCompare(b.name,undefined,{sensitivity:"base"})).map(item => `<label class="avoid-option"><input type="checkbox" data-avoid-student="${escapeHtml(item.id)}" ${avoided.has(String(item.id))?"checked":""}> <span>${escapeHtml(item.name)}</span></label>`).join("") : '<div class="profile-muted">No other students in this class.</div>'}</div></details></div></section>`;
+        return `<section class="profile-section"><div class="profile-section-head"><h3>Notes</h3></div>${notesHtml}<div class="profile-note-composer"><input class="td-input" data-note-input type="text" maxlength="400" placeholder="Add a quick note…"><button type="button" class="td-button td-button-secondary td-button-small" data-note-add>Add</button></div><div class="avoid-pairing"><div class="avoid-pairing-label">Avoid pairing with</div><div class="td-student-search"><input class="td-input" data-avoid-search type="text" autocomplete="off" placeholder="Start typing a student's name…"><div class="td-student-search-results" data-avoid-results role="listbox" aria-label="Students to avoid pairing with"></div></div><div class="td-student-search-selected" data-avoid-selected hidden></div></div></section>`;
+      }
+
+      function bindPairingSearch(student, period) {
+        pairingSearch?.destroy?.();
+        pairingSearch = null;
+        const input = el("profileBody").querySelector("[data-avoid-search]");
+        const results = el("profileBody").querySelector("[data-avoid-results]");
+        const selectedContainer = el("profileBody").querySelector("[data-avoid-selected]");
+        if (!input || !results || !selectedContainer || !window.TeacherDashboardStudentSearch) return;
+        pairingSearch = TeacherDashboardStudentSearch.create({
+          input,
+          results,
+          selectedContainer,
+          multiple: true,
+          classId: String(period),
+          excludeStudentIds: [String(student.id)],
+          onChange(selected) {
+            StudentProfileService.setAvoidPairing(period, student.id, (selected || []).map(item => item.id));
+          }
+        });
+        const selected = StudentProfileService.getProfile(period, student.id).avoidPairingWith
+          .map(id => {
+            const match = DashboardData.getStudent(period, id);
+            return match ? { id:String(match.id), classId:String(period), name:match.name } : null;
+          })
+          .filter(Boolean);
+        pairingSearch.setSelected(selected, { silent:true });
       }
 
       function escapeHtml(value) {
@@ -1300,6 +1325,7 @@
         el("profileName").textContent = student.name;
         el("profilePeriod").textContent = classLabel(period);
         el("profileBody").innerHTML = renderProfileBody(student, period);
+        bindPairingSearch(student, period);
         el("drawerBackdrop").classList.add("open");
         el("profileDrawer").classList.add("open");
         el("profileDrawer").setAttribute("aria-hidden", "false");
@@ -1307,6 +1333,8 @@
 
       function closeProfile() {
         profileContext = null;
+        pairingSearch?.destroy?.();
+        pairingSearch = null;
         el("drawerBackdrop").classList.remove("open");
         el("profileDrawer").classList.remove("open");
         el("profileDrawer").setAttribute("aria-hidden", "true");
@@ -1470,13 +1498,6 @@
         event.preventDefault();
         try { StudentProfileService.addNote(profileContext.period,profileContext.studentId,event.target.value); openProfile(profileContext.studentId,profileContext.period); }
         catch(e) { if(e?.message) window.alert(e.message); }
-      });
-      el("profileBody").addEventListener("change", event => {
-        if(!event.target.matches("[data-avoid-student]") || !profileContext)return;
-        const checked=[...el("profileBody").querySelectorAll("[data-avoid-student]:checked")];
-        StudentProfileService.setAvoidPairing(profileContext.period,profileContext.studentId,checked.map(input=>input.dataset.avoidStudent));
-        const summary=event.target.closest(".avoid-select")?.querySelector("summary span:first-child");
-        if(summary) summary.textContent=checked.length?checked.map(input=>input.closest("label")?.querySelector("span")?.textContent||"").filter(Boolean).join(", "):"Select students…";
       });
 
       ["roster", "participation", "timeliness"].forEach(view => {

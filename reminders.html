@@ -148,9 +148,10 @@
 
               <div class="field full student-field">
                 <label class="field-label" for="studentInput">Student <span style="font-weight:500;color:var(--td-text-muted)">(optional)</span></label>
-                <input id="studentInput" class="td-input" type="text" autocomplete="off" placeholder="Start typing a student's name…">
-                <div id="studentSuggestions" class="suggestions"></div>
-                <div id="studentMatchNote" class="field-help">Suggestions search student rosters across all active periods.</div>
+                <div class="td-student-search">
+                  <input id="studentInput" class="td-input" type="text" autocomplete="off" placeholder="Start typing a student's name…">
+                  <div id="studentSuggestions" class="td-student-search-results" role="listbox" aria-label="Student matches"></div>
+                </div>
               </div>
 
               <label class="field full">
@@ -251,6 +252,7 @@
 
   <script src="shared/app-shell.js"></script>
   <script src="shared/dashboard-data.js"></script>
+  <script src="shared/student-search.js"></script>
   <script src="shared/bell-service.js"></script>
   <script src="shared/reminder-service.js"></script>
   <script>
@@ -261,7 +263,6 @@
     const dateInput = el("reminderDate");
     const studentInput = el("studentInput");
     const suggestions = el("studentSuggestions");
-    const matchNote = el("studentMatchNote");
     const reminderText = el("reminderText");
     const customTimingRow = el("customTimingRow");
     const customTimeInput = el("customTime");
@@ -294,8 +295,7 @@
     let selectedStudentClassId = "";
     let editingReminderId = "";
     const revealedPrivateIds = new Set();
-    let suggestionItems = [];
-    let activeSuggestionIndex = -1;
+    let studentSearch = null;
 
     function showToast(message) {
       toast.textContent = message;
@@ -359,11 +359,13 @@
     function buildPeriods(){const previous=periodSelect.value;const classes=DashboardData.getClasses({activeOnly:true});const preferred=DashboardData.getCurrentClassId();const classMap=new Map(classes.map(item=>[String(item.id),item]));const schedule=DashboardData.getBellSchedule(reminderScheduleKey())||[];periodSelect.innerHTML="";schedule.forEach(entry=>{const name=String(entry?.name||"").trim();if(!name)return;const match=name.match(/^Period\s+(\d+)$/i);if(match){const id=match[1];const info=classMap.get(id);if(!info)return;const option=document.createElement("option");option.value=`class:${id}`;option.textContent=info.name;periodSelect.appendChild(option);return;}if(/^(Snack|Lunch)$/i.test(name)){const option=document.createElement("option");option.value=`entry:${name}`;option.textContent=name;periodSelect.appendChild(option);}});const values=[...periodSelect.options].map(o=>o.value);if(values.includes(previous))periodSelect.value=previous;else if(values.includes(`class:${preferred}`))periodSelect.value=`class:${preferred}`;else if(periodSelect.options.length)periodSelect.selectedIndex=0;}
     function selectedTarget(){const value=String(periodSelect.value||"");if(value.startsWith("entry:")){const entryName=value.slice(6);return{classId:"",entryName,label:entryName,isBreak:true};}const classId=value.startsWith("class:")?value.slice(6):value;const info=DashboardData.getClass(classId);return{classId,entryName:"",label:info?.name||`Period ${classId}`,isBreak:false};}
 
-    function allStudents(){const classes=DashboardData.getClasses({activeOnly:true});const students=[];classes.forEach(info=>{let roster=typeof DashboardData.getStudents==="function"?(DashboardData.getStudents(info.id)||[]):[];roster.forEach((student,index)=>{const normalized=typeof student==="string"?{id:`manual-${info.id}-${index}`,name:student}:student;if(!normalized?.name)return;students.push({...normalized,rosterClassId:info.id,rosterClassName:info.name||`Period ${info.id}`});});});return students.sort((a,b)=>a.name.localeCompare(b.name)||String(a.rosterClassId).localeCompare(String(b.rosterClassId),undefined,{numeric:true}));}
-    function clearStudentSelection(keepText=false){selectedStudentId="";selectedStudentClassId="";if(!keepText)studentInput.value="";matchNote.textContent="Suggestions search student rosters across all active periods.";}
-    function updateSelectedStudentNote(){if(!selectedStudentId)return;const student=allStudents().find(item=>String(item.id)===String(selectedStudentId)&&(!selectedStudentClassId||String(item.rosterClassId)===String(selectedStudentClassId)));if(!student)return;matchNote.textContent=`Matched to ${student.name} · ${student.rosterClassName}.`;}
-    function chooseStudent(student){selectedStudentId=String(student.id);selectedStudentClassId=String(student.rosterClassId||"");studentInput.value=student.name;const target=`class:${selectedStudentClassId}`;if([...periodSelect.options].some(o=>o.value===target)){periodSelect.value=target;updateTimingPreview();}suggestions.classList.remove("visible");updateSelectedStudentNote();}
-    function renderSuggestions(){const query=studentInput.value.trim().toLocaleLowerCase();const students=allStudents();if(!query){suggestionItems=[];suggestions.innerHTML="";suggestions.classList.remove("visible");return;}suggestionItems=students.map(student=>{const name=student.name.toLocaleLowerCase();const tokens=name.split(/\s+/);const rank=name.startsWith(query)?0:tokens.some(t=>t.startsWith(query))?1:name.includes(query)?2:99;return{student,rank};}).filter(x=>x.rank<99).sort((a,b)=>a.rank-b.rank||a.student.name.localeCompare(b.student.name)).slice(0,8).map(x=>x.student);suggestions.innerHTML="";activeSuggestionIndex=-1;suggestionItems.forEach(student=>{const button=document.createElement("button");button.type="button";button.className="suggestion";button.innerHTML=`<span class="suggestion-name">${escapeHtml(student.name)}</span><span class="suggestion-class">${escapeHtml(student.rosterClassName)}</span>`;button.addEventListener("mousedown",event=>{event.preventDefault();chooseStudent(student);});suggestions.appendChild(button);});suggestions.classList.toggle("visible",suggestionItems.length>0);const exact=students.filter(s=>s.name.toLocaleLowerCase()===query);if(exact.length===1){selectedStudentId=String(exact[0].id);selectedStudentClassId=String(exact[0].rosterClassId||"");updateSelectedStudentNote();}else if(selectedStudentId){const chosen=students.find(s=>String(s.id)===String(selectedStudentId));if(!chosen||chosen.name.toLocaleLowerCase()!==query){selectedStudentId="";selectedStudentClassId="";matchNote.textContent="No exact roster match yet. You can keep typing or leave the student as free text.";}}}
+    function clearStudentSelection(keepText=false){
+      selectedStudentId="";
+      selectedStudentClassId="";
+      if(studentSearch) studentSearch.clear({keepInput:keepText,silent:true});
+      else if(!keepText) studentInput.value="";
+    }
+
     function escapeHtml(value){return String(value??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[ch]||ch));}
 
     function selectedTiming(){return document.querySelector('input[name="timing"]:checked')?.value||"start";}
@@ -385,18 +387,30 @@
     function renderReminders(){const all=ReminderService.getReminders();const today=ReminderService.dateKey();const active=all.filter(item=>item.date>=today&&item.status!=="done").sort((a,b)=>a.date.localeCompare(b.date)||(Number(a.triggerAt||0)-Number(b.triggerAt||0)));const completed=all.filter(item=>item.status==="done").sort((a,b)=>String(b.completedAt||"").localeCompare(String(a.completedAt||"")));reminderCount.textContent=String(active.length);completedReminderCount.textContent=String(completed.length);completedReminderActions.hidden=completed.length===0;reminderList.innerHTML="";completedReminderList.innerHTML="";if(!active.length){const empty=document.createElement("div");empty.className="empty-state";const past=all.filter(item=>item.date<today&&item.status!=="done").length;empty.innerHTML=past?`<strong>No upcoming reminders.</strong><br>${past} older reminder${past===1?" is":"s are"} still stored but no longer shown here.`:"<strong>No upcoming reminders.</strong><br>Add one above and it will surface anywhere in Teacher Dashboard.";const recovery=typeof ReminderService.getReminderRecoveryCandidates==="function"?ReminderService.getReminderRecoveryCandidates():[];if(recovery.length&&all.length===0){const button=document.createElement("button");button.className="td-button td-button-secondary td-button-small";button.style.marginTop="12px";button.textContent="Restore Reminder Backup";button.addEventListener("click",()=>{if(confirm(`Restore ${recovery[0].count} reminders from ${recovery[0].label.toLowerCase()}?`)){ReminderService.restoreReminderBackup(recovery[0].source);renderReminders();}});empty.appendChild(document.createElement("br"));empty.appendChild(button);}reminderList.appendChild(empty);}else active.forEach(r=>reminderList.appendChild(reminderCard(r)));if(!completed.length){const empty=document.createElement("div");empty.className="empty-state";empty.textContent="Completed reminders will appear here.";completedReminderList.appendChild(empty);}else completed.forEach(r=>completedReminderList.appendChild(reminderCard(r,{completed:true})));}
 
     function resetComposer(){editingReminderId="";composerTitle.textContent="New Reminder";editIndicator.classList.remove("visible");addReminderButton.textContent="Add Reminder";cancelEditButton.hidden=true;reminderText.value="";clearStudentSelection();customTimeInput.value="";document.querySelector('input[name="timing"][value="start"]').checked=true;document.querySelector('input[name="privacy"][value="normal"]').checked=true;updateTimingPreview();}
-    function startEdit(reminder){editingReminderId=reminder.id;composerTitle.textContent="Edit Reminder";editIndicator.classList.add("visible");addReminderButton.textContent="Save Changes";cancelEditButton.hidden=false;dateInput.value=reminder.date;buildPeriods();const target=reminder.entryName?`entry:${reminder.entryName}`:`class:${reminder.classId}`;if([...periodSelect.options].some(o=>o.value===target))periodSelect.value=target;studentInput.value=reminder.studentName||"";selectedStudentId=String(reminder.studentId||"");selectedStudentClassId=String(reminder.studentClassId||"");reminderText.value=reminder.text||"";let timing=reminder.timing||"start";let radio=document.querySelector(`input[name="timing"][value="${timing}"]`);const legacyTiming=!radio;if(legacyTiming){timing="custom";radio=document.querySelector('input[name="timing"][value="custom"]');}radio.checked=true;customTimeInput.value=legacyTiming&&reminder.triggerAt?formatTimeInput(reminder.triggerAt):(reminder.customTime||(reminder.timing==="custom"&&reminder.triggerAt?formatTimeInput(reminder.triggerAt):""));const privacy=document.querySelector(`input[name="privacy"][value="${reminder.privacy==="private"?"private":"normal"}"]`);if(privacy)privacy.checked=true;updateSelectedStudentNote();updateTimingPreview();composerCard.scrollIntoView({behavior:"smooth",block:"start"});setTimeout(()=>reminderText.focus(),250);}
+    function startEdit(reminder){editingReminderId=reminder.id;composerTitle.textContent="Edit Reminder";editIndicator.classList.add("visible");addReminderButton.textContent="Save Changes";cancelEditButton.hidden=false;dateInput.value=reminder.date;buildPeriods();const target=reminder.entryName?`entry:${reminder.entryName}`:`class:${reminder.classId}`;if([...periodSelect.options].some(o=>o.value===target))periodSelect.value=target;selectedStudentId=String(reminder.studentId||"");selectedStudentClassId=String(reminder.studentClassId||"");if(selectedStudentId&&selectedStudentClassId&&reminder.studentName){studentSearch?.setSelected({id:selectedStudentId,classId:selectedStudentClassId,name:reminder.studentName},{silent:true});}else{studentSearch?.clear({silent:true});studentInput.value=reminder.studentName||"";}reminderText.value=reminder.text||"";let timing=reminder.timing||"start";let radio=document.querySelector(`input[name="timing"][value="${timing}"]`);const legacyTiming=!radio;if(legacyTiming){timing="custom";radio=document.querySelector('input[name="timing"][value="custom"]');}radio.checked=true;customTimeInput.value=legacyTiming&&reminder.triggerAt?formatTimeInput(reminder.triggerAt):(reminder.customTime||(reminder.timing==="custom"&&reminder.triggerAt?formatTimeInput(reminder.triggerAt):""));const privacy=document.querySelector(`input[name="privacy"][value="${reminder.privacy==="private"?"private":"normal"}"]`);if(privacy)privacy.checked=true;updateTimingPreview();composerCard.scrollIntoView({behavior:"smooth",block:"start"});setTimeout(()=>reminderText.focus(),250);}
 
     function saveReminder(){try{const target=selectedTarget();const timing=selectedTiming();const customTime=selectedCustomTime();if(timing==="custom"&&!customTime)throw new Error("Choose an exact reminder time.");const payload={date:dateInput.value,classId:target.classId,entryName:target.entryName,studentId:selectedStudentId,studentClassId:selectedStudentClassId,studentName:studentInput.value.trim(),text:reminderText.value.trim(),timing,customMinutes:5,customTime,privacy:selectedPrivacy()};let reminder;if(editingReminderId){if(!payload.text)throw new Error("Enter a reminder first.");reminder=ReminderService.updateReminder(editingReminderId,{...payload,status:"pending",completedAt:"",snoozeUntil:0,alertedDueAt:0,claimOwner:"",claimUntil:0});showToast("Reminder updated");}else{reminder=ReminderService.addReminder(payload);showToast(`Reminder set for ${reminder.className||target.label}`);}resetComposer();renderReminders();}catch(error){console.error(error);showToast(error.message||"Reminder could not be saved");}}
     el("reminderSettingsButton").addEventListener("click",openSettings);el("closeReminderSettings").addEventListener("click",closeSettings);settingsBackdrop.addEventListener("click",closeSettings);
     notificationToggleButton.addEventListener("click",handleNotificationToggle);notificationPermissionCancel.addEventListener("click",closeNotificationPermissionDialog);notificationPermissionContinue.addEventListener("click",async()=>{closeNotificationPermissionDialog();await enableDesktopNotifications();});notificationPermissionBackdrop.addEventListener("click",closeNotificationPermissionDialog);
-    periodSelect.addEventListener("change",()=>{updateSelectedStudentNote();updateTimingPreview();});dateInput.addEventListener("change",()=>{buildPeriods();updateTimingPreview();});
-    studentInput.addEventListener("input",renderSuggestions);studentInput.addEventListener("blur",()=>setTimeout(()=>suggestions.classList.remove("visible"),120));studentInput.addEventListener("keydown",event=>{const buttons=[...suggestions.querySelectorAll(".suggestion")];if(!buttons.length)return;if(event.key==="ArrowDown"){event.preventDefault();activeSuggestionIndex=Math.min(activeSuggestionIndex+1,buttons.length-1);}else if(event.key==="ArrowUp"){event.preventDefault();activeSuggestionIndex=Math.max(activeSuggestionIndex-1,0);}else if(event.key==="Enter"&&activeSuggestionIndex>=0){event.preventDefault();chooseStudent(suggestionItems[activeSuggestionIndex]);return;}else if(event.key==="Escape"){suggestions.classList.remove("visible");return;}else return;buttons.forEach((b,i)=>b.classList.toggle("active",i===activeSuggestionIndex));buttons[activeSuggestionIndex]?.scrollIntoView({block:"nearest"});});
+    studentSearch=TeacherDashboardStudentSearch.create({
+      input:studentInput,
+      results:suggestions,
+      onChange(student){
+        selectedStudentId=student?.id?String(student.id):"";
+        selectedStudentClassId=student?.classId?String(student.classId):"";
+        if(student){
+          const target=`class:${selectedStudentClassId}`;
+          if([...periodSelect.options].some(option=>option.value===target)) periodSelect.value=target;
+        }
+        updateTimingPreview();
+      }
+    });
+    periodSelect.addEventListener("change",updateTimingPreview);dateInput.addEventListener("change",()=>{buildPeriods();updateTimingPreview();});
     document.querySelectorAll('input[name="timing"]').forEach(i=>i.addEventListener("change",updateTimingPreview));customTimeInput.addEventListener("input",updateTimingPreview);
     scheduleMode.addEventListener("change",()=>{BellService.setScheduleMode(scheduleMode.value);buildPeriods();renderSchedule();showToast(`${BellService.getSnapshot().scheduleLabel} schedule selected`);});
     addReminderButton.addEventListener("click",saveReminder);cancelEditButton.addEventListener("click",resetComposer);
     clearCompletedButton.addEventListener("click",()=>{const cleared=ReminderService.clearCompleted();renderReminders();showToast(cleared?`Cleared ${cleared} completed reminder${cleared===1?"":"s"}`:"No completed reminders to clear");});
-    window.addEventListener(ReminderService.changeEvent,renderReminders);window.addEventListener(ReminderService.notificationChangeEvent,renderNotificationSetting);window.addEventListener(DashboardData.changeEvent,()=>{buildPeriods();renderSuggestions();renderReminders();updateTimingPreview();});window.addEventListener(BellService.changeEvent,()=>{buildPeriods();renderSchedule();});
+    window.addEventListener(ReminderService.changeEvent,renderReminders);window.addEventListener(ReminderService.notificationChangeEvent,renderNotificationSetting);window.addEventListener(DashboardData.changeEvent,()=>{buildPeriods();studentSearch?.refresh();renderReminders();updateTimingPreview();});window.addEventListener(BellService.changeEvent,()=>{buildPeriods();renderSchedule();});
     window.addEventListener("keydown",event=>{if(event.key!=="Escape")return;closeSettings();closeNotificationPermissionDialog();document.querySelectorAll("details.reminder-menu[open]").forEach(d=>d.open=false);});
     document.addEventListener("click",event=>{document.querySelectorAll("details.reminder-menu[open]").forEach(d=>{if(!d.contains(event.target))d.open=false;});});
 

@@ -186,6 +186,14 @@
     .winner-preview{background:#fef7e0;color:#7c5900;border-radius:10px;padding:10px 12px;font-weight:700;font-size:13px;min-height:38px}
     .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
 
+    /* ---------- Team names ---------- */
+    .team-name-list{display:grid;gap:9px}
+    .team-name-row{display:grid;grid-template-columns:minmax(150px,.7fr) minmax(220px,1.3fr) auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)}
+    .team-name-row:last-child{border-bottom:0}
+    .team-name-period{font-size:13px;font-weight:700}
+    .team-name-period span{display:block;margin-top:3px;color:var(--muted);font-size:10px;font-weight:600}
+    .team-name-input{min-width:0}
+
     /* ---------- Presentation mode ---------- */
     body.present-mode{background:#fff;height:100vh;overflow:hidden}
     body.present-mode .app{max-width:1500px;height:100vh;padding:18px 34px 24px;display:flex;flex-direction:column}
@@ -244,6 +252,7 @@
       .scoring-toggle{display:flex;width:100%}
       .scoring-method-button{flex:1}
       .manage-class-list{grid-template-columns:1fr}
+      .team-name-row{grid-template-columns:1fr}
     }
     @media(max-width:520px){
       .competition-list{grid-template-columns:1fr}
@@ -290,6 +299,7 @@
         <button class="button small" id="backupButton">Backup</button>
         <button class="button small" id="restoreButton">Restore</button>
         <input type="file" id="restoreFile" accept=".json" hidden>
+        <button class="button small" id="teamNamesButton" type="button">Team Names</button>
         <button class="button small" id="newCompetitionButton" type="button">New Competition</button>
         <button class="button small primary" id="presentButton">Show Standings</button>
       </div>
@@ -412,6 +422,25 @@
   </div>
 
 
+  <!-- TEAM NAMES MODAL -->
+  <div class="modal-backdrop" id="teamNamesModal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="teamNamesModalTitle">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title" id="teamNamesModalTitle">Scoreboard Team Names</div>
+          <div class="modal-subtitle">Give each class a student-chosen team name. This changes Scoreboard labels only; rosters and period IDs stay untouched.</div>
+        </div>
+        <button class="icon-button" id="closeTeamNamesModal" aria-label="Close">×</button>
+      </div>
+      <div class="team-name-list" id="teamNameList"></div>
+      <div class="modal-actions">
+        <button class="button" id="cancelTeamNames" type="button">Cancel</button>
+        <button class="button primary" id="saveTeamNames" type="button">Save Team Names</button>
+      </div>
+    </div>
+  </div>
+
+
 <script src="shared/dashboard-data.js"></script>
 <script src="shared/competition-service.js"></script>
 <script src="shared/bell-service.js"></script>
@@ -436,7 +465,8 @@ const DEFAULT_SEASON_TITLE = "Fall Semester Championship";
 const DEFAULT_STATE = {
   schemaVersion: 4,
   activeSeason: DEFAULT_SEASON_TITLE,
-  seasons: {}
+  seasons: {},
+  teamNames: {}
 };
 
 let state = loadState();
@@ -467,14 +497,16 @@ function loadState(){
         activeSeason: migratedTitle,
         seasons: {
           [migratedTitle]: {events: parsed.events}
-        }
+        },
+        teamNames: {}
       };
     }
 
     const next = {
       schemaVersion: 4,
       activeSeason: SEASON_TITLES.includes(parsed.activeSeason) ? parsed.activeSeason : DEFAULT_SEASON_TITLE,
-      seasons: parsed.seasons && typeof parsed.seasons === "object" ? parsed.seasons : {}
+      seasons: parsed.seasons && typeof parsed.seasons === "object" ? parsed.seasons : {},
+      teamNames: parsed.teamNames && typeof parsed.teamNames === "object" && !Array.isArray(parsed.teamNames) ? parsed.teamNames : {}
     };
 
     Object.keys(next.seasons).forEach(title => {
@@ -506,6 +538,10 @@ function makeId(){
   return Date.now().toString(36) + Math.random().toString(36).slice(2,8);
 }
 
+function escapeHtml(value){
+  return String(value ?? "").replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[ch] || ch));
+}
+
 function dateKey(date = new Date()){
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2,"0");
@@ -532,8 +568,22 @@ function getDashboardClass(period){
   return DashboardData.getClass(String(period));
 }
 
-function getClassLabel(period){
+function getBaseClassLabel(period){
   return getDashboardClass(period)?.name || `Period ${period}`;
+}
+
+function getTeamName(period){
+  return String(state.teamNames?.[String(period)] || state.teamNames?.[period] || "").trim();
+}
+
+function getClassLabel(period){
+  return getTeamName(period) || getBaseClassLabel(period);
+}
+
+function getControlClassLabel(period){
+  const team = getTeamName(period);
+  const base = getBaseClassLabel(period);
+  return team ? `${team} · ${base}` : base;
 }
 
 function activePeriods(){
@@ -874,7 +924,7 @@ function renderPeriodControls(){
   visible.forEach(period => {
     const option = document.createElement("option");
     option.value = period;
-    option.textContent = getClassLabel(period);
+    option.textContent = getControlClassLabel(period);
     periodSelect.appendChild(option);
   });
 
@@ -895,7 +945,7 @@ function renderPeriodControls(){
   visible.forEach(period => {
     const option = document.createElement("option");
     option.value = period;
-    option.textContent = getClassLabel(period);
+    option.textContent = getControlClassLabel(period);
     historyFilter.appendChild(option);
   });
 
@@ -1079,9 +1129,9 @@ function openCompetitionModal(){
     row.dataset.period = period;
     row.innerHTML = `
       <td class="rank-cell">—</td>
-      <td class="period-cell">${getClassLabel(period)}</td>
-      <td><input class="game-score" type="number" min="0" step="1" placeholder="0" aria-label="${getClassLabel(period)} game score"></td>
-      <td><input class="championship-points" type="number" step="0.1" placeholder="—" aria-label="${getClassLabel(period)} championship points" readonly></td>
+      <td class="period-cell">${escapeHtml(getClassLabel(period))}</td>
+      <td><input class="game-score" type="number" min="0" step="1" placeholder="0" aria-label="${escapeHtml(getClassLabel(period))} game score"></td>
+      <td><input class="championship-points" type="number" step="0.1" placeholder="—" aria-label="${escapeHtml(getClassLabel(period))} championship points" readonly></td>
     `;
     competitionRows.appendChild(row);
   });
@@ -1223,6 +1273,81 @@ document.getElementById("saveCompetition").addEventListener("click", () => {
 });
 
 /* =========================================================
+   SCOREBOARD TEAM NAMES
+========================================================= */
+const teamNamesModal = document.getElementById("teamNamesModal");
+const teamNameList = document.getElementById("teamNameList");
+
+function renderTeamNameEditor(){
+  teamNameList.innerHTML = "";
+  const periods = activePeriods();
+  if(!periods.length){
+    const empty = document.createElement("div");
+    empty.className = "history-empty";
+    empty.textContent = "No active classes. Turn on classes in Dashboard Settings first.";
+    teamNameList.appendChild(empty);
+    return;
+  }
+  periods.forEach(period => {
+    const row = document.createElement("div");
+    row.className = "team-name-row";
+    const label = document.createElement("div");
+    label.className = "team-name-period";
+    label.textContent = getBaseClassLabel(period);
+    const help = document.createElement("span");
+    help.textContent = `Period ${period} · Scoreboard only`;
+    label.appendChild(help);
+    const input = document.createElement("input");
+    input.type = "text";
+    input.maxLength = 40;
+    input.className = "team-name-input";
+    input.dataset.teamPeriod = String(period);
+    input.value = getTeamName(period);
+    input.placeholder = "Use class/period name";
+    const reset = document.createElement("button");
+    reset.type = "button";
+    reset.className = "button small";
+    reset.textContent = "Reset";
+    reset.addEventListener("click", () => { input.value = ""; input.focus(); });
+    row.append(label,input,reset);
+    teamNameList.appendChild(row);
+  });
+}
+
+function openTeamNamesModal(){
+  renderTeamNameEditor();
+  teamNamesModal.classList.add("open");
+  teamNamesModal.setAttribute("aria-hidden","false");
+  setTimeout(() => teamNameList.querySelector("input")?.focus(), 50);
+}
+
+function closeTeamNamesModal(){
+  teamNamesModal.classList.remove("open");
+  teamNamesModal.setAttribute("aria-hidden","true");
+}
+
+function saveTeamNames(){
+  const next = {...(state.teamNames || {})};
+  teamNameList.querySelectorAll("[data-team-period]").forEach(input => {
+    const period = String(input.dataset.teamPeriod || "");
+    const value = input.value.trim();
+    if(value) next[period] = value;
+    else delete next[period];
+  });
+  state.teamNames = next;
+  saveState();
+  renderAll();
+  closeTeamNamesModal();
+  showToast("Team names saved.");
+}
+
+document.getElementById("teamNamesButton").addEventListener("click", openTeamNamesModal);
+document.getElementById("closeTeamNamesModal").addEventListener("click", closeTeamNamesModal);
+document.getElementById("cancelTeamNames").addEventListener("click", closeTeamNamesModal);
+document.getElementById("saveTeamNames").addEventListener("click", saveTeamNames);
+teamNamesModal.addEventListener("click", event => { if(event.target === teamNamesModal) closeTeamNamesModal(); });
+
+/* =========================================================
    BACKUP / RESTORE
 ========================================================= */
 
@@ -1264,13 +1389,15 @@ document.getElementById("restoreFile").addEventListener("change", event => {
         state = {
           schemaVersion:4,
           activeSeason:title,
-          seasons:{[title]:{events:restored.events}}
+          seasons:{[title]:{events:restored.events}},
+          teamNames: restored.teamNames && typeof restored.teamNames === "object" ? restored.teamNames : {}
         };
       }else if(restored.seasons && typeof restored.seasons === "object"){
         state = {
           schemaVersion:4,
           activeSeason:SEASON_TITLES.includes(restored.activeSeason) ? restored.activeSeason : DEFAULT_SEASON_TITLE,
-          seasons:restored.seasons
+          seasons:restored.seasons,
+          teamNames: restored.teamNames && typeof restored.teamNames === "object" ? restored.teamNames : {}
         };
       }else{
         throw new Error("Invalid backup");
