@@ -7,9 +7,11 @@
   }
 
   const HOST_ID = "teacherDashboardGlobalBell";
+  const SPACE_ID = "teacherDashboardGlobalBellSpace";
   const QUICK_MINUTES = [20, 15, 10, 5];
 
   let host = null;
+  let space = null;
   let root = null;
   let summaryButton = null;
   let labelEl = null;
@@ -274,6 +276,29 @@
     stopButton.classList.toggle("visible", alarmActive);
   }
 
+
+  function ensureReservedSpace() {
+    const existing = document.getElementById(SPACE_ID);
+    if (existing) {
+      space = existing;
+      return;
+    }
+
+    space = document.createElement("div");
+    space.id = SPACE_ID;
+    space.className = "td-global-bell-space";
+    space.setAttribute("aria-hidden", "true");
+
+    const main = document.querySelector(".td-main");
+    if (main) {
+      main.prepend(space);
+      document.body.classList.add("td-global-bell-shell-space");
+    } else {
+      document.body.prepend(space);
+      document.body.classList.add("td-global-bell-standalone-space");
+    }
+  }
+
   function moveIntoFullscreenContext() {
     if (!host) return;
     const target = document.fullscreenElement || document.body;
@@ -281,6 +306,8 @@
   }
 
   function mount() {
+    ensureReservedSpace();
+
     const existing = document.getElementById(HOST_ID);
     if (existing) {
       host = existing;
@@ -306,7 +333,10 @@
     if (renderTimer) window.clearInterval(renderTimer);
     renderTimer = null;
     host?.remove();
+    space?.remove();
+    document.body.classList.remove("td-global-bell-shell-space", "td-global-bell-standalone-space");
     host = null;
+    space = null;
     root = null;
   }
 

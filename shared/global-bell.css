@@ -4,6 +4,28 @@
    State and alarm logic live in shared/bell-service.js.
    ========================================================= */
 
+:root {
+  --td-global-bell-space-height: 58px;
+}
+
+/*
+   The bell owns a real layout lane instead of floating over page controls.
+   global-bell.js inserts exactly one spacer into the page's main content
+   (or at the top of standalone pages) so every app automatically inherits
+   the same collision-free upper-right bell area.
+*/
+.td-global-bell-space {
+  display: block;
+  width: 100%;
+  height: var(--td-global-bell-space-height);
+  flex: 0 0 var(--td-global-bell-space-height);
+  pointer-events: none;
+}
+
+body.td-global-bell-shell-space .td-main > .td-global-bell-space {
+  margin-top: calc(-1 * min(8px, var(--td-global-bell-space-height)));
+}
+
 .td-global-bell-host {
   position: fixed;
   top: 14px;
@@ -307,8 +329,18 @@
   display: block;
 }
 
+/* Fullscreen classroom games also keep the bell lane. Wordle uses a fixed
+   100vh app height, so subtract the reserved lane instead of overflowing. */
+body.td-global-bell-standalone-space:fullscreen .app {
+  box-sizing: border-box;
+  max-height: calc(100vh - var(--td-global-bell-space-height));
+}
+
 @media (max-width: 860px) {
-  body.td-has-app-shell .td-global-bell-host {
+  :root {
+    --td-global-bell-space-height: 54px;
+  }
+  body.td-global-bell-shell-space .td-global-bell-host {
     top: 66px;
     right: 10px;
   }

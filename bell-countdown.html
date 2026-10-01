@@ -14,7 +14,7 @@
     body {
       margin: 0;
       min-height: 100vh;
-      padding: 72px 24px 48px;
+      padding: 14px 24px 48px;
       background: var(--td-bg);
       color: var(--td-text);
       font-family: var(--td-font-sans);
@@ -377,7 +377,7 @@
     }
 
     body.projector-mode .countdown-card {
-      min-height: calc(100vh - 36px);
+      min-height: calc(100vh - 36px - var(--td-global-bell-space-height));
       margin: 0;
       border: 0;
       border-radius: var(--td-radius-xl);
@@ -422,7 +422,7 @@
     body.projector-mode .projector-exit { display: inline-flex; }
 
     @media (max-width: 760px) {
-      body { padding: 68px 14px 30px; }
+      body { padding: 14px 14px 30px; }
       .controls-grid { grid-template-columns: 1fr; }
       .app-header { margin-bottom: 18px; }
       .countdown-card { min-height: 300px; padding: 28px 14px; }
