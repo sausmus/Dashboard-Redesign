@@ -1,0 +1,71 @@
+TEACHER DASHBOARD — PROTOTYPE 7.2
+GLOBAL BELL HARDENING / SHARED UI REFACTOR
+
+Source of truth
+---------------
+Built from the user-provided Dashboard-Redesign-main (1).zip.
+
+What changed
+------------
+1. One global bell control now appears in the upper-right corner of every root Dashboard page.
+   - 17/17 HTML pages load the same shared component.
+   - Small rectangular summary: current bell context + countdown + chevron.
+   - The chevron opens a compact alarm panel.
+
+2. New shared UI files
+   - shared/global-bell.js
+   - shared/global-bell.css
+   These contain the one and only compact bell UI implementation.
+
+3. shared/bell-service.js is now focused on shared bell state and behavior.
+   - Removed the old injected mini-bell markup/styles.
+   - Removed old data-bell-mini mounting/rendering code.
+   - Existing bell state, schedule detection, alarm audio, warning persistence, and current-class sync remain in BellService.
+
+4. Old page-specific bell controls were removed.
+   - Agenda
+   - Scoreboard
+   - Participation Tracker
+   - Student Picker
+   - Settings
+   Related dead bell layout/style rules were removed as well.
+
+5. Home no longer duplicates the countdown in the Now card.
+   - The global bell owns the always-visible countdown.
+   - Home still shows current-class context and schedule information.
+   - The existing full Bell Countdown page remains available as the dedicated full/projector countdown via “Full countdown →”.
+
+6. Global alarm panel
+   - Quick alarms: 20, 15, 10, and 5 minutes before the current bell target.
+   - Custom alarm: 1–180 minutes before the bell target.
+   - Armed alarms are visible in the compact panel.
+   - Stop-ringing control appears while an alarm is active.
+   - Schedule selector supports Auto / Regular / Late Start / Minimum Day.
+
+7. Global persistence
+   - No new bell storage schema was introduced.
+   - Existing BellService state key remains: teacherDashboard.bellState.v1
+   - Existing bell preference key remains: bjhClassBellCountdownPrefsV3
+   - Alarms armed on one page remain armed after navigating to another page because all pages read the same BellService state.
+
+8. Theme / layout behavior
+   - Uses the global Teacher Dashboard theme variables for light/dark mode and all accent themes.
+   - Fixed in the upper-right corner.
+   - On app-shell mobile pages, drops below the mobile navigation bar.
+   - Reparents into the active fullscreen element so the bell remains available in fullscreen game/presentation contexts.
+   - Hidden for printing.
+
+Data safety
+-----------
+- No roster, Participation, Timeliness, Classroom, Calendar, Reminders, To-Do, Student Notes, Pairing, Scoreboard, or game storage keys were renamed or cleared.
+- No destructive migrations were added.
+- Bell state and bell preference keys were preserved exactly.
+
+Validation
+----------
+- 17/17 root HTML pages verified to load shared/global-bell.css and shared/global-bell.js exactly once.
+- global-bell.js verified to load after bell-service.js on every page.
+- 21 shared JavaScript files passed node --check.
+- 13 inline JavaScript blocks passed node --check.
+- No legacy data-bell-mini / td-bell-mini / page-specific bell host references remain.
+- All local HTML script, stylesheet, image, and internal-link references resolve to files in the repository.

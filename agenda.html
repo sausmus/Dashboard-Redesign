@@ -55,13 +55,6 @@
     .app-header h1{margin:0;font-size:30px;font-weight:700;letter-spacing:-.5px}
     .bjh-logo{width:64px;height:64px;object-fit:contain}.bjh-logo.right{transform:scaleX(-1)}
 
-    .bell-card{justify-self:end;background:#fff;border-radius:14px;box-shadow:var(--shadow);padding:10px 15px;min-width:190px;text-align:center}
-    .bell-service-host{justify-self:end;width:245px;max-width:100%}
-    .bell-period{font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
-    .bell-time{font-size:35px;line-height:1;font-weight:700;font-variant-numeric:tabular-nums;margin:4px 0}
-    .bell-end{font-size:12px;color:var(--muted)}
-    .bell-schedule{margin-top:7px}.bell-schedule select{border:0;background:transparent;color:var(--blue);font-size:11px;font-weight:600;cursor:pointer;outline:none}
-
     .card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px;margin-bottom:16px}
 
     .week-controls{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
@@ -121,14 +114,13 @@
     body.present-mode .homework-card{flex:0 0 auto;margin-bottom:0;max-height:30vh;overflow:hidden}
     body.present-mode .homework-editor{font-size:var(--present-homework-size);line-height:1.28;min-height:0;max-height:none;overflow:hidden;padding:10px 16px 12px}
     body.present-mode .homework-title{font-size:15px;padding:6px 14px}
-    body.present-mode .bell-card{min-width:210px;padding:8px 15px}.present-mode .bell-time{font-size:39px}.present-mode .bell-schedule{display:none}
 
     #exitPresent{display:none;position:fixed;right:18px;bottom:18px;z-index:9999;border:0;border-radius:10px;padding:9px 13px;background:rgba(0,0,0,.65);color:#fff;font-size:12px}
     body.present-mode #exitPresent{display:block}
 
     @media(max-width:800px){
       .app{padding:18px 12px 30px}.top-row{display:flex;flex-direction:column;gap:12px}.header-spacer{display:none}.app-header{gap:8px;margin-bottom:4px}
-      .app-header h1{font-size:23px}.bjh-logo{width:46px;height:46px}.bell-card{justify-self:center}.week-controls{justify-content:center}.week-navigation{flex-wrap:wrap;justify-content:center}
+      .app-header h1{font-size:23px}.bjh-logo{width:46px;height:46px}.week-controls{justify-content:center}.week-navigation{flex-wrap:wrap;justify-content:center}
       .week-title{order:-1;width:100%}.data-controls{justify-content:center}.day-tabs{gap:4px}.day-tab{padding:8px 2px}.day-name{font-size:11px}.day-date{font-size:10px}
       .period-tabs{grid-template-columns:repeat(4,1fr)}.period-visibility-list{grid-template-columns:1fr}.editor{font-size:21px;min-height:280px}
     }
@@ -144,6 +136,7 @@
 
   </style>
   <link rel="stylesheet" href="shared/theme.css">
+  <link rel="stylesheet" href="shared/global-bell.css">
   <script src="shared/theme.js"></script>
 </head>
 <body class="td-has-app-shell">
@@ -159,7 +152,6 @@
       <div>
         <h1 id="appTitle" class="td-page-title">Agenda</h1>
       </div>
-      <div class="bell-service-host" data-bell-mini></div>
     </div>
 
     <div class="card planning-card">
@@ -254,7 +246,7 @@
 <script src="shared/dashboard-data.js"></script>
 <script src="shared/class-groups.js"></script>
 <script src="shared/agenda-service.js"></script>
-<script src="shared/bell-service.js"></script>
+<script src="shared/bell-service.js"></script><script src="shared/global-bell.js"></script>
   <script src="shared/reminder-service.js"></script>
 <script>
 let visiblePeriods=loadVisiblePeriods();

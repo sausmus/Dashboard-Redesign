@@ -1,0 +1,343 @@
+/* =========================================================
+   TEACHER DASHBOARD — GLOBAL BELL
+   One fixed, theme-aware bell control shared by every app page.
+   State and alarm logic live in shared/bell-service.js.
+   ========================================================= */
+
+.td-global-bell-host {
+  position: fixed;
+  top: 14px;
+  right: 16px;
+  z-index: 2147482000;
+  width: max-content;
+  max-width: calc(100vw - 28px);
+  font-family: var(--td-font-sans);
+  color: var(--td-text);
+}
+
+.td-global-bell {
+  position: relative;
+}
+
+.td-global-bell-summary {
+  min-width: 132px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 10px 0 11px;
+  border: 1px solid var(--td-border);
+  border-radius: 11px;
+  background: var(--td-surface);
+  color: var(--td-text);
+  box-shadow: var(--td-shadow-sm);
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background var(--td-fast),
+    border-color var(--td-fast),
+    box-shadow var(--td-fast),
+    transform var(--td-fast);
+}
+
+.td-global-bell-summary:hover {
+  background: var(--td-surface-hover);
+  border-color: var(--td-border-strong);
+  box-shadow: var(--td-shadow-md);
+}
+
+.td-global-bell-summary:active {
+  transform: translateY(1px);
+}
+
+.td-global-bell-label {
+  max-width: 88px;
+  overflow: hidden;
+  color: var(--td-text-secondary);
+  font-size: 11px;
+  font-weight: 720;
+  line-height: 1;
+  text-overflow: ellipsis;
+}
+
+.td-global-bell-time {
+  color: var(--td-text);
+  font-size: 15px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.18px;
+  line-height: 1;
+}
+
+.td-global-bell-indicator {
+  width: 6px;
+  height: 6px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: var(--td-text-muted);
+  opacity: .55;
+  transition: background var(--td-fast), opacity var(--td-fast), box-shadow var(--td-fast);
+}
+
+.td-global-bell.has-armed .td-global-bell-indicator {
+  background: var(--td-accent);
+  opacity: 1;
+  box-shadow: 0 0 0 3px var(--td-accent-soft);
+}
+
+.td-global-bell.alarm-active .td-global-bell-indicator {
+  background: var(--td-danger);
+  opacity: 1;
+  box-shadow: 0 0 0 3px var(--td-danger-soft);
+}
+
+.td-global-bell-chevron {
+  width: 14px;
+  height: 14px;
+  display: grid;
+  place-items: center;
+  color: var(--td-text-muted);
+  transition: transform var(--td-normal), color var(--td-fast);
+}
+
+.td-global-bell-chevron svg {
+  width: 12px;
+  height: 12px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.td-global-bell.open .td-global-bell-chevron {
+  transform: rotate(180deg);
+  color: var(--td-accent);
+}
+
+.td-global-bell-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: min(296px, calc(100vw - 24px));
+  padding: 14px;
+  border: 1px solid var(--td-border);
+  border-radius: var(--td-radius-md);
+  background: var(--td-surface-raised);
+  color: var(--td-text);
+  box-shadow: var(--td-shadow-lg);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px) scale(.985);
+  transform-origin: top right;
+  pointer-events: none;
+  transition:
+    opacity var(--td-fast),
+    transform var(--td-fast),
+    visibility var(--td-fast);
+}
+
+.td-global-bell.open .td-global-bell-panel {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+.td-global-bell-panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.td-global-bell-panel-title {
+  margin: 0;
+  color: var(--td-text);
+  font-size: 14px;
+  font-weight: 780;
+  letter-spacing: -.12px;
+}
+
+.td-global-bell-context {
+  margin: 3px 0 0;
+  color: var(--td-text-secondary);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.td-global-bell-section-label {
+  display: block;
+  margin: 0 0 7px;
+  color: var(--td-text-secondary);
+  font-size: 10px;
+  font-weight: 760;
+  letter-spacing: .065em;
+  text-transform: uppercase;
+}
+
+.td-global-bell-quick {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.td-global-bell-alarm-button,
+.td-global-bell-custom-button,
+.td-global-bell-stop {
+  min-height: 34px;
+  border: 1px solid var(--td-border);
+  border-radius: 9px;
+  background: var(--td-surface);
+  color: var(--td-text);
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 720;
+  transition:
+    background var(--td-fast),
+    border-color var(--td-fast),
+    color var(--td-fast),
+    transform var(--td-fast);
+}
+
+.td-global-bell-alarm-button:hover,
+.td-global-bell-custom-button:hover {
+  background: var(--td-surface-hover);
+  border-color: var(--td-border-strong);
+}
+
+.td-global-bell-alarm-button:active,
+.td-global-bell-custom-button:active,
+.td-global-bell-stop:active {
+  transform: translateY(1px);
+}
+
+.td-global-bell-alarm-button.armed,
+.td-global-bell-custom-button.armed {
+  border-color: var(--td-accent);
+  background: var(--td-accent-soft);
+  color: var(--td-accent-strong);
+}
+
+.td-global-bell-alarm-button.fired {
+  background: var(--td-surface-soft);
+  color: var(--td-text-muted);
+}
+
+.td-global-bell-custom-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 7px;
+  margin-top: 7px;
+}
+
+.td-global-bell-custom-input,
+.td-global-bell-schedule {
+  min-height: 34px;
+  border: 1px solid var(--td-border);
+  border-radius: 9px;
+  background: var(--td-surface);
+  color: var(--td-text);
+  outline: none;
+}
+
+.td-global-bell-custom-input {
+  width: 100%;
+  padding: 6px 9px;
+  font-size: 12px;
+}
+
+.td-global-bell-custom-input::placeholder {
+  color: var(--td-text-muted);
+}
+
+.td-global-bell-custom-button {
+  padding: 6px 10px;
+}
+
+.td-global-bell-status {
+  min-height: 17px;
+  margin: 8px 1px 0;
+  color: var(--td-text-secondary);
+  font-size: 10.5px;
+  line-height: 1.4;
+}
+
+.td-global-bell-status.error {
+  color: var(--td-danger);
+  font-weight: 680;
+}
+
+.td-global-bell-divider {
+  height: 1px;
+  margin: 11px 0;
+  background: var(--td-border);
+}
+
+.td-global-bell-schedule-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 9px;
+}
+
+.td-global-bell-schedule-row .td-global-bell-section-label {
+  margin: 0;
+}
+
+.td-global-bell-schedule {
+  width: 100%;
+  padding: 5px 8px;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.td-global-bell-stop {
+  display: none;
+  width: 100%;
+  margin-top: 9px;
+  border-color: var(--td-danger);
+  background: var(--td-danger-soft);
+  color: var(--td-danger);
+}
+
+.td-global-bell-stop.visible {
+  display: block;
+}
+
+@media (max-width: 860px) {
+  body.td-has-app-shell .td-global-bell-host {
+    top: 66px;
+    right: 10px;
+  }
+
+  .td-global-bell-host {
+    right: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .td-global-bell-summary {
+    min-width: 118px;
+    height: 34px;
+    gap: 6px;
+    padding-inline: 9px;
+  }
+
+  .td-global-bell-label {
+    max-width: 70px;
+    font-size: 10px;
+  }
+
+  .td-global-bell-time {
+    font-size: 14px;
+  }
+}
+
+@media print {
+  .td-global-bell-host {
+    display: none !important;
+  }
+}

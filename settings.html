@@ -64,12 +64,6 @@
       margin-bottom: 14px;
     }
 
-    .settings-bell-row {
-      display: flex;
-      justify-content: flex-end;
-      margin-bottom: 18px;
-    }
-
     .back-link {
       display: inline-flex;
       align-items: center;
@@ -1414,6 +1408,7 @@
 
   </style>
   <link rel="stylesheet" href="shared/theme.css">
+  <link rel="stylesheet" href="shared/global-bell.css">
   <script src="shared/theme.js"></script>
 </head>
 
@@ -1432,10 +1427,6 @@
         <h1 class="td-page-title">Settings</h1>
         <p class="td-page-subtitle">Appearance, classes, school calendar, Google Classroom, backups, and school-year controls.</p>
       </div>
-    </div>
-
-    <div class="settings-bell-row">
-      <div data-bell-mini></div>
     </div>
 
     <section class="settings-hub" aria-label="Settings sections">
@@ -2109,7 +2100,7 @@
   <script src="shared/class-groups.js"></script>
   <script src="shared/calendar-service.js"></script>
   <script src="shared/classroom-service.js"></script>
-  <script src="shared/bell-service.js"></script>
+  <script src="shared/bell-service.js"></script><script src="shared/global-bell.js"></script>
   <script src="shared/reminder-service.js"></script>
   <script src="shared/data-backup-service.js"></script>
   <script>

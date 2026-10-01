@@ -6,6 +6,7 @@
   <title>Teacher Dashboard</title>
   <link rel="icon" type="image/svg+xml" href="redesign-favicon.svg">
   <link rel="stylesheet" href="shared/theme.css">
+  <link rel="stylesheet" href="shared/global-bell.css">
   <script src="shared/theme.js"></script>
   <style>
     .home-head {
@@ -53,16 +54,6 @@
     .now-class { margin-top: 11px; font-size: clamp(24px, 3.2vw, 34px); font-weight: 760; letter-spacing: -.03em; }
     .now-class-subtitle { margin-top: 5px; color: var(--td-text-secondary); font-size: 13px; }
     .schedule-badge { flex: 0 0 auto; }
-
-    .countdown-wrap { margin-top: 28px; }
-    .countdown {
-      font-variant-numeric: tabular-nums;
-      font-size: clamp(64px, 9vw, 100px);
-      line-height: .95;
-      letter-spacing: -.055em;
-      font-weight: 760;
-    }
-    .countdown-caption { margin: 10px 0 0 4px; color: var(--td-text-secondary); font-size: 13px; }
 
     .now-actions {
       display: grid;
@@ -152,7 +143,7 @@
         <section class="now-section" aria-labelledby="nowHeading">
           <div class="section-heading-row">
             <div id="nowHeading" class="td-eyebrow">Now</div>
-            <a class="section-link" href="bell-countdown.html">Bell controls →</a>
+            <a class="section-link" href="bell-countdown.html">Full countdown →</a>
           </div>
 
           <article class="td-card now-card">
@@ -165,10 +156,6 @@
               <div id="scheduleBadge" class="td-badge schedule-badge"><span class="td-dot"></span><span>Schedule</span></div>
             </div>
 
-            <div class="countdown-wrap">
-              <div id="nowCountdown" class="countdown">--:--</div>
-              <div id="nowCountdownCaption" class="countdown-caption">Checking the bell schedule…</div>
-            </div>
 
             <div class="now-actions" aria-label="Current class shortcuts">
               <a class="now-action" id="agendaShortcut" href="agenda.html">
@@ -204,7 +191,7 @@
   <script src="shared/class-groups.js"></script>
   <script src="shared/agenda-service.js"></script>
   <script src="shared/calendar-service.js"></script>
-  <script src="shared/bell-service.js"></script>
+  <script src="shared/bell-service.js"></script><script src="shared/global-bell.js"></script>
   <script src="shared/reminder-service.js"></script>
   <script>
     (() => {
@@ -239,22 +226,17 @@
         let kicker = "Current class";
         let title = activeClassLabel(s);
         let subtitle = "";
-        let caption = "remaining";
 
         if (s.phase === "passing") {
           kicker = "Passing period";
           title = s.nextEntry?.name ? `Up next: ${s.nextEntry.name}` : "Passing period";
-          caption = s.nextEntry?.name ? `until ${s.nextEntry.name}` : "until the next class";
         } else if (s.countdownType === "schoolStart") {
           kicker = s.phase === "afterSchool" ? "Planning" : "Before school";
           title = s.phase === "afterSchool" ? (s.targetDayLabel ? `${s.targetDayLabel} planning` : "Next school day") : (s.targetDayLabel ? `${s.targetDayLabel} · First Bell` : "First Bell");
-          caption = s.phase === "afterSchool" ? "until the next school day" : "until First Bell";
         } else if (s.entry?.name && !/^Period\s+\d+$/i.test(s.entry.name)) {
           kicker = s.entry.name;
           title = s.entry.name;
-          caption = `remaining in ${s.entry.name}`;
         } else if (s.entry?.name) {
-          caption = `remaining in ${s.entry.name}`;
           const classId = String(s.entry.name.match(/\d+/)?.[0] || "");
           const info = classId ? DashboardData.getClass(classId) : null;
           subtitle = info?.name && info.name !== s.entry.name ? info.name : "";
@@ -282,8 +264,6 @@
         el("nowKicker").innerHTML = `<span class="now-kicker-dot"></span><span>${kicker}</span>`;
         el("nowClass").textContent = title;
         el("nowClassSubtitle").textContent = subtitle;
-        el("nowCountdown").textContent = s.displayCountdown || BellService.formatCountdown?.(s.remainingSeconds || 0) || "--:--";
-        el("nowCountdownCaption").textContent = caption;
       }
 
       function reminderTime(reminder) {

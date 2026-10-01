@@ -818,12 +818,6 @@
       transform: translate(-50%, 0);
     }
 
-    .global-bell-row {
-      display: flex;
-      justify-content: flex-end;
-      margin: -6px 0 16px;
-    }
-
     /* =========================================================
        MOBILE
     ========================================================= */
@@ -883,6 +877,7 @@
     }
   </style>
   <link rel="stylesheet" href="shared/theme.css">
+  <link rel="stylesheet" href="shared/global-bell.css">
   <script src="shared/theme.js"></script>
 </head>
 
@@ -900,8 +895,6 @@
 
     <img src="bjh-logo.png" class="bjh-logo right" alt="BJH Bobcat">
   </div>
-
-  <div class="global-bell-row"><div data-bell-mini></div></div>
 
   <!-- PERIOD -->
 
@@ -1292,7 +1285,7 @@
 
 <script src="shared/dashboard-data.js"></script>
 <script src="shared/student-profile-service.js"></script>
-<script src="shared/bell-service.js"></script>
+<script src="shared/bell-service.js"></script><script src="shared/global-bell.js"></script>
   <script src="shared/reminder-service.js"></script>
 
 <script>

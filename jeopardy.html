@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Jeopardy | Teacher Dashboard</title><link rel="icon" href="bjh-logo.png"><link rel="stylesheet" href="shared/jeopardy.css"><link rel="stylesheet" href="shared/game-competition-award.css">  <link rel="stylesheet" href="shared/theme.css">
+  <link rel="stylesheet" href="shared/global-bell.css">
   <script src="shared/theme.js"></script>
 </head>
 <body class="td-standalone-themed"><a class="dashboard-back" href="games.html">← Games</a><main class="app">
@@ -12,4 +13,4 @@ Team 3</textarea></label><label class="check"><input type="checkbox" id="deduct"
 <dialog id="editor"><form id="editorForm"><div class="row spread"><h2>Edit review board</h2><button type="button" id="cancelEdit">Cancel</button></div><label>Board title<input id="title" required maxlength="100"></label><p class="muted">Five categories, five questions each. Values run from 100 to 500. Leave unused question-and-answer pairs blank.</p><div id="fields"></div><button class="primary" type="submit">Save board</button></form></dialog>
 <dialog id="clue"><div class="row spread"><p id="clueLabel" class="eyebrow"></p><button id="back">Back to board</button></div><h2 id="question"></h2><button id="reveal" class="primary">Show answer</button><p id="answer" hidden></p><div class="row"><label>Responding team<select id="respondent"></select></label><button id="correct" class="primary">Correct</button><button id="incorrect">Incorrect</button><button id="skip">Skip question</button></div><p id="attemptInfo" class="muted"></p></dialog>
 
-</main><script src="shared/dashboard-data.js"></script><script src="shared/competition-service.js"></script><script src="shared/game-competition-award.js"></script><script src="shared/jeopardy.js"></script><script src="shared/bell-service.js"></script><script src="shared/reminder-service.js"></script></body></html>
+</main><script src="shared/dashboard-data.js"></script><script src="shared/competition-service.js"></script><script src="shared/game-competition-award.js"></script><script src="shared/jeopardy.js"></script><script src="shared/bell-service.js"></script><script src="shared/global-bell.js"></script><script src="shared/reminder-service.js"></script></body></html>
